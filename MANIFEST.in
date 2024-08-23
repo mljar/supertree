@@ -1,2 +1,5 @@
 include *.txt
 include README.md
+include *.pdf
+include supertree/js/style.css
+include supertree/js/supertree.min.js
