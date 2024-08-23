@@ -11,7 +11,7 @@ def get_d3_html(tree_data, licence_key="KEY"):
         css_text = fin.read()
 
     js_template = ""
-    with open(os.path.join(current_dir, "js", "script.js")) as fin:
+    with open(os.path.join(current_dir, "js", "supertree.min.js")) as fin:
         js_template = fin.read()
 
     myID = str(random.randint(1, 100000))
