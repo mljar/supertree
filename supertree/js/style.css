@@ -1,0 +1,265 @@
+
+.st-dropdown {
+  border: 1px solid #007B9A;
+  background-color: #008CBA;
+  color: #ffffff;
+  border: 2px solid #007B9A;
+  text-align: center;
+  text-decoration: none;
+  font-size: 16px; 
+  margin-top: -30px;
+  margin: 0px;
+  width: 150px;
+  padding: 10px;
+}
+
+.st-option-button {
+  border: 1px solid #007B9A;
+  border-radius: 0px; 
+  background-color: #008CBA;
+  border: 2px solid #007B9A;
+  color: white; 
+  padding: 7px 28px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  cursor: pointer; 
+  transition: background-color 0.3s, box-shadow 0.3s; 
+}
+
+.st-option-button:hover {
+    background-color: #45a049;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.jp-RenderedHTMLCommon p {
+    text-align: center;
+    margin: 0;
+    margin-bottom: 1em;
+}
+
+.st-info-div {
+    align-items: center;     
+}
+
+.st-body-toolbar-div {
+  margin: 0;
+  padding: 0;
+  /* flex-grow: 1; */
+  max-height: 100;
+}
+
+
+
+
+.st-logo-button svg {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  margin-bottom: 0;
+}
+
+
+
+
+
+
+
+.st-svg {
+  width: 100%;
+  height: 1000px;
+}
+
+
+
+.st-target {
+  font-family: lato;
+  font-size: 10px;
+  fill: #333333;
+}
+
+
+.st-pie-target {
+  font-family: lato;
+  font-size: 10px;
+  fill: #333333;
+}
+
+.st-pie-target2 {
+  font-family: lato;
+  font-size: 10px;
+  fill: #333333;
+}
+
+.st-grid path {
+  stroke-width: 0;
+  stroke: #333333;
+}
+
+.st-grid .tick line {
+  stroke: #333333;
+  stroke-width: 0.3px;
+  stroke-opacity: 0.3;
+}
+
+
+.st-tooltip {
+  background-color: #ffffff;
+  font-family: lato;
+  font-size: 11px;
+  padding: 4px;
+  color: #666666;
+  border: none;
+  box-shadow: 0px 0px 3px 0px #E6E6E6;
+}
+
+.st-modal {
+    display: none; 
+    position: fixed; 
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; 
+    background-color: rgba(0, 0, 0, 0.7); 
+}
+
+
+.st-modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 90%; 
+    height: 90%;
+    max-width: 90%;
+    max-height: 90%;
+    text-align: center;
+    overflow: auto;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex; 
+    flex-direction: column;
+}
+
+
+
+.st-container {
+    background-color: #fefefe;
+    width: 100%; 
+    height: 100vh;
+    text-align: center;
+    display: flex;
+    overflow: hidden;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+    margin: 0;
+}
+
+
+.st-body-tree-div {
+  min-height: 1000px;
+}
+
+
+.st-logo {
+  cursor: pointer;
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+}
+
+
+
+
+.st-container > div {
+    margin: 0;
+    padding: 0;
+}
+
+
+
+.st-closeBtn {
+    color: #aaa;
+    position: absolute;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    top: 10px;
+    right: 20px;
+}
+
+.st-closeBtn:hover,
+.st-closeBtn:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+
+
+.st-logo-button {
+
+  height: 100%;
+  padding: 14px 28px;
+  background: #008CBA;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  justify-content: center;
+  align-items: center;
+
+
+}
+
+
+.bold-link {
+    background-color: #008CBA; 
+    color: white; 
+}
+
+.bold-link:hover {
+    background-color: #007bb5;
+}
+
+
+.st-openModal {
+    background-color: #008CBA;
+    border: 2px solid #007B9A;
+    color: white; 
+    padding: 14px 28px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer; 
+    border-radius: 8px; 
+    transition: background-color 0.3s, box-shadow 0.3s; 
+}
+
+.st-openModal:hover {
+    background-color: #45a049;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.st-tree-div {
+    flex-grow: 1; 
+    display: flex;
+    justify-content: center; 
+    align-items: center;
+}
+
+.jp-RenderedHTMLCommon img, .jp-RenderedImage img, .jp-RenderedHTMLCommon svg, .jp-RenderedSVG svg {
+    max-width: none;
+    height: 100%;
+}
+
+
