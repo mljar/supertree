@@ -12,6 +12,8 @@ import supertree.templatehtml as templatehtml
 from supertree.node import Node
 from supertree.treedata import TreeData
 
+import importlib.metadata
+
 
 class SuperTree:
     def __init__(
@@ -419,10 +421,17 @@ class SuperTree:
             else:
                 super_tree = self.model.tree_
 
+            
+            sklearn_version = importlib.metadata.version('scikit-learn')
+
             for i in range(super_tree.node_count):
                 samples = super_tree.n_node_samples[i]
                 if(self.model_name not in ("GradientBoostingClassifier")):
-                    class_distribution = super_tree.value[i] * samples
+                    if(sklearn_version > "1.4.0"):
+                        class_distribution = super_tree.value[i] * samples
+                    else:
+                        class_distribution = super_tree.value[i]
+
                     predicted_class_index = class_distribution.argmax()
                 else:
                     class_distribution = None

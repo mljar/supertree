@@ -1,16 +1,19 @@
 
 .st-dropdown {
-  border: 1px solid #007B9A;
+
+  border-radius: 0px; 
   background-color: #008CBA;
-  color: #ffffff;
   border: 2px solid #007B9A;
+  color: white; 
+  padding: 0.825em 1.5em;
   text-align: center;
-  text-decoration: none;
-  font-size: 16px; 
-  margin-top: -30px;
-  margin: 0px;
-  width: 150px;
-  padding: 10px;
+  line-height: 1.5;
+  font-size: 16px;
+  cursor: pointer; 
+  transition: background-color 0.3s, box-shadow 0.3s; 
+  box-sizing: border-box;
+
+
 }
 
 .st-option-button {
@@ -19,7 +22,7 @@
   background-color: #008CBA;
   border: 2px solid #007B9A;
   color: white; 
-  padding: 7px 28px;
+  padding: 0.7em 1.75em;
   text-align: center;
   text-decoration: none;
   display: inline-block;
@@ -44,11 +47,32 @@
 }
 
 .st-body-toolbar-div {
+align-items: center;
+display: flex; 
+justify-content: center; 
   margin: 0;
   padding: 0;
   /* flex-grow: 1; */
-  max-height: 100;
+  appearance: none; /* Wyłączenie domyślnego stylu przeglądarki */
+  line-height: normal; /* Resetuje line-height */
+  margin: 0;
+  padding: 0.5em 1em; /* Dopasowanie paddingu */
+  vertical-align: middle;
 }
+
+.st-toolbar {
+align-items: center;
+display: flex; 
+justify-content: center; 
+  margin: 0;
+  padding: 0;
+  appearance: none; /* Wyłączenie domyślnego stylu przeglądarki */
+  line-height: normal; /* Resetuje line-height */
+  margin: 0;
+  padding: 0.5em 1em; /* Dopasowanie paddingu */
+  vertical-align: middle;
+}
+
 
 
 
@@ -56,10 +80,24 @@
 .st-logo-button svg {
   width: 100%;
   height: 100%;
+  vertical-align: middle; /* Wyrównanie SVG */
   margin: 0;
   margin-bottom: 0;
 }
 
+
+
+select {
+    appearance: none; /* Wyłącz domyślny styl przeglądarki */
+    text-align: center;
+    text-align-last: right;
+}
+
+
+option {
+
+  text-align: left;
+}
 
 
 
