@@ -1,4 +1,4 @@
-![](https://raw.githubusercontent.com/mljar/supertree/main/media/supertree.gif)
+![](https://raw.githubusercontent.com/mljar/supertree/main/media/supertree2.gif)
 
 # SuperTree - Interactive Decision Tree Visualization
 
