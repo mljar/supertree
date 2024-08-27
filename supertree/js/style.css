@@ -39,11 +39,8 @@
 
 
 .st-option-button svg {
-   margin: 0;
+    margin: 0;
     padding: 0;
-    height: auto;
-    height: 50px !important;
-    width: 60%;
     vertical-align: middle;
 }
 
