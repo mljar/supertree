@@ -4,7 +4,7 @@ import random
 from pathlib import Path
 
 
-def get_d3_html(tree_data, licence_key="KEY"):
+def get_d3_html(tree_data,start_depth, licence_key="KEY"):
     current_dir = Path(__file__).parent.resolve()
     css_text = ""
     with open(os.path.join(current_dir, "js", "style.css")) as fin:
@@ -18,7 +18,7 @@ def get_d3_html(tree_data, licence_key="KEY"):
     js_text = js_template.replace('"$treetemplate"', tree_data)
     js_text = js_text.replace("treeID", myID)
     js_text = js_text.replace("st-licence-KEY", licence_key)
-
+    js_text = js_text.replace('"$depth"',str(start_depth))
     html_template = Template(
         """
     <style > $css_text </style>

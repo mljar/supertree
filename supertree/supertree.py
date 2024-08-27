@@ -174,12 +174,15 @@ class SuperTree:
 
         self.licence_key = licence_key
 
-    def show_tree(self, which_tree=0):
+    def show_tree(self, which_tree=0, start_depth=5):
         """
         Displaying model HTMl template and create json tree model.
         """
         if not isinstance(which_tree, int):
             raise TypeError("Invalid which_tree type. Expected an integer.")
+
+        if not isinstance(start_depth, int):
+            raise TypeError("Invalid start_depth type. Expected an integer.")
 
         self.which_tree = which_tree
 
@@ -199,17 +202,21 @@ class SuperTree:
         combined_data_str = self.get_combined_data()
 
         display(HTML(templatehtml.get_d3_html(
-            combined_data_str, self.licence_key)))
+            combined_data_str,start_depth, self.licence_key)))
 
-    def save_html(self, filename="output", which_tree=0):
+    def save_html(self, filename="output", which_tree=0,start_depth=5):
         """
         Saving HTML file and create json tree model.
         """
+
         if not filename.endswith(".html"):
                 filename += ".html"
 
         if not isinstance(which_tree, int):
             raise TypeError("Invalid which_tree type. Expected an integer.")
+        
+        if not isinstance(start_depth, int):
+            raise TypeError("Invalid start_depth type. Expected an integer.")
 
         if filename is not None and not isinstance(filename, str):
             raise TypeError("Invalid filename type. Expected a string.")
@@ -225,7 +232,7 @@ class SuperTree:
         combined_data_str = self.get_combined_data()
 
         html = d3script + \
-            templatehtml.get_d3_html(combined_data_str, self.licence_key)
+            templatehtml.get_d3_html(combined_data_str,start_depth ,self.licence_key)
 
         with open(filename, "w", encoding="utf-8") as file:
             file.write(html)
