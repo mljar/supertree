@@ -2,19 +2,10 @@
 
 # `supertree` - Interactive Decision Tree Visualization
 
-Interactive Decision Tree Visualization is a Python package designed to visualize decision trees in an **interactive** and user-friendly way within Jupyter Notebooks, Jupyter Lab, Google Colab, and any other notebooks that support HTML rendering. 
-
-## Description
-
-This package allows users to seamlessly integrate decision tree visualizations into their data analysis workflows. With this tool, you can not only display decision trees, but also interact with them directly within your notebook environment. 
-
-## Key features 
-
-Whether you're presenting your analysis to others or exploring complex models yourself, this package enhances the way you work with decision trees by making them more accessible and easier to understand. Key features include:
+`supertree` is a Python package designed to visualize decision trees in an **interactive** and user-friendly way within Jupyter Notebooks, Jupyter Lab, Google Colab, and any other notebooks that support HTML rendering. With this tool, you can not only display decision trees, but also interact with them directly within your notebook environment. Key features include:
 - ability to zoom and pan through large trees,
 - collapse and expand selected nodes, 
 - explore the structure of the tree in an intuitive and visually appealing manner.
-
 
 ## Examples
 
