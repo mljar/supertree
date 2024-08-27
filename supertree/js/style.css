@@ -317,3 +317,9 @@ option {
 }
 */
 
+.yAxis{
+  color: #000000;
+}
+.xAxis-text {
+  color: #000000;
+}
