@@ -9,7 +9,11 @@
 
 ## Examples
 
-### Decision Tree classifier on iris data.
+### Decision Tree classifier on iris data 
+
+<a target="_blank" href="https://colab.research.google.com/github/https://colab.research.google.com/drive/1f2Xu8CwbXaT33hvh-ze0JK3sBSpXBt5T?usp=sharing">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a>
 
 ```python
 from sklearn.tree import DecisionTreeClassifier
@@ -31,11 +35,14 @@ super_tree = SuperTree(model, X, y, iris.feature_names, iris.target_names)
 super_tree.show_tree()
 ```
 
-https://colab.research.google.com/drive/1f2Xu8CwbXaT33hvh-ze0JK3sBSpXBt5T?usp=sharing
-
 ![](https://raw.githubusercontent.com/mljar/supertree/main/media/classifier.png)
 
 ### Random Forest Regressor Example
+
+<a target="_blank" href="https://colab.research.google.com/github/https://colab.research.google.com/drive/1nR7GlrIKcMQYdnMm_duY7a6vscyqTCMj?usp=sharing">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a>
+
 ```python
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.datasets import load_diabetes
@@ -55,8 +62,6 @@ super_tree = SuperTree(model,X, y)
 # show tree with index 2 in your notebook
 super_tree.show_tree(2)
 ```
-
-https://colab.research.google.com/drive/1nR7GlrIKcMQYdnMm_duY7a6vscyqTCMj?usp=sharing
 
 ![](https://raw.githubusercontent.com/mljar/supertree/main/media/regressor.png)
 
