@@ -4,15 +4,16 @@
   border-radius: 0px; 
   background-color: #008CBA;
   border: 2px solid #007B9A;
-  color: white; 
-  padding: 0.825em 1.5em;
+  color: white;
+  height: 50px;
+  width: 125px;
   text-align: center;
   line-height: 1.5;
   font-size: 16px;
   cursor: pointer; 
   transition: background-color 0.3s, box-shadow 0.3s; 
   box-sizing: border-box;
-
+  display: inline-block;
 
 }
 
@@ -22,13 +23,28 @@
   background-color: #008CBA;
   border: 2px solid #007B9A;
   color: white; 
-  padding: 0.7em 1.75em;
+  line-height: 1.5;
+  height: 50px;
+  width: 50px;
   text-align: center;
   text-decoration: none;
   display: inline-block;
   font-size: 16px;
   cursor: pointer; 
   transition: background-color 0.3s, box-shadow 0.3s; 
+  align-items: center; /* Wyśrodkowanie pionowe */
+  justify-content: center;
+  display: flex;
+}
+
+
+.st-option-button svg {
+   margin: 0;
+    padding: 0;
+    height: auto;
+    width: 60%;
+    vertical-align: middle;
+}
 }
 
 .st-option-button:hover {
@@ -90,13 +106,12 @@ justify-content: center;
 select {
     appearance: none; /* Wyłącz domyślny styl przeglądarki */
     text-align: center;
-    text-align-last: right;
+    box-sizing: border-box; 
 }
 
 
 option {
 
-  text-align: left;
 }
 
 
