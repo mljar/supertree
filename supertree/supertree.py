@@ -47,7 +47,9 @@ class SuperTree:
             "XGBRegressor", 
             "XGBRFClassifier", 
             "XGBRFRegressor",
-            "ModelLoader"
+            "ModelLoader",
+            "HistGradientBoostingClassifier",
+            "HistGradientBoostingRegressor",
         ]
 
         if model.__class__.__name__ not in valid_model_classes:
@@ -174,17 +176,21 @@ class SuperTree:
 
         self.licence_key = licence_key
 
-    def show_tree(self, which_tree=0, start_depth=5):
+    def show_tree(self, which_tree=0, which_iteration=0, start_depth=5):
         """
         Displaying model HTMl template and create json tree model.
         """
         if not isinstance(which_tree, int):
             raise TypeError("Invalid which_tree type. Expected an integer.")
 
+        if not isinstance(which_iteration, int):
+            raise TypeError("Invalid which_iteration type. Expected an integer.")
+
         if not isinstance(start_depth, int):
             raise TypeError("Invalid start_depth type. Expected an integer.")
 
         self.which_tree = which_tree
+        self.which_iteration = which_iteration
 
         if self.model_type == "uknown_model":
             return 0
@@ -204,7 +210,7 @@ class SuperTree:
         display(HTML(templatehtml.get_d3_html(
             combined_data_str,start_depth, self.licence_key)))
 
-    def save_html(self, filename="output", which_tree=0,start_depth=5):
+    def save_html(self, filename="output", which_tree=0, which_iteration=0,start_depth=5):
         """
         Saving HTML file and create json tree model.
         """
@@ -218,11 +224,14 @@ class SuperTree:
         if not isinstance(start_depth, int):
             raise TypeError("Invalid start_depth type. Expected an integer.")
 
+        if not isinstance(which_iteration, int):
+            raise TypeError("Invalid which_iteration type. Expected an integer.")
+
         if filename is not None and not isinstance(filename, str):
             raise TypeError("Invalid filename type. Expected a string.")
 
         self.which_tree = which_tree
-
+        self.which_iteration = which_iteration
         d3script = """
     <script src="https://cdn.jsdelivr.net/npm/d3@7" charset="utf-8"></script>
     <script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl.min.js"></script>
@@ -312,7 +321,7 @@ class SuperTree:
                 node.start_end_x_axis,
             )
 
-    def save_json_tree(self, filename="treedata", which_tree=0):
+    def save_json_tree(self, filename="treedata", which_tree=0, which_iteration = 0):
         """
         Save tree to json tree.
         """
@@ -325,7 +334,11 @@ class SuperTree:
         if filename is not None and not isinstance(filename, str):
             raise TypeError("Invalid filename type. Expected a string.")
 
+        if not isinstance(which_iteration, int):
+            raise TypeError("Invalid which_iteration type. Expected an integer.")
+
         self.which_tree = which_tree
+        self.which_iteration = which_iteration
 
         combined_data_str = self.get_combined_data()
 
@@ -344,6 +357,7 @@ class SuperTree:
             "LGBMClassifier",
             "XGBClassifier",
             "XGBRFClassifier",
+            "HistGradientBoostingClassifier",
         ):
             return "classification"
         elif self.model_name in (
@@ -355,6 +369,7 @@ class SuperTree:
             "LGBMRegressor",
             "XGBRegressor",
             "XGBRFRegressor",
+            "HistGradientBoostingRegressor",
         ):
             return "regression"
 
@@ -421,10 +436,10 @@ class SuperTree:
                 "GradientBoostingRegressor",
                 "GradientBoostingClassifier",
             ):
-                if (0 <= self.which_tree < len(self.model.estimators_) and 0 <= self.which_iteration < len(self.model.estimators_[self.which_tree]) ):
-                    super_tree = self.model.estimators_[self.which_tree, self.which_iteration].tree_
+                if (0 <= self.which_iteration < len(self.model.estimators_) and 0 <= self.which_tree < len(self.model.estimators_[self.which_tree]) ):
+                    super_tree = self.model.estimators_[self.which_iteration, self.which_tree].tree_
                 else:
-                    raise IndexError("Wartość 'which_tree' lub 'which_iteration' jest poza zakresem dostępnych wartości.")
+                    raise IndexError("Value of 'which_tree' or 'which_iteration' is out of range.")
             else:
                 super_tree = self.model.tree_
 
@@ -489,7 +504,6 @@ class SuperTree:
             else:
                 model_dict = self.model.get_dump(with_stats=True, dump_format="json")
 
-
             json_tree = model_dict[self.which_tree]
 
             if 0 <= self.which_tree < len(model_dict):
@@ -500,6 +514,16 @@ class SuperTree:
             self.collect_node_info_xgboost(dict_tree)
         if model_name in ("ModelLoader"):
             self.node_list  = self.model.model_dict
+
+        if model_name in ("HistGradientBoostingClassifier", "HistGradientBoostingRegressor"):
+
+            if not (0 <= self.which_iteration < len(self.model._predictors)):
+                raise IndexError(f"which_iteration {self.which_iteration} is out of range. Valid range is 0 to {len(self.model._predictors) - 1}.")
+
+            if not (0 <= self.which_tree < len(self.model._predictors[self.which_iteration])):
+                raise IndexError(f"which_tree {self.which_tree} is out of range for iteration {self.which_iteration}. Valid range is 0 to {len(self.model._predictors[self.which_iteration]) - 1}.")
+            nodes = self.model._predictors[self.which_iteration][self.which_tree].nodes
+            self.collect_node_info_histgb(nodes)
 
 
     def collect_node_info_lgbm(self, node, depth=0):
@@ -673,3 +697,47 @@ class SuperTree:
             self.node_list.append(node_info)
 
         return node_index
+
+    def collect_node_info_histgb(self, nodes):
+       for i, node in enumerate(nodes):
+            feature_index = int(node[2])
+            threshold = node[3] 
+            left_child = int(node[5])
+            right_child = int(node[6])
+            samples = int(node[1])  
+            impurity = node[8]  
+            if( self.model_type not in ("nodata")):
+                if(self.model_name=="HistGradientBoostingRegressor" ):
+                    class_dist = [[10,10,10]]
+                    predicted_class = self.target_names[0]
+                else:
+                    class_dist = None
+                    predicted_class_index = node[9]
+                    predicted_class = self.target_names[predicted_class_index]
+            if(self.model_type =="nodata"):
+                class_dist = "No Data"
+                predicted_class = node[9]
+            
+            if left_child == 0:
+                left_child = -1
+            if right_child == 0:
+                right_child = -1
+
+            if left_child == -1 and right_child == -1:
+                is_leaf = True
+            else:
+                is_leaf = False
+
+            node_info = {
+                "index": i,
+                "feature": feature_index,
+                "impurity": impurity,
+                "threshold": threshold,
+                "class_distribution": class_dist,  
+                "predicted_class": predicted_class,  
+                "samples": samples,
+                "is_leaf": is_leaf,
+                "left_child_index": left_child,
+                "right_child_index": right_child,
+            }
+            self.node_list.append(node_info)
