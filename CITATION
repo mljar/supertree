@@ -1,0 +1,8 @@
+@misc{mljar,
+  author    = {Tomasz Marchela and Piotr P\l{}o\'{n}ski},
+  year      = {2024},
+  publisher = {MLJAR Sp. z o.o.},
+  address   = {\L{}apy, Poland},
+  title     = {supertree: interactive visualization of decision trees.  Version 0.1.0},
+  url       = {https://github.com/mljar/supertree}
+}
