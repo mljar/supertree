@@ -1,6 +1,4 @@
 import json
-import re
-import sys
 from copy import deepcopy
 from typing import List, Optional, Union
 
@@ -42,10 +40,10 @@ class SuperTree:
             "Booster",
             "LGBMClassifier",
             "LGBMRegressor",
-            "XGBoostBooster", 
-            "XGBClassifier", 
-            "XGBRegressor", 
-            "XGBRFClassifier", 
+            "XGBoostBooster",
+            "XGBClassifier",
+            "XGBRegressor",
+            "XGBRFClassifier",
             "XGBRFRegressor",
             "ModelLoader",
             "HistGradientBoostingClassifier",
@@ -105,13 +103,13 @@ class SuperTree:
 
         if target_names is None:
             if isinstance(target_data, pd.DataFrame):
-                self.target_names = target_data.columns.tolist() 
+                self.target_names = target_data.columns.tolist()
             elif isinstance(target_data, pd.Series):
                 if self.model_type == "classification":
                     unique_values = target_data.unique()
                     if np.issubdtype(unique_values.dtype, np.integer):
                         self.target_names = [
-                         f"target{i+1}" for i in range(len(unique_values))
+                            f"target{i+1}" for i in range(len(unique_values))
                         ]
                     else:
                         self.target_names = unique_values.tolist()
@@ -143,7 +141,7 @@ class SuperTree:
         if (self.feature_data is None and self.target_data is None):
             self.feature_data = [0]
             self.target_data = [0]
-            self.model_type = "nodata"
+            self.model_type = "nodata" + self.model_type
             pass
         elif (feature_data is not None and self.target_data is not None):
             pass
@@ -154,7 +152,7 @@ class SuperTree:
         if isinstance(self.feature_data, pd.DataFrame):
             self.feature_data = self.feature_data.values
         if isinstance(self.target_data, pd.DataFrame):
-            self.target_data = self.target_data.values
+            self.target_data = self.target_data.values.flatten()
 
         self.target_len = len(self.target_names)
         self.tree_data = TreeData(
@@ -184,7 +182,8 @@ class SuperTree:
             raise TypeError("Invalid which_tree type. Expected an integer.")
 
         if not isinstance(which_iteration, int):
-            raise TypeError("Invalid which_iteration type. Expected an integer.")
+            raise TypeError(
+                "Invalid which_iteration type. Expected an integer.")
 
         if not isinstance(start_depth, int):
             raise TypeError("Invalid start_depth type. Expected an integer.")
@@ -208,24 +207,25 @@ class SuperTree:
         combined_data_str = self.get_combined_data()
 
         display(HTML(templatehtml.get_d3_html(
-            combined_data_str,start_depth, self.licence_key)))
+            combined_data_str, start_depth, self.licence_key)))
 
-    def save_html(self, filename="output", which_tree=0, which_iteration=0,start_depth=5):
+    def save_html(self, filename="output", which_tree=0, which_iteration=0, start_depth=5):
         """
         Saving HTML file and create json tree model.
         """
 
         if not filename.endswith(".html"):
-                filename += ".html"
+            filename += ".html"
 
         if not isinstance(which_tree, int):
             raise TypeError("Invalid which_tree type. Expected an integer.")
-        
+
         if not isinstance(start_depth, int):
             raise TypeError("Invalid start_depth type. Expected an integer.")
 
         if not isinstance(which_iteration, int):
-            raise TypeError("Invalid which_iteration type. Expected an integer.")
+            raise TypeError(
+                "Invalid which_iteration type. Expected an integer.")
 
         if filename is not None and not isinstance(filename, str):
             raise TypeError("Invalid filename type. Expected a string.")
@@ -241,7 +241,8 @@ class SuperTree:
         combined_data_str = self.get_combined_data()
 
         html = d3script + \
-            templatehtml.get_d3_html(combined_data_str,start_depth ,self.licence_key)
+            templatehtml.get_d3_html(
+                combined_data_str, start_depth, self.licence_key)
 
         with open(filename, "w", encoding="utf-8") as file:
             file.write(html)
@@ -276,8 +277,8 @@ class SuperTree:
 
         self.create_node_dfs(0, "ROOT", None, None, None)
         root = self.nodes[0]
-        if root.class_distribution is None and (self.model_type == "classification" or 
-            (self.model_name=="GradientBoostingClassifier" and self.model_type == "nodata" )):
+        if root.class_distribution is None and (self.model_type == "classification" or
+                                                (self.model_name == "GradientBoostingClassifier" and self.model_type.startswith("nodata"))):
             self.count_class_distribution(root)
         tree_dict = root.to_dict()
         tree_json = json.dumps(tree_dict, indent=4)
@@ -294,7 +295,7 @@ class SuperTree:
                 node.start_end_x_axis.append(["notexist", "notexist"])
         else:
             node.start_end_x_axis = deepcopy(x_axis)
-        if (self.model_type != "nodata"):
+        if (not self.model_type.startswith("nodata")):
             if left_right == "R" and feature >= 0:
                 node.start_end_x_axis[feature][1] = threshold
 
@@ -321,7 +322,7 @@ class SuperTree:
                 node.start_end_x_axis,
             )
 
-    def save_json_tree(self, filename="treedata", which_tree=0, which_iteration = 0):
+    def save_json_tree(self, filename="treedata", which_tree=0, which_iteration=0):
         """
         Save tree to json tree.
         """
@@ -335,7 +336,8 @@ class SuperTree:
             raise TypeError("Invalid filename type. Expected a string.")
 
         if not isinstance(which_iteration, int):
-            raise TypeError("Invalid which_iteration type. Expected an integer.")
+            raise TypeError(
+                "Invalid which_iteration type. Expected an integer.")
 
         self.which_tree = which_tree
         self.which_iteration = which_iteration
@@ -436,20 +438,22 @@ class SuperTree:
                 "GradientBoostingRegressor",
                 "GradientBoostingClassifier",
             ):
-                if (0 <= self.which_iteration < len(self.model.estimators_) and 0 <= self.which_tree < len(self.model.estimators_[self.which_tree]) ):
-                    super_tree = self.model.estimators_[self.which_iteration, self.which_tree].tree_
+                if (0 <= self.which_iteration < len(self.model.estimators_)
+                        and 0 <= self.which_tree < len(self.model.estimators_[self.which_tree])):
+                    super_tree = self.model.estimators_[
+                        self.which_iteration, self.which_tree].tree_
                 else:
-                    raise IndexError("Value of 'which_tree' or 'which_iteration' is out of range.")
+                    raise IndexError(
+                        "Value of 'which_tree' or 'which_iteration' is out of range.")
             else:
                 super_tree = self.model.tree_
 
-            
             sklearn_version = importlib.metadata.version('scikit-learn')
 
             for i in range(super_tree.node_count):
                 samples = super_tree.n_node_samples[i]
-                if(self.model_name not in ("GradientBoostingClassifier")):
-                    if(sklearn_version > "1.4.0"):
+                if (self.model_name not in ("GradientBoostingClassifier")):
+                    if (sklearn_version > "1.4.0" and self.model_type in "classification"):
                         class_distribution = super_tree.value[i] * samples
                     else:
                         class_distribution = super_tree.value[i]
@@ -457,12 +461,12 @@ class SuperTree:
                     predicted_class_index = class_distribution.argmax()
                 else:
                     class_distribution = None
-                    predicted_class_index = "brak"
+                    predicted_class_index = "nodata"
                 is_leaf = False
-                if self.model_type != "nodata" and self.model_name not in ("GradientBoostingClassifier"):
+                if not self.model_type.startswith("nodata") and self.model_name not in ("GradientBoostingClassifier"):
                     predicted_class = self.target_names[predicted_class_index]
                 else:
-                    if(self.model_name == "GradientBoostingClassifier"):
+                    if (self.model_name == "GradientBoostingClassifier"):
                         predicted_class = "No data"
                     else:
                         predicted_class = predicted_class_index
@@ -500,20 +504,22 @@ class SuperTree:
         if model_name in ("XGBoostBooster", "XGBClassifier", "XGBRegressor", "XGBRFClassifier", "XGBRFRegressor"):
             if model_name != "XGBoostBooster":
                 booster = self.model.get_booster()
-                model_dict = booster.get_dump(with_stats=True, dump_format="json")
+                model_dict = booster.get_dump(
+                    with_stats=True, dump_format="json")
             else:
-                model_dict = self.model.get_dump(with_stats=True, dump_format="json")
+                model_dict = self.model.get_dump(
+                    with_stats=True, dump_format="json")
 
             json_tree = model_dict[self.which_tree]
 
             if 0 <= self.which_tree < len(model_dict):
                 json_tree = model_dict[self.which_tree]
             else:
-                raise KeyError(f"Wartość 'which_tree' ({self.which_tree}) nie jest poprawnym kluczem w 'model_dict'.")
+                raise KeyError(f"Value 'which_tree' ({self.which_tree}) it is not correct key in 'model_dict'.")
             dict_tree = json.loads(json_tree)
             self.collect_node_info_xgboost(dict_tree)
         if model_name in ("ModelLoader"):
-            self.node_list  = self.model.model_dict
+            self.node_list = self.model.model_dict
 
         if model_name in ("HistGradientBoostingClassifier", "HistGradientBoostingRegressor"):
 
@@ -525,17 +531,17 @@ class SuperTree:
             nodes = self.model._predictors[self.which_iteration][self.which_tree].nodes
             self.collect_node_info_histgb(nodes)
 
-
     def collect_node_info_lgbm(self, node, depth=0):
         node_index = len(self.node_list)
         if "split_index" in node:
             predicted_data = None
-            if self.model_type == "nodata":
+            if self.model_type.startswith("nodata"):
                 predicted_data = "No data"
+                class_dist = "no data"
             else:
                 predicted_data = self.target_names[0]
 
-            class_dist = [[10, 10, 10]]
+            class_dist = [["No data"]]
             if self.model_type == "classification":
                 class_dist = None
             node_info = {
@@ -561,11 +567,11 @@ class SuperTree:
             self.node_list[node_index]["right_child_index"] = right_child_index
         else:
             predicted_data = None
-            if self.model_type == "nodata":
+            if self.model_type.startswith("nodata"):
                 predicted_data = "No data"
             else:
                 predicted_data = self.target_names[0]
-            class_dist = [[10, 10, 10]]
+            class_dist = [[node["leaf_value"]]]
             if self.model_type == "classification":
                 class_dist = None
             node_info = {
@@ -641,10 +647,9 @@ class SuperTree:
                 except ValueError:
                     raise ValueError(
                         f"Feature {feature} not found in feature_names.")
-
             class_dist = [[10, 10, 10]]
             predicted_data = None
-            if self.model_type == "nodata":
+            if self.model_type.startswith("nodata"):
                 predicted_data = "No data"
             else:
                 predicted_data = self.target_names[0]
@@ -676,9 +681,11 @@ class SuperTree:
             class_dist = [[10, 10, 10]]
             if self.model_type == "classification":
                 class_dist = None
+            else:
+                class_dist = [[node["leaf"]]]
 
             predicted_data = None
-            if self.model_type == "nodata":
+            if self.model_type.startswith("nodata"):
                 predicted_data = "No data"
             else:
                 predicted_data = self.target_names[0]
@@ -699,25 +706,25 @@ class SuperTree:
         return node_index
 
     def collect_node_info_histgb(self, nodes):
-       for i, node in enumerate(nodes):
+        for i, node in enumerate(nodes):
             feature_index = int(node[2])
-            threshold = node[3] 
+            threshold = node[3]
             left_child = int(node[5])
             right_child = int(node[6])
-            samples = int(node[1])  
-            impurity = node[8]  
-            if( self.model_type not in ("nodata")):
-                if(self.model_name=="HistGradientBoostingRegressor" ):
-                    class_dist = [[10,10,10]]
+            samples = int(node[1])
+            impurity = node[8]
+            if (not self.model_type.startswith("nodata")):
+                if (self.model_name == "HistGradientBoostingRegressor"):
+                    class_dist = [[node[0]]]
                     predicted_class = self.target_names[0]
                 else:
                     class_dist = None
                     predicted_class_index = node[9]
                     predicted_class = self.target_names[predicted_class_index]
-            if(self.model_type =="nodata"):
+            if (self.model_type.startswith("nodata")):
                 class_dist = "No Data"
                 predicted_class = node[9]
-            
+
             if left_child == 0:
                 left_child = -1
             if right_child == 0:
@@ -733,8 +740,8 @@ class SuperTree:
                 "feature": feature_index,
                 "impurity": impurity,
                 "threshold": threshold,
-                "class_distribution": class_dist,  
-                "predicted_class": predicted_class,  
+                "class_distribution": class_dist,
+                "predicted_class": predicted_class,
                 "samples": samples,
                 "is_leaf": is_leaf,
                 "left_child_index": left_child,

@@ -94,11 +94,13 @@ The package is compatible with a wide range of classifiers and regressors from t
 - `ExtraTreesClassifier`
 - `RandomForestClassifier`
 - `GradientBoostingClassifier`
+- `HistGradientBoostingClassifier`
 - `DecisionTreeRegressor`
 - `ExtraTreeRegressor`
 - `ExtraTreesRegressor`
 - `RandomForestRegressor`
 - `GradientBoostingRegressor`
+- `HistGradientBoostingRegressor`
 
 #### LightGBM
 - `LGBMClassifier`
