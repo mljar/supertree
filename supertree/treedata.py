@@ -18,6 +18,7 @@ class TreeData:
         self.data_target = self.convert_target_strings(data_target)
         self.feature_names_size = len(feature_names)
         self.tree_type = tree_type
+        self.max_samples = None
 
     def to_dict(self):
         def convert(value):
@@ -48,12 +49,15 @@ class TreeData:
 
             return value
 
+        data_feature = self.data_feature[:self.max_samples] if len(self.data_feature) > self.max_samples else self.data_feature
+        data_target = self.data_target[:self.max_samples] if len(self.data_target) > self.max_samples else self.data_target
+
         tree_data_dict = {
             "tree_type": self.tree_type,
             "feature_names": self.feature_names,
             "target_names": convert(self.target_names),
-            "data_feature": convert(self.data_feature),
-            "data_target": convert(self.data_target),
+            "data_feature": convert(data_feature),
+            "data_target": convert(data_target),
         }
 
         return tree_data_dict
