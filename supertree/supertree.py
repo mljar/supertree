@@ -48,6 +48,7 @@ class SuperTree:
             "XGBRFClassifier",
             "XGBRFRegressor",
             "ModelLoader",
+            "ModelProto"
         ]
 
         if model.__class__.__name__ not in valid_model_classes:
@@ -85,8 +86,7 @@ class SuperTree:
         self.which_iteration = 0
         self.feature_names = feature_names
         self.target_names = target_names
-
-        if not self.is_model_fitted():
+        if not self.is_model_fitted() and self.model_name not in ("ModelProto"):
             raise TypeError("Model is not fitted")
 
         if feature_names is None:
@@ -217,6 +217,9 @@ class SuperTree:
         display(HTML(templatehtml.get_d3_html(
             combined_data_str, start_depth, self.licence_key)))
 
+        self.node_list = []
+        self.nodes = []
+
     def save_html(self, filename="output", which_tree=0, which_iteration=0, start_depth=5, max_samples=7500):
         """
         Saving HTML file and create json tree model.
@@ -225,13 +228,13 @@ class SuperTree:
         if not filename.endswith(".html"):
             filename += ".html"
 
-        if not isinstance(which_tree, int)  or which_tree < 0:
+        if not isinstance(which_tree, int) or which_tree < 0:
             raise TypeError("Invalid which_tree type. Expected an integer.")
 
-        if not isinstance(start_depth, int)  or start_depth < 1:
+        if not isinstance(start_depth, int) or start_depth < 1:
             raise TypeError("Invalid start_depth type. Expected an integer.")
 
-        if not isinstance(which_iteration, int)  or which_iteration < 0:
+        if not isinstance(which_iteration, int) or which_iteration < 0:
             raise TypeError(
                 "Invalid which_iteration type. Expected an integer.")
 
@@ -261,6 +264,9 @@ class SuperTree:
             file.write(html)
 
         print(f"HTML saved to {filename}")
+
+        self.node_list = []
+        self.nodes = []
 
     def get_json_tree_data(self):
         """
@@ -293,6 +299,9 @@ class SuperTree:
         if root.class_distribution is None and (self.model_type == "classification" or
                                                 (self.model_name == "GradientBoostingClassifier" and self.model_type.startswith("nodata"))):
             self.count_class_distribution(root)
+        if self.model_name == "ModelProto" and "nodata" not in self.model_type:
+            self.count_samples(root)
+
         tree_dict = root.to_dict()
         tree_json = json.dumps(tree_dict, indent=4)
         return tree_json
@@ -342,13 +351,13 @@ class SuperTree:
         if not filename.endswith(".json"):
             filename += ".json"
 
-        if not isinstance(which_tree, int)  or which_tree < 0:
+        if not isinstance(which_tree, int) or which_tree < 0:
             raise TypeError("Invalid which_tree type. Expected an integer.")
 
         if filename is not None and not isinstance(filename, str):
             raise TypeError("Invalid filename type. Expected a string.")
 
-        if not isinstance(which_iteration, int)  or which_iteration < 0:
+        if not isinstance(which_iteration, int) or which_iteration < 0:
             raise TypeError(
                 "Invalid which_iteration type. Expected an integer.")
 
@@ -366,6 +375,9 @@ class SuperTree:
             file.write(combined_data_str)
 
         print(f"JSON data saved to {filename}")
+
+        self.node_list = []
+        self.nodes = []
 
     def which_model(self):
         if self.model_name in (
@@ -424,6 +436,12 @@ class SuperTree:
                     return "regression"
                 else:
                     return "classification"
+        elif self.model_name in ("ModelProto"):
+            graph_name = self.model.graph.node[0].op_type
+            if "Classifier" in graph_name:
+                return "classification"
+            else:
+                return "regression"
         else:
             print("Uknown Model")
             return "uknown_model"
@@ -551,6 +569,8 @@ class SuperTree:
                 raise IndexError(f"which_tree {self.which_tree} is out of range for iteration {self.which_iteration}. Valid range is 0 to {len(self.model._predictors[self.which_iteration]) - 1}.")
             nodes = self.model._predictors[self.which_iteration][self.which_tree].nodes
             self.collect_node_info_histgb(nodes)
+        if model_name in ("ModelProto"):
+            self.collect_node_info_onnx(self.model)
 
     def collect_node_info_lgbm(self, node, depth=0):
         node_index = len(self.node_list)
@@ -626,17 +646,44 @@ class SuperTree:
                     if node.start_end_x_axis[i][1] > self.feature_data[j][i]:
                         index_set.add(j)
 
+        samples = 0
         for i in range(len(self.target_data)):
             if i not in index_set:
                 node.class_distribution[self.target_data[i]] += 1
-
+                samples += 1
+        if node.samples is None:
+            node.samples = samples
         node.class_distribution = [node.class_distribution]
 
-        if node.left_node != None:
+        if node.left_node is not None:
             self.count_class_distribution(node.left_node)
 
-        if node.right_node != None:
+        if node.right_node is not None:
             self.count_class_distribution(node.right_node)
+
+    def count_samples(self, node):
+        index_set = set()
+        for i in range(len(node.start_end_x_axis)):
+            for j in range(len(self.feature_data)):
+                if node.start_end_x_axis[i][0] != "notexist":
+                    if node.start_end_x_axis[i][0] < self.feature_data[j][i]:
+                        index_set.add(j)
+
+                if node.start_end_x_axis[i][1] != "notexist":
+                    if node.start_end_x_axis[i][1] > self.feature_data[j][i]:
+                        index_set.add(j)
+
+        samples = 0
+        for i in range(len(self.target_data)):
+            if i not in index_set:
+                samples += 1
+        if node.samples == -1:
+            node.samples = samples
+        if node.left_node is not None:
+            self.count_samples(node.left_node)
+
+        if node.right_node is not None:
+            self.count_samples(node.right_node)
 
     def get_combined_data(self):
         self.convert_model_to_dict_array()
@@ -805,7 +852,7 @@ class SuperTree:
 
 
             elif self.model_name == "XGBoostBooster":
-                    return True
+                return True
 
             elif self.model_name == "LightGBMBooster":
                 if hasattr(self.model, 'num_trees') and self.model.num_trees() > 0:
@@ -817,4 +864,89 @@ class SuperTree:
 
         except Exception:
             return False
+
+    def collect_node_info_onnx(self, onnx_model):
+        for node in onnx_model.graph.node:
+
+                attributes = {attr.name: attr for attr in node.attribute}
+
+                if 'nodes_treeids' in attributes and 'nodes_nodeids' in attributes:
+                    tree_ids = list(attributes['nodes_treeids'].ints)
+                    node_ids = list(attributes['nodes_nodeids'].ints)
+                    feature_ids = list(attributes.get('nodes_featureids', []).ints)
+                    thresholds = list(attributes.get('nodes_values', []).floats)
+                    left_children = list(attributes.get('nodes_truenodeids', []).ints)
+                    right_children = list(attributes.get('nodes_falsenodeids', []).ints)
+                    node_modes = list(attributes.get("nodes_modes", []).strings)
+
+                    if "regression" in self.model_type:
+                        class_ids = []
+                    else:
+                        class_ids = list(attributes.get("class_ids", []).ints)
+                    if "regression" in self.model_type:
+                        target_weights = list(attributes.get("target_weights", []).floats)
+                    else:
+                        target_weights = []
+
+                    trees = {}
+                    leaf_index = 0
+
+                    for i, tree_id in enumerate(tree_ids):
+                        if tree_id not in trees:
+                            trees[tree_id] = []
+
+                        is_leaf = node_modes[i] == b'LEAF'
+                        if is_leaf:
+                            current_target_weight = target_weights[leaf_index] if leaf_index < len(target_weights) else None
+                            current_class = class_ids[leaf_index] if leaf_index < len(class_ids) else None
+                            leaf_index += 1
+                        else:
+                            current_target_weight = None
+                            current_class = None
+
+                        trees[tree_id].append({
+                            'node_id': node_ids[i],
+                            'class_id': class_ids[i] if i < len(class_ids) else None,
+                            'feature_id': feature_ids[i] if i < len(feature_ids) else None,
+                            'threshold': thresholds[i] if i < len(thresholds) else None,
+                            'left_child': left_children[i] if left_children[i] != 0 else -1,
+                            'right_child': right_children[i] if right_children[i] != 0 else -1,
+                            'node_modes': current_class,
+                            'target_weights': current_target_weight,
+                        })
+
+                    if self.which_tree in trees:
+                        for node in trees[self.which_tree]:
+                            if self.model_type == "nodataclassification":
+                                predicted_class = node["class_id"]
+                                class_dist = [["No data"]]
+                            elif self.model_type == "classification":
+                                predicted_class = self.target_names[node["class_id"]]
+                                class_dist = None
+                            elif "regression" in self.model_type:
+                                if node['left_child'] == -1 and node['right_child'] == -1:
+                                    class_dist = [[node["target_weights"]]]
+                                    predicted_class = "No data"
+                                else:
+                                    class_dist = [[0]]
+                                    predicted_class = "No data"
+                            else:
+                                class_dist = [[0]]
+                                predicted_class = "No data"
+
+                            node_info = {
+                                "index": node['node_id'],
+                                "feature": node['feature_id'],
+                                "impurity": 1,
+                                "threshold": node['threshold'],
+                                "class_distribution": class_dist,
+                                "predicted_class": predicted_class if node['left_child'] == -1 and node['right_child'] == -1 else "NoData",
+                                "samples": -1,
+                                "is_leaf": True if node['left_child'] == -1 and node['right_child'] == -1 else False,
+                                "left_child_index": node['left_child'],
+                                "right_child_index": node['right_child'],
+                            }
+
+                            self.node_list.append(node_info)
+
 
