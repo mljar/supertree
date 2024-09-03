@@ -83,6 +83,7 @@ Conda support coming soon.
 - **scikit-learn** (`sklearn`)
 - **LightGBM**
 - **XGBoost**
+- **ONNX**:
 
 ### Supported Algorithms
 
