@@ -23,7 +23,7 @@ class SuperTree:
                                     pd.DataFrame, pd.Series]] = None,
         feature_names: Optional[List[str]] = None,
         target_names: Optional[Union[str, List[str]]] = None,
-        licence_key: str = "key",
+        license_key: str = "key",
     ):
 
         valid_model_classes = [
@@ -86,7 +86,7 @@ class SuperTree:
         self.which_iteration = 0
         self.feature_names = feature_names
         self.target_names = target_names
-        if not self.is_model_fitted() and self.model_name not in ("ModelProto"):
+        if not self.is_model_fitted() and self.model_name not in ("ModelProto") and self.model_name not in ("ModelLoader"):
             raise TypeError("Model is not fitted")
 
         if feature_names is None:
@@ -176,9 +176,9 @@ class SuperTree:
                 "Invalid target_names length"
             )
 
-        self.licence_key = licence_key
+        self.license_key = license_key
 
-    def show_tree(self, which_tree=0, which_iteration=0, start_depth=5, max_samples=7500):
+    def show_tree(self, which_tree=0, which_iteration=0, start_depth=5, max_samples=7500, show_sample=None):
         """
         Displaying model HTMl template and create json tree model.
         """
@@ -189,11 +189,18 @@ class SuperTree:
             raise TypeError(
                 "Invalid which_iteration type. Expected an integer.")
 
-        if not isinstance(start_depth, int) or start_depth < 1:
+        if not isinstance(start_depth, int) or start_depth < 0:
             raise TypeError("Invalid start_depth type. Expected an integer.")
+
+        start_depth = start_depth + 1
 
         if not isinstance(max_samples, int) or max_samples < 1:
             raise ValueError("Invalid max_samples value. Expected an integer greater than or equal to 1.")
+
+        if show_sample is not None:
+            self.tree_data.set_show_sample(show_sample)
+        else:
+            self.tree_data.reset_sample()
 
         self.tree_data.max_samples = max_samples
         self.which_tree = which_tree
@@ -215,12 +222,12 @@ class SuperTree:
         combined_data_str = self.get_combined_data()
 
         display(HTML(templatehtml.get_d3_html(
-            combined_data_str, start_depth, self.licence_key)))
+            combined_data_str, start_depth, self.license_key)))
 
         self.node_list = []
         self.nodes = []
 
-    def save_html(self, filename="output", which_tree=0, which_iteration=0, start_depth=5, max_samples=7500):
+    def save_html(self, filename="output", which_tree=0, which_iteration=0, start_depth=5, max_samples=7500, show_sample=None):
         """
         Saving HTML file and create json tree model.
         """
@@ -231,8 +238,10 @@ class SuperTree:
         if not isinstance(which_tree, int) or which_tree < 0:
             raise TypeError("Invalid which_tree type. Expected an integer.")
 
-        if not isinstance(start_depth, int) or start_depth < 1:
+        if not isinstance(start_depth, int) or start_depth < 0:
             raise TypeError("Invalid start_depth type. Expected an integer.")
+        
+        start_depth = start_depth + 1
 
         if not isinstance(which_iteration, int) or which_iteration < 0:
             raise TypeError(
@@ -243,6 +252,12 @@ class SuperTree:
 
         if not isinstance(max_samples, int) or max_samples < 1:
             raise ValueError("Invalid max_samples value. Expected an integer greater than or equal to 1.")
+
+
+        if show_sample is not None:
+            self.tree_data.set_show_sample(show_sample)
+        else:
+            self.tree_data.reset_sample()
 
         self.tree_data.max_samples = max_samples
 
@@ -258,7 +273,7 @@ class SuperTree:
 
         html = d3script + \
             templatehtml.get_d3_html(
-                combined_data_str, start_depth, self.licence_key)
+                combined_data_str, start_depth, self.license_key)
 
         with open(filename, "w", encoding="utf-8") as file:
             file.write(html)
@@ -267,6 +282,65 @@ class SuperTree:
 
         self.node_list = []
         self.nodes = []
+
+    def save_json_tree(self, filename="treedata", which_tree=0, which_iteration=0, max_samples=7500, show_sample=None):
+        """
+        Save tree to json tree.
+        """
+        if not filename.endswith(".json"):
+            filename += ".json"
+
+        if not isinstance(which_tree, int) or which_tree < 0:
+            raise TypeError("Invalid which_tree type. Expected an integer.")
+
+        if filename is not None and not isinstance(filename, str):
+            raise TypeError("Invalid filename type. Expected a string.")
+
+        if not isinstance(which_iteration, int) or which_iteration < 0:
+            raise TypeError(
+                "Invalid which_iteration type. Expected an integer.")
+
+        if not isinstance(max_samples, int) or max_samples < 1:
+            raise ValueError("Invalid max_samples value. Expected an integer greater than or equal to 1.")
+
+        if show_sample is not None:
+            self.tree_data.set_show_sample(show_sample)
+        else:
+            self.tree_data.reset_sample()
+
+        self.tree_data.max_samples = max_samples
+
+        self.which_tree = which_tree
+        self.which_iteration = which_iteration
+
+        combined_data_str = self.get_combined_data()
+
+        with open((filename), "w", encoding="utf-8") as file:
+            file.write(combined_data_str)
+
+        print(f"JSON data saved to {filename}")
+
+        self.node_list = []
+        self.nodes = []
+
+    def get_combined_data(self):
+        """
+        Combine node and tree data as one json file.
+        """
+        self.convert_model_to_dict_array()
+        json_node_data_str = self.get_json_tree()
+        json_tree_data_str = self.get_json_tree_data()
+
+        json_node_data = json.loads(json_node_data_str)
+        json_tree_data = json.loads(json_tree_data_str)
+
+        combined_data = {
+            "node_data": json_node_data,
+            "tree_data": json_tree_data,
+        }
+        combined_data_str = json.dumps(combined_data)
+
+        return combined_data_str
 
     def get_json_tree_data(self):
         """
@@ -344,42 +418,11 @@ class SuperTree:
                 node.start_end_x_axis,
             )
 
-    def save_json_tree(self, filename="treedata", which_tree=0, which_iteration=0, max_samples=7500):
-        """
-        Save tree to json tree.
-        """
-        if not filename.endswith(".json"):
-            filename += ".json"
-
-        if not isinstance(which_tree, int) or which_tree < 0:
-            raise TypeError("Invalid which_tree type. Expected an integer.")
-
-        if filename is not None and not isinstance(filename, str):
-            raise TypeError("Invalid filename type. Expected a string.")
-
-        if not isinstance(which_iteration, int) or which_iteration < 0:
-            raise TypeError(
-                "Invalid which_iteration type. Expected an integer.")
-
-        if not isinstance(max_samples, int) or max_samples < 1:
-            raise ValueError("Invalid max_samples value. Expected an integer greater than or equal to 1.")
-
-        self.tree_data.max_samples = max_samples
-
-        self.which_tree = which_tree
-        self.which_iteration = which_iteration
-
-        combined_data_str = self.get_combined_data()
-
-        with open((filename), "w", encoding="utf-8") as file:
-            file.write(combined_data_str)
-
-        print(f"JSON data saved to {filename}")
-
-        self.node_list = []
-        self.nodes = []
 
     def which_model(self):
+        """
+        Recognize which model is used.
+        """
         if self.model_name in (
             "DecisionTreeClassifier",
             "ExtraTreeClassifier",
@@ -446,7 +489,119 @@ class SuperTree:
             print("Uknown Model")
             return "uknown_model"
 
+    def count_class_distribution(self, node):
+        """
+        Count class distribution if model data about samples is not in model.
+        """
+        target_len = self.target_len
+        node.class_distribution = [0] * target_len
+        index_set = set()
+        for i in range(len(node.start_end_x_axis)):
+            for j in range(len(self.feature_data)):
+                if node.start_end_x_axis[i][0] != "notexist":
+                    if node.start_end_x_axis[i][0] < self.feature_data[j][i]:
+                        index_set.add(j)
+
+                if node.start_end_x_axis[i][1] != "notexist":
+                    if node.start_end_x_axis[i][1] > self.feature_data[j][i]:
+                        index_set.add(j)
+
+        samples = 0
+        for i in range(len(self.target_data)):
+            if i not in index_set:
+                node.class_distribution[self.target_data[i]] += 1
+                samples += 1
+        if node.samples is None:
+            node.samples = samples
+        node.class_distribution = [node.class_distribution]
+
+        if node.left_node is not None:
+            self.count_class_distribution(node.left_node)
+
+        if node.right_node is not None:
+            self.count_class_distribution(node.right_node)
+
+    def is_model_fitted(self):
+
+        """
+        Check is model fitted.
+        """
+        try:
+            if self.model_name in [
+                "DecisionTreeClassifier",
+                "ExtraTreeClassifier",
+                "ExtraTreesClassifier",
+                "RandomForestClassifier",
+                "GradientBoostingClassifier",
+                "DecisionTreeRegressor",
+                "ExtraTreeRegressor",
+                "ExtraTreesRegressor",
+                "RandomForestRegressor",
+                "GradientBoostingRegressor",
+                "HistGradientBoostingClassifier",
+                "HistGradientBoostingRegressor"
+            ]:
+                return hasattr(self.model, "tree_") or hasattr(self.model, "estimators_") or hasattr(self.model,"_predictors")
+
+            elif self.model_name in ["LGBMClassifier", "LGBMRegressor"]:
+                if hasattr(self.model, 'booster_'):
+                    return True
+                else:
+                    return False
+
+            elif self.model_name in ["XGBClassifier", "XGBRegressor", "XGBRFClassifier", "XGBRFRegressor"]:
+                try:
+                    self.model.get_booster()
+                    return True
+                except NotFittedError:
+                    return False
+
+
+            elif self.model_name == "XGBoostBooster":
+                return True
+
+            elif self.model_name == "LightGBMBooster":
+                if hasattr(self.model, 'num_trees') and self.model.num_trees() > 0:
+                    return True
+                else:
+                    return False
+
+            return False
+
+        except Exception:
+            return False
+
+    def count_samples(self, node):
+        """
+        Count samples if model doesnt have info about samples.
+        """
+        index_set = set()
+        for i in range(len(node.start_end_x_axis)):
+            for j in range(len(self.feature_data)):
+                if node.start_end_x_axis[i][0] != "notexist":
+                    if node.start_end_x_axis[i][0] < self.feature_data[j][i]:
+                        index_set.add(j)
+
+                if node.start_end_x_axis[i][1] != "notexist":
+                    if node.start_end_x_axis[i][1] > self.feature_data[j][i]:
+                        index_set.add(j)
+
+        samples = 0
+        for i in range(len(self.target_data)):
+            if i not in index_set:
+                samples += 1
+        if node.samples == -1:
+            node.samples = samples
+        if node.left_node is not None:
+            self.count_samples(node.left_node)
+
+        if node.right_node is not None:
+            self.count_samples(node.right_node)
+
     def convert_model_to_dict_array(self):
+        """
+        Converting model to my structure
+        """
         model_name = self.model_name
         if model_name in (
             "DecisionTreeClassifier",
@@ -573,6 +728,9 @@ class SuperTree:
             self.collect_node_info_onnx(self.model)
 
     def collect_node_info_lgbm(self, node, depth=0):
+        """
+        Converting lgbm model to my structure
+        """
         node_index = len(self.node_list)
         if "split_index" in node:
             predicted_data = None
@@ -632,76 +790,10 @@ class SuperTree:
 
         return node_index
 
-    def count_class_distribution(self, node):
-        target_len = self.target_len
-        node.class_distribution = [0] * target_len
-        index_set = set()
-        for i in range(len(node.start_end_x_axis)):
-            for j in range(len(self.feature_data)):
-                if node.start_end_x_axis[i][0] != "notexist":
-                    if node.start_end_x_axis[i][0] < self.feature_data[j][i]:
-                        index_set.add(j)
-
-                if node.start_end_x_axis[i][1] != "notexist":
-                    if node.start_end_x_axis[i][1] > self.feature_data[j][i]:
-                        index_set.add(j)
-
-        samples = 0
-        for i in range(len(self.target_data)):
-            if i not in index_set:
-                node.class_distribution[self.target_data[i]] += 1
-                samples += 1
-        if node.samples is None:
-            node.samples = samples
-        node.class_distribution = [node.class_distribution]
-
-        if node.left_node is not None:
-            self.count_class_distribution(node.left_node)
-
-        if node.right_node is not None:
-            self.count_class_distribution(node.right_node)
-
-    def count_samples(self, node):
-        index_set = set()
-        for i in range(len(node.start_end_x_axis)):
-            for j in range(len(self.feature_data)):
-                if node.start_end_x_axis[i][0] != "notexist":
-                    if node.start_end_x_axis[i][0] < self.feature_data[j][i]:
-                        index_set.add(j)
-
-                if node.start_end_x_axis[i][1] != "notexist":
-                    if node.start_end_x_axis[i][1] > self.feature_data[j][i]:
-                        index_set.add(j)
-
-        samples = 0
-        for i in range(len(self.target_data)):
-            if i not in index_set:
-                samples += 1
-        if node.samples == -1:
-            node.samples = samples
-        if node.left_node is not None:
-            self.count_samples(node.left_node)
-
-        if node.right_node is not None:
-            self.count_samples(node.right_node)
-
-    def get_combined_data(self):
-        self.convert_model_to_dict_array()
-        json_node_data_str = self.get_json_tree()
-        json_tree_data_str = self.get_json_tree_data()
-
-        json_node_data = json.loads(json_node_data_str)
-        json_tree_data = json.loads(json_tree_data_str)
-
-        combined_data = {
-            "node_data": json_node_data,
-            "tree_data": json_tree_data,
-        }
-        combined_data_str = json.dumps(combined_data)
-
-        return combined_data_str
-
     def collect_node_info_xgboost(self, node, depth=0):
+        """
+        Converting xgb models to my structure
+        """
         node_index = len(self.node_list)
 
         if "split" in node:
@@ -774,6 +866,9 @@ class SuperTree:
         return node_index
 
     def collect_node_info_histgb(self, nodes):
+        """
+        Converting histgb model to my structure
+        """
         for i, node in enumerate(nodes):
             feature_index = int(node[2])
             threshold = node[3]
@@ -819,53 +914,10 @@ class SuperTree:
             }
             self.node_list.append(node_info)
 
-    def is_model_fitted(self):
-        try:
-            if self.model_name in [
-                "DecisionTreeClassifier",
-                "ExtraTreeClassifier",
-                "ExtraTreesClassifier",
-                "RandomForestClassifier",
-                "GradientBoostingClassifier",
-                "DecisionTreeRegressor",
-                "ExtraTreeRegressor",
-                "ExtraTreesRegressor",
-                "RandomForestRegressor",
-                "GradientBoostingRegressor",
-                "HistGradientBoostingClassifier",
-                "HistGradientBoostingRegressor"
-            ]:
-                return hasattr(self.model, "tree_") or hasattr(self.model, "estimators_") or hasattr(self.model,"_predictors")
-
-            elif self.model_name in ["LGBMClassifier", "LGBMRegressor"]:
-                if hasattr(self.model, 'booster_'):
-                    return True
-                else:
-                    return False
-
-            elif self.model_name in ["XGBClassifier", "XGBRegressor", "XGBRFClassifier", "XGBRFRegressor"]:
-                try:
-                    self.model.get_booster()
-                    return True
-                except NotFittedError:
-                    return False
-
-
-            elif self.model_name == "XGBoostBooster":
-                return True
-
-            elif self.model_name == "LightGBMBooster":
-                if hasattr(self.model, 'num_trees') and self.model.num_trees() > 0:
-                    return True
-                else:
-                    return False
-
-            return False
-
-        except Exception:
-            return False
-
     def collect_node_info_onnx(self, onnx_model):
+        """
+        Converting onnx to my structure
+        """
         for node in onnx_model.graph.node:
 
                 attributes = {attr.name: attr for attr in node.attribute}
@@ -948,5 +1000,5 @@ class SuperTree:
                             }
 
                             self.node_list.append(node_info)
-
-
+                    else:
+                        raise IndexError(f"Key '{self.which_tree}' not found in trees")

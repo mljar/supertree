@@ -123,6 +123,11 @@ option {
 }
 
 
+.st-svg-2 {
+  width: 100%;
+}
+
+
 
 .st-target {
   font-family: lato;
@@ -173,7 +178,7 @@ option {
     top: 0;
     width: 100%; 
     height: 100%; 
-    overflow: auto; 
+    overflow: hidden; 
     background-color: rgba(0, 0, 0, 0.7); 
 }
 
@@ -188,7 +193,7 @@ option {
     max-width: 90%;
     max-height: 90%;
     text-align: center;
-    overflow: auto;
+    overflow: hidden;
     position: absolute;
     top: 50%;
     left: 50%;
@@ -270,15 +275,36 @@ option {
 
 }
 
-
-.bold-link {
-    background-color: #008CBA; 
-    color: white; 
+.st-link{
+  stroke: #555;
 }
 
-.bold-link:hover {
-    background-color: #007bb5;
+#my-window {
+    position: relative; /* Kluczowy krok: pozycjonowanie względem tego kontenera */
 }
+
+.st-side-panel {
+    width: 300px; 
+   background-color: #f3f9fb;
+    position: absolute;
+    top: 0;
+    right: -350px;
+    padding: 10px;
+    box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+    transition: right 0.3s ease;
+    overflow: auto; 
+    max-height: 100vh;
+}
+
+.st-side-panel.show {
+    right: 0px; /* Panel pojawia się z prawej strony */
+}
+
+/* Klasa, która ukryje panel */
+.st-side-panel.hide {
+    right: -350px; /* Panel wraca do ukrycia */
+}
+
 
 
 .st-openModal {
@@ -299,6 +325,15 @@ option {
 .st-openModal:hover {
     background-color: #45a049;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.st-close-button {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    cursor: pointer;
+    color: #000;
 }
 
 .st-tree-div {

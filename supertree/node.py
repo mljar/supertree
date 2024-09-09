@@ -36,7 +36,7 @@ class Node:
                 ),
             ):
                 return int(value)
-            if isinstance(value, (np.float16, np.float32, np.float64, np.float128)):
+            if isinstance(value, (np.float16, np.float32, np.float64) + (getattr(np, 'float128', ()),)):
                 return float(value)
             if isinstance(value, np.ndarray):
                 return [convert(item) for item in value.tolist()]

@@ -19,6 +19,7 @@ class TreeData:
         self.feature_names_size = len(feature_names)
         self.tree_type = tree_type
         self.max_samples = None
+        self.show_sample = "nodata"
 
     def to_dict(self):
         def convert(value):
@@ -36,7 +37,7 @@ class TreeData:
                 ),
             ):
                 return int(value)
-            if isinstance(value, (np.float16, np.float32, np.float64, np.float128)):
+            if isinstance(value, (np.float16, np.float32, np.float64) + (getattr(np, 'float128', ()),)):
                 return float(value)
             if isinstance(value, np.ndarray):
                 return [convert(item) for item in value.tolist()]
@@ -58,6 +59,7 @@ class TreeData:
             "target_names": convert(self.target_names),
             "data_feature": convert(data_feature),
             "data_target": convert(data_target),
+            "show_sample": convert(self.show_sample)
         }
 
         return tree_data_dict
@@ -82,3 +84,19 @@ class TreeData:
             data_target = [val - 1 for val in data_target]
 
         return data_target
+
+    def set_show_sample(self, sample):
+        """
+        Set and check show sample
+        """
+        if not isinstance(sample, list):
+            raise TypeError(f"Expected a list, but got {type(sample).__name__}")
+
+        if len(sample) != self.feature_names_size:
+            raise ValueError(f"Expected a list of length {self.feature_names_size}, but got {len(sample)}")
+
+        self.show_sample = sample
+
+    def reset_sample(self):
+        self.show_sample = "nodata"
+
