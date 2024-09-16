@@ -209,17 +209,8 @@ class SuperTree:
         if self.model_type == "uknown_model":
             return 0
 
-        display(
-            HTML(
-                """
-    <script src="https://cdn.jsdelivr.net/npm/d3@7" charset="utf-8"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tweetnacl-util@0.15.1/nacl-util.min.js"></script>
-"""
-            )
-        )
 
-        combined_data_str = self.get_combined_data()
+        combined_data_str = self._get_combined_data()
 
         display(HTML(templatehtml.get_d3_html(
             combined_data_str, start_depth, self.license_key)))
@@ -269,7 +260,7 @@ class SuperTree:
     <script src="https://cdn.jsdelivr.net/npm/tweetnacl-util@0.15.1/nacl-util.min.js"></script>
 """
 
-        combined_data_str = self.get_combined_data()
+        combined_data_str = self._get_combined_data()
 
         html = d3script + \
             templatehtml.get_d3_html(
@@ -313,7 +304,7 @@ class SuperTree:
         self.which_tree = which_tree
         self.which_iteration = which_iteration
 
-        combined_data_str = self.get_combined_data()
+        combined_data_str = self._get_combined_data()
 
         with open((filename), "w", encoding="utf-8") as file:
             file.write(combined_data_str)
@@ -323,13 +314,13 @@ class SuperTree:
         self.node_list = []
         self.nodes = []
 
-    def get_combined_data(self):
+    def _get_combined_data(self):
         """
         Combine node and tree data as one json file.
         """
         self.convert_model_to_dict_array()
-        json_node_data_str = self.get_json_tree()
-        json_tree_data_str = self.get_json_tree_data()
+        json_node_data_str = self._get_json_nodes()
+        json_tree_data_str = self._get_json_tree_data()
 
         json_node_data = json.loads(json_node_data_str)
         json_tree_data = json.loads(json_tree_data_str)
@@ -342,7 +333,7 @@ class SuperTree:
 
         return combined_data_str
 
-    def get_json_tree_data(self):
+    def _get_json_tree_data(self):
         """
         Save Tree Data to Json
         """
@@ -350,7 +341,7 @@ class SuperTree:
         tree_data_json = json.dumps(tree_data_dict, indent=4)
         return tree_data_json
 
-    def get_json_tree(self):
+    def _get_json_nodes(self):
         """
         Save Node Data to Json
         """
@@ -368,7 +359,7 @@ class SuperTree:
             )
             self.nodes.append(node)
 
-        self.create_node_dfs(0, "ROOT", None, None, None)
+        self._create_node_dfs(0, "ROOT", None, None, None)
         root = self.nodes[0]
         if root.class_distribution is None and (self.model_type == "classification" or
                                                 (self.model_name == "GradientBoostingClassifier" and self.model_type.startswith("nodata"))):
@@ -380,7 +371,7 @@ class SuperTree:
         tree_json = json.dumps(tree_dict, indent=4)
         return tree_json
 
-    def create_node_dfs(self, node_index, left_right, threshold, feature, x_axis):
+    def _create_node_dfs(self, node_index, left_right, threshold, feature, x_axis):
         """
         Using DFS algorithm to create tree structure;
         """
@@ -400,7 +391,7 @@ class SuperTree:
 
         if node.left_children != -1:
             node.add_left(self.nodes[node.left_children])
-            self.create_node_dfs(
+            self._create_node_dfs(
                 node.left_children,
                 "L",
                 node.threshold,
@@ -410,7 +401,7 @@ class SuperTree:
 
         if node.right_children != -1:
             node.add_right(self.nodes[node.right_children])
-            self.create_node_dfs(
+            self._create_node_dfs(
                 node.right_children,
                 "R",
                 node.threshold,

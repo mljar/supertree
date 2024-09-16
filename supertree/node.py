@@ -73,7 +73,7 @@ class Node:
             node_dict["right_node"] = None
 
         return node_dict
-    
+
 
     def add_left(self, left_node):
         self.left_node = left_node
