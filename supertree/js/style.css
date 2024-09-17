@@ -254,24 +254,26 @@ select {
 }
 
 .st-link{
-  stroke: #555;
+  stroke: #000;
 }
 
 #my-window {
     position: relative; 
 }
 
+
+
 .st-side-panel {
-    width: 300px ; 
-   background-color: #f3f9fb;
+    width: 300px; 
+    background-color: #f3f9fb;
     position: absolute;
     top: 0;
     right: -350px;
+    bottom: 0;
     padding: 10px;
     box-shadow: -2px 0 5px rgba(0,0,0,0.1);
-    transition: right 0.3s ease !important;
-    overflow: auto !important; 
-    max-height: 100vh !important;
+    transition: right 0.3s ease;
+    overflow-y: auto; 
 }
 
 .st-side-panel.show {
@@ -282,6 +284,9 @@ select {
     right: -350px; 
 }
 
+.st-side-panel svg {
+    width: 100%;
+}
 
 
 .st-openModal {
