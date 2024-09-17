@@ -32,6 +32,7 @@
   transition: background-color 0.3s, box-shadow 0.3s !important; 
   align-items: center !important;
   justify-content: center !important;
+  margin: 0px !important;
 }
 
 
