@@ -1,52 +1,50 @@
 .st-dropdown {
-
-  border-radius: 0px; 
-  background-color: #008CBA;
-  border: 2px solid #007B9A;
-  color: white;
-  height: 50px;
-  width: 125px;
-  text-align: center;
-  line-height: 1.5;
-  font-size: 16px;
-  cursor: pointer; 
-  transition: background-color 0.3s, box-shadow 0.3s; 
-  box-sizing: border-box;
-  display: inline-block;
+  border-radius: 0px !important; 
+  background-color: #008CBA !important;
+  border: 2px solid #007B9A !important;
+  color: white !important;
+  height: 50px !important;
+  width: 125px !important;
+  text-align: center !important;
+  line-height: 1.5 !important;
+  font-size: 16px !important;
+  cursor: pointer !important; 
+  transition: background-color 0.3s, box-shadow 0.3s !important; 
+  box-sizing: border-box !important;
+  display: inline-block !important;
 
 }
 
 .st-option-button {
-  border: 1px solid #007B9A;
+  border: 1px solid #007B9A ;
   border-radius: 0px; 
   background-color: #008CBA;
   border: 2px solid #007B9A;
   color: white; 
-  line-height: 1.5;
-  height: 50px;
-  width: 50px;
-  text-align: center;
-  text-decoration: none;
+  line-height: 1.5 !important;
+  height: 50px !important;
+  width: 50px !important;
+  text-align: center !important;
+  text-decoration: none !important;
   display: inline-block;
-  font-size: 16px;
-  cursor: pointer; 
-  transition: background-color 0.3s, box-shadow 0.3s; 
-  align-items: center;
-  justify-content: center;
-  display: flex;
+  font-size: 16px !important;
+  cursor: pointer !important; 
+  transition: background-color 0.3s, box-shadow 0.3s !important; 
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 
 .st-option-button svg {
-    margin: 0;
-    padding: 0;
-    vertical-align: middle;
+    margin: 0 !important;
+    padding: 0 !important;
+    vertical-align: middle !important;
 }
 
 
 .st-option-button:hover {
-    background-color: #45a049;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    background-color: #45a049 !important;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3) !important;
 }
 
 .jp-RenderedHTMLCommon p {
@@ -56,20 +54,20 @@
 }
 
 .st-info-div {
-    align-items: center;     
+    align-items: center !important;     
 }
 
 .st-body-toolbar-div {
-align-items: center;
-display: flex; 
-justify-content: center; 
-  margin: 0;
-  padding: 0;
-  appearance: none; 
-  line-height: normal;
-  margin: 0;
-  padding: 0.5em 1em;
-  vertical-align: middle;
+align-items: center !important;
+display: flex !important; 
+justify-content: center !important; 
+  margin: 0 !important;
+  padding: 0 !important;
+  appearance: none !important; 
+  line-height: normal !important;
+  margin: 0 !important;
+  padding: 0.5em 1em !important;
+  vertical-align: middle !important;
 }
 
 .st-toolbar {
@@ -90,11 +88,11 @@ justify-content: center;
 
 
 .st-logo-button svg {
-  width: 100%;
-  height: 100%;
-  vertical-align: middle; 
-  margin: 0;
-  margin-bottom: 0;
+  width: 100% !important;
+  height: 100% !important;
+  vertical-align: middle !important; 
+  margin: 0 !important;
+  margin-bottom: 0 !important;
 }
 
 
@@ -106,43 +104,31 @@ select {
 }
 
 
-option {
-
-}
-
-
-
-
-
-
 .st-svg {
-  width: 100%;
+  width: 100% !important;
   height: 1000px !important;
 }
 
 
 .st-svg-2 {
-  width: 100%;
+  width: 100% !important;
 }
 
 
 
 .st-target {
-  font-family: lato;
-  font-size: 10px;
-  fill: #333333;
+  font-family: lato !important;
+  fill: #333333 ;
 }
 
 
 .st-pie-target {
-  font-family: lato;
-  font-size: 10px;
+  font-family: lato !important;
   fill: #333333;
 }
 
 .st-pie-target2 {
-  font-family: lato;
-  font-size: 10px;
+  font-family: lato !important;
   fill: #333333;
 }
 
@@ -159,13 +145,7 @@ option {
 
 
 .st-tooltip {
-  background-color: #ffffff;
-  font-family: lato;
-  font-size: 11px;
-  padding: 4px;
-  color: #666666;
-  border: none;
-  box-shadow: 0px 0px 3px 0px #E6E6E6;
+  font-family: lato !important;
 }
 
 .st-modal {
@@ -260,7 +240,6 @@ option {
 
 
 .st-logo-button {
-
   height: 100%;
   padding: 14px 28px;
   background: #008CBA;
@@ -283,16 +262,16 @@ option {
 }
 
 .st-side-panel {
-    width: 300px; 
+    width: 300px ; 
    background-color: #f3f9fb;
     position: absolute;
     top: 0;
     right: -350px;
     padding: 10px;
     box-shadow: -2px 0 5px rgba(0,0,0,0.1);
-    transition: right 0.3s ease;
-    overflow: auto; 
-    max-height: 100vh;
+    transition: right 0.3s ease !important;
+    overflow: auto !important; 
+    max-height: 100vh !important;
 }
 
 .st-side-panel.show {

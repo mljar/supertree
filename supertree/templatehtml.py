@@ -7,11 +7,11 @@ from pathlib import Path
 def get_d3_html(tree_data,start_depth, licence_key="KEY"):
     current_dir = Path(__file__).parent.resolve()
     css_text = ""
-    with open(os.path.join(current_dir, "js", "style.css")) as fin:
+    with open(os.path.join(current_dir, "js", "style.css"), encoding='utf-8') as fin:
         css_text = fin.read()
 
     js_template = ""
-    with open(os.path.join(current_dir, "js", "supertree.min.js")) as fin:
+    with open(os.path.join(current_dir, "js", "supertree.min.js"), encoding='utf-8') as fin:
         js_template = fin.read()
 
     myID = str(random.randint(1, 100000))
