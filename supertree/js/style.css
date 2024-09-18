@@ -33,6 +33,7 @@
   align-items: center !important;
   justify-content: center !important;
   margin: 0px !important;
+  box-sizing: border-box !important;
 }
 
 
@@ -40,6 +41,9 @@
     margin: 0 !important;
     padding: 0 !important;
     vertical-align: middle !important;
+    width: 24px !important;
+    height: 24px !important;
+    box-sizing: border-box !important;
 }
 
 
