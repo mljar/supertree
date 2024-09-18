@@ -231,7 +231,7 @@ class SuperTree:
 
         if not isinstance(start_depth, int) or start_depth < 0:
             raise TypeError("Invalid start_depth type. Expected an integer.")
-        
+
         start_depth = start_depth + 1
 
         if not isinstance(which_iteration, int) or which_iteration < 0:
@@ -348,7 +348,7 @@ class SuperTree:
         for node_info in list(self.node_list):
             node = Node(
                 node_info["feature"],
-                round(node_info["threshold"], 3),
+                node_info["threshold"],
                 round(node_info["impurity"], 3),
                 node_info["samples"],
                 node_info["class_distribution"],
@@ -746,6 +746,7 @@ class SuperTree:
                 "left_child_index": None,
                 "right_child_index": None,
             }
+            print(node_info["threshold"])
             self.node_list.append(node_info)
             left_child_index = self.collect_node_info_lgbm(
                 node["left_child"], depth + 1
