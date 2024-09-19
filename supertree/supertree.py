@@ -488,27 +488,18 @@ class SuperTree:
         node.class_distribution = [0] * target_len
         index_set = set()
 
+        
+        for j in range(len(self.feature_data)):
+            for i in range(len(node.start_end_x_axis)):
+                if node.start_end_x_axis[i][0] != "notexist":
+                    if node.start_end_x_axis[i][0] <= self.feature_data[j][i]:
+                        index_set.add(j)
 
-        for i in range(len(node.start_end_x_axis)):
-            for j in range(len(self.feature_data)):
-                lower_bound = node.start_end_x_axis[i][0]
-                upper_bound = node.start_end_x_axis[i][1]
-                value = self.feature_data[j][i]
-                if(not node.is_leaf):
-                    print(node.is_leaf)
-                    print(lower_bound)
-                    print(upper_bound)
-                    print(value)
-                
-                if lower_bound != "notexist":
-                    if value < lower_bound:
-                        continue  
-                
-                if upper_bound != "notexist":
-                    if value > upper_bound:
-                        continue
-                
-                index_set.add(j)
+                if node.start_end_x_axis[i][1] != "notexist":
+                    if node.start_end_x_axis[i][1] > self.feature_data[j][i]:
+                        index_set.add(j)
+                        
+
 
         samples = 0
         for i in range(len(self.target_data)):
@@ -518,7 +509,6 @@ class SuperTree:
         if node.samples is None:
             node.samples = samples
         node.class_distribution = [node.class_distribution]
-        print(node.class_distribution)
 
         if node.left_node is not None:
             self.count_class_distribution(node.left_node)
