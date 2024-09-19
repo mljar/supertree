@@ -260,6 +260,7 @@ select {
 
 .st-link{
   stroke: #000;
+  fill: none;
 }
 
 #my-window {
