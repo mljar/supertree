@@ -14,6 +14,7 @@ def get_d3_html(tree_data,start_depth, licence_key="KEY"):
     with open(os.path.join(current_dir, "js", "supertree.min.js"), encoding='utf-8') as fin:
         js_template = fin.read()
 
+
     myID = str(random.randint(1, 100000))
     js_text = js_template.replace('"$treetemplate"', tree_data)
     js_text = js_text.replace("treeID", myID)
@@ -40,6 +41,5 @@ def get_d3_html(tree_data,start_depth, licence_key="KEY"):
     super_tree = html_template.substitute(
         {"css_text": css_text, "js_text": js_text, "treeID": myID}
     )
-
 
     return super_tree

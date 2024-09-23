@@ -339,3 +339,8 @@ select {
 .xAxis-text {
   color: #000000;
 }
+
+.jp-Cell-outputArea{
+  height: auto !important;
+  max-height: none !important;
+}

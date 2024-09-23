@@ -11,6 +11,7 @@ from supertree.node import Node
 from supertree.treedata import TreeData
 
 import importlib.metadata
+import ipywidgets as widgets
 
 
 class SuperTree:
@@ -165,6 +166,7 @@ class SuperTree:
             self.target_names,
             self.feature_data,
             self.target_data,
+            self.model_name
         )
 
         if self.which_model == "classification" and len(self.target_names) != np.unique(self.target_data):
@@ -178,7 +180,7 @@ class SuperTree:
 
         self.license_key = license_key
 
-    def show_tree(self, which_tree=0, which_iteration=0, start_depth=5, max_samples=7500, show_sample=None):
+    def show_tree(self, which_tree=0, which_iteration=0, start_depth=5, max_samples=7500, show_sample=None, widgets=False):
         """
         Displaying model HTMl template and create json tree model.
         """
@@ -205,18 +207,21 @@ class SuperTree:
         self.tree_data.max_samples = max_samples
         self.which_tree = which_tree
         self.which_iteration = which_iteration
+        self.tree_data.set_which_tree(self.which_tree)
 
         if self.model_type == "uknown_model":
             return 0
 
+        if(widgets==True):
+            self.ipy_widget(start_depth)
+        else:
+            combined_data_str = self._get_combined_data()
 
-        combined_data_str = self._get_combined_data()
+            display(HTML(templatehtml.get_d3_html(
+                combined_data_str, start_depth, self.license_key)))
 
-        display(HTML(templatehtml.get_d3_html(
-            combined_data_str, start_depth, self.license_key)))
-
-        self.node_list = []
-        self.nodes = []
+            self.node_list = []
+            self.nodes = []
 
     def save_html(self, filename="output", which_tree=0, which_iteration=0, start_depth=5, max_samples=7500, show_sample=None):
         """
@@ -254,6 +259,8 @@ class SuperTree:
 
         self.which_tree = which_tree
         self.which_iteration = which_iteration
+        self.tree_data.set_which_tree(self.which_tree)
+
         d3script = """
     <script src="https://cdn.jsdelivr.net/npm/d3@7" charset="utf-8"></script>
     <script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl.min.js"></script>
@@ -638,16 +645,26 @@ class SuperTree:
 
             for i in range(super_tree.node_count):
                 samples = super_tree.n_node_samples[i]
+                class_distribution = ["No data"]
+                class_distribution_from_model = None
                 if (self.model_name not in ("GradientBoostingClassifier")):
                     if (sklearn_version > "1.4.0" and self.model_type in "classification"):
-                        class_distribution = super_tree.value[i] * samples
-                        class_distribution = np.round(class_distribution)
+                        class_distribution_from_model = super_tree.value[i] * samples
+                        class_distribution_from_model = np.round(class_distribution_from_model)
                     elif (self.model_type == "nodataclassification"):
-                        class_distribution = np.round(super_tree.value[i] * samples)
+                        class_distribution_from_model = np.round(super_tree.value[i] * samples)
                     else:
-                        class_distribution = super_tree.value[i]
+                        class_distribution_from_model = super_tree.value[i]
 
-                    predicted_class_index = class_distribution.argmax()
+
+                    if(class_distribution_from_model is not None):
+                        class_distribution = class_distribution_from_model
+
+                    if(self.model_type == "classification"):
+                        class_distribution = None
+
+
+                    predicted_class_index = class_distribution_from_model.argmax()
                 else:
                     class_distribution = None
                     predicted_class_index = "nodata"
@@ -699,12 +716,10 @@ class SuperTree:
                 model_dict = self.model.get_dump(
                     with_stats=True, dump_format="json")
 
-            json_tree = model_dict[self.which_tree]
-
             if 0 <= self.which_tree < len(model_dict):
                 json_tree = model_dict[self.which_tree]
             else:
-                raise KeyError(f"Value 'which_tree' ({self.which_tree}) it is not correct key in 'model_dict'.")
+                raise IndexError(f"Value 'which_tree' ({self.which_tree}) it is not correct key in 'model_dict'.")
             dict_tree = json.loads(json_tree)
             self.collect_node_info_xgboost(dict_tree)
         if model_name in ("ModelLoader"):
@@ -750,7 +765,6 @@ class SuperTree:
                 "left_child_index": None,
                 "right_child_index": None,
             }
-            print(node_info["threshold"])
             self.node_list.append(node_info)
             left_child_index = self.collect_node_info_lgbm(
                 node["left_child"], depth + 1
@@ -998,3 +1012,146 @@ class SuperTree:
                             self.node_list.append(node_info)
                     else:
                         raise IndexError(f"Key '{self.which_tree}' not found in trees")
+
+
+
+    def ipy_widget(self, start_depth):
+        """
+        Navigate to the next tree using ipy widgets
+        """
+
+        output = widgets.Output()
+
+        number_input = widgets.BoundedIntText(
+            value=0,
+            min=0,
+            max=self.get_max_tree_size()-1,
+            step=1,
+            description='',
+            style={'description_width': 'initial'},
+            layout=widgets.Layout(width='60px')
+        )
+
+        def next_button_click(b):
+            with output:
+                output.clear_output()
+                if(self.which_tree + 1 > (self.get_max_tree_size())-1):
+                    self.which_tree=0
+                else:
+                    self.which_tree = self.which_tree+1
+                
+                
+                self.tree_data.set_which_tree(self.which_tree)
+                combined_data_str = self._get_combined_data()
+                display(HTML(templatehtml.get_d3_html(
+                combined_data_str, start_depth, self.license_key)))
+                self.node_list = []
+                self.nodes = []
+
+
+        def previous_button_click(b):
+            with output:
+                output.clear_output()
+
+                if(self.which_tree - 1 < 0):
+                    self.which_tree=self.get_max_tree_size()-1
+                else:
+                    self.which_tree = self.which_tree-1
+
+                self.tree_data.set_which_tree(self.which_tree)
+                combined_data_str = self._get_combined_data()
+                display(HTML(templatehtml.get_d3_html(
+                combined_data_str, start_depth, self.license_key)))
+                self.node_list = []
+                self.nodes = []
+
+        def number_input_change(change):
+            with output:
+                output.clear_output()
+                self.which_tree = change['new']
+                self.tree_data.set_which_tree(self.which_tree)
+                combined_data_str = self._get_combined_data()
+                display(HTML(templatehtml.get_d3_html(
+                    combined_data_str, start_depth, self.license_key)))
+                self.node_list = []
+                self.nodes = []
+
+        next_button = widgets.Button(description="→", layout=widgets.Layout(width='60px'),
+                                 button_style='info')
+
+        next_button.on_click(next_button_click)
+
+
+        number_input.observe(number_input_change, names='value')
+
+
+        previous_button = widgets.Button(description="←", layout=widgets.Layout(width='60px'),
+                                     button_style='info')
+
+        previous_button.on_click(previous_button_click)
+
+        widgets_box = widgets.HBox([previous_button,number_input, next_button], layout=widgets.Layout(align_items='center'))
+
+        display(widgets.VBox([widgets_box, output], layout=widgets.Layout(align_items='center')))
+
+        with output:
+            combined_data_str = self._get_combined_data()
+            display(HTML(templatehtml.get_d3_html(
+                    combined_data_str, start_depth, self.license_key)))
+
+
+        self.node_list = []
+        self.nodes = []
+
+
+    def get_max_tree_size(self):
+        model_name = self.model_name
+        if model_name in (
+            "DecisionTreeClassifier",
+            "ExtraTreeClassifier",
+            "ExtraTreesClassifier",
+            "DecisionTreeRegressor",
+            "ExtraTreeRegressor",
+            "ExtraTreesRegressor",
+            "RandomForestClassifier",
+            "RandomForestRegressor",
+            "GradientBoostingRegressor",
+            "GradientBoostingClassifier",
+        ):
+            if model_name in (
+                "RandomForestClassifier",
+                "RandomForestRegressor",
+                "ExtraTreesClassifier",
+                "ExtraTreesRegressor",
+            ):
+                return len(self.model.estimators_)
+            elif model_name in (
+                "GradientBoostingRegressor",
+                "GradientBoostingClassifier",
+            ):
+                return len(self.model.estimators_[0])
+
+        if model_name == "LightGBMBooster" or model_name in ("LGBMRegressor", "LGBMClassifier"):
+            if model_name != "LightGBMBooster":
+                booster = self.model.booster_
+                model_dict = booster.dump_model()
+            else:
+                model_dict = self.model.dump_model()
+
+            return len(model_dict["tree_info"])
+        
+        if model_name in ("XGBoostBooster", "XGBClassifier", "XGBRegressor", "XGBRFClassifier", "XGBRFRegressor"):
+            if model_name != "XGBoostBooster":
+                booster = self.model.get_booster()
+                model_dict = booster.get_dump(
+                    with_stats=True, dump_format="json")
+            else:
+                model_dict = self.model.get_dump(
+                    with_stats=True, dump_format="json")
+
+            return len(model_dict)
+
+        if model_name in ("HistGradientBoostingClassifier", "HistGradientBoostingRegressor"):
+           return len(self.model._predictors[0])
+
+        return 1

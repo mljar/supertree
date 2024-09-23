@@ -5,7 +5,7 @@ import pandas as pd
 class TreeData:
 
     def __init__(
-        self, tree_type, feature_names, target_names, data_feature, data_target
+        self, tree_type, feature_names, target_names, data_feature, data_target, model_name
     ):
         self.feature_names = feature_names
         self.target_names = None
@@ -20,6 +20,8 @@ class TreeData:
         self.tree_type = tree_type
         self.max_samples = None
         self.show_sample = "nodata"
+        self.model_name = model_name
+        self.which_tree = 0
 
     def to_dict(self):
         def convert(value):
@@ -59,7 +61,9 @@ class TreeData:
             "target_names": convert(self.target_names),
             "data_feature": convert(data_feature),
             "data_target": convert(data_target),
-            "show_sample": convert(self.show_sample)
+            "show_sample": convert(self.show_sample),
+            "model_name": convert(self.model_name),
+            "which_tree": convert(self.which_tree),
         }
 
         return tree_data_dict
@@ -99,4 +103,7 @@ class TreeData:
 
     def reset_sample(self):
         self.show_sample = "nodata"
+
+    def set_which_tree(self,which):
+        self.which_tree = which
 
