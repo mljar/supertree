@@ -10,7 +10,7 @@ with open(path.join(here, "README.md"), encoding="utf-8") as f:
 
 setup(
     name="supertree",
-    version="0.4.3",
+    version="0.5.0",
     description="Visualize decision tree in Python",
     long_description=long_description,
     long_description_content_type="text/markdown",
