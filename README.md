@@ -125,6 +125,6 @@ If you encounter any issues, find a bug, or have a feature request, we would lov
 
 `supertree` is a commercial software with two licenses available:
 
-- Free for non-commercial purposes such as teaching, academic research, and evaluation. [supertree-non-commercial-license.pdf](supertree-non-commercial-license.pdf).
+- AGPL-3.0 license
 - Commercial license with support and maintenance included. [supertree-commercial-license.pdf](supertree-commercial-license.pdf).
 
