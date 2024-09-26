@@ -128,20 +128,26 @@ If we do not support the model you want to use, please let us know.
   </table>
   <table style="table-layout: fixed; width: 100%; position: absolute;'">
     <tr>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/4_fullscreen-ezgif.com-video-to-gif-converter.gif" alt="Gif4" width="375"/><br/>Fullscreen in jupyter</td>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/6_change_depth_dynamicaly-ezgif.com-video-to-gif-converter.gif" alt="Gif5" width="375"/><br/>Change depth</td>
+    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/4_fullscreen-ezgif.com-video-to-gif-converter.gif" alt="Gif3" width="375"/><br/>Fullscreen in jupyter</td>
+    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/6_change_depth_dynamicaly-ezgif.com-video-to-gif-converter.gif" alt="Gif4" width="375"/><br/>Change depth</td>
   </tr>
     </table>
    <table style="table-layout: fixed; width: 100%; position: absolute;'">
     <tr>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/change_palette.gif" alt="Gif4" width="375"/><br/>Change colors</td>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/switch_tree_in_forest.gif" alt="Gif5" width="375"/><br/>Navigate in forest</td>
+    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/change_palette.gif" alt="Gif5" width="375"/><br/>Change colors</td>
+    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/switch_tree_in_forest.gif" alt="Gif6" width="375"/><br/>Navigate in forest</td>
   </tr>
     </table>
    <table style="table-layout: fixed; width: 100%; position: absolute;'">
     <tr>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/sample_path.gif" alt="Gif4" width="375"/><br/>Show specific sample path</td>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/save_svg.gif" alt="Gif5" width="375"/><br/>Save svg</td>
+    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/sample_path.gif" alt="Gif7" width="375"/><br/>Show specific sample path</td>
+    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/save_svg.gif" alt="Gif8" width="375"/><br/>Save svg</td>
+  </tr>
+    </table>
+  <table style="table-layout: fixed; width: 100%; position: absolute;'">
+    <tr>
+    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/3_amount_of_sample_visualized-ezgif.com-video-to-gif-converter.gif" alt="Gif11" width="375"/><br/>Show specific sample path</td>
+    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/4_fullscreen-ezgif.com-video-to-gif-converter.gifr.gif" alt="Gif12" width="375"/><br/>Save svg</td>
   </tr>
     </table>
 </div>
