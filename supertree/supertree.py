@@ -158,7 +158,7 @@ class SuperTree:
             self.feature_data = self.feature_data.values
         if isinstance(self.target_data, pd.DataFrame):
             self.target_data = self.target_data.values.flatten()
-
+        
         self.target_len = len(self.target_names)
         self.tree_data = TreeData(
             self.model_type,
@@ -168,6 +168,9 @@ class SuperTree:
             self.target_data,
             self.model_name
         )
+
+        self.target_data = self.tree_data.data_target
+    
 
         if self.which_model == "classification" and len(self.target_names) != np.unique(self.target_data):
             raise TypeError(
