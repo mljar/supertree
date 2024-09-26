@@ -119,20 +119,23 @@ If we do not support the model you want to use, please let us know.
 
 ## Features
 
-<table>
+<div style="overflow: hidden;">
+  <table style="table-layout: fixed; width: 100%; position: absolute;'">
   <tr>
     <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/2_regression_details-ezgif.com-video-to-gif-converter.gif" alt="Gif1" width="400"/><br/>See all deatils</td>
     <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/1_supertree_zoom_an_reset-ezgif.com-video-to-gif-converter.gif" alt="Gif2" width="400"/><br/>Zoom</td>
   </tr>
-  <tr>
+    <tr>
     <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/4_fullscreen-ezgif.com-video-to-gif-converter.gif" alt="Gif4" width="400"/><br/>Fullscreen in jupyter</td>
     <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/6_change_depth_dynamicaly-ezgif.com-video-to-gif-converter.gif" alt="Gif5" width="400"/><br/>Change depth</td>
   </tr>
+    </table>
+  <table style="table-layout: fixed; width: 100%; position: absolute;'">
       <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/3_amount_of_sample_visualized-ezgif.com-video-to-gif-converter.gif" alt="Gif3" width="400"/><br/>Amount of samples in links</td>
           <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/7_path_to_leaf-ezgif.com-video-to-gif-converter.gif" alt="Gif6" width="400"/><br/>See Path</td>
   <tr>
-  </tr>
 </table>
+</div>
 
 ## Support
 
