@@ -37,7 +37,7 @@
   <table style="table-layout: fixed; width: 100%; position: absolute;'">
     <tr>
     <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/3_amount_of_sample_visualized-ezgif.com-video-to-gif-converter.gif" alt="Gif11" width="375"/><br/>Change links</td>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/4_fullscreen-ezgif.com-video-to-gif-converter.gif" alt="Gif12" width="375"/><br/>Full screen in jupyter</td>
+    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/7_path_to_leaf-ezgif.com-video-to-gif-converter.gif" alt="Gif12" width="375"/><br/>See path to leaf</td>
   </tr>
     </table>
 </div>
