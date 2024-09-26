@@ -42,6 +42,8 @@
     </table>
 </div>
 
+Check this features in example directory :)
+
 ## Examples
 
 ### Decision Tree classifier on iris data 
