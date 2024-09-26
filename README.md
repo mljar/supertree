@@ -132,11 +132,6 @@ If we do not support the model you want to use, please let us know.
     <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/6_change_depth_dynamicaly-ezgif.com-video-to-gif-converter.gif" alt="Gif5" width="375"/><br/>Change depth</td>
   </tr>
     </table>
-  <table style="table-layout: fixed; width: 100%; position: absolute;'">
-      <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/3_amount_of_sample_visualized-ezgif.com-video-to-gif-converter.gif" alt="Gif3" width="375"/><br/>a</td>
-          <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/7_path_to_leaf-ezgif.com-video-to-gif-converter.gif" alt="Gif6" width="375"/><br/>aa</td>
-  <tr>
-</table>
    <table style="table-layout: fixed; width: 100%; position: absolute;'">
     <tr>
     <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/change_palette.gif" alt="Gif4" width="375"/><br/>Change colors</td>
