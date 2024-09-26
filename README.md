@@ -146,5 +146,5 @@ If you encounter any issues, find a bug, or have a feature request, we would lov
 `supertree` is a commercial software with two licenses available:
 
 - AGPL-3.0 license
-- Commercial license with support and maintenance included. [supertree-commercial-license.pdf](supertree-commercial-license.pdf).
+- Commercial license with support and maintenance included. Pricing website https://mljar.com/supertree/ License [supertree-commercial-license.pdf](supertree-commercial-license.pdf).
 
