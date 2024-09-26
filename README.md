@@ -146,8 +146,8 @@ If we do not support the model you want to use, please let us know.
     </table>
   <table style="table-layout: fixed; width: 100%; position: absolute;'">
     <tr>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/3_amount_of_sample_visualized-ezgif.com-video-to-gif-converter.gif" alt="Gif11" width="375"/><br/>Show specific sample path</td>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/4_fullscreen-ezgif.com-video-to-gif-converter.gifr.gif" alt="Gif12" width="375"/><br/>Save svg</td>
+    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/3_amount_of_sample_visualized-ezgif.com-video-to-gif-converter.gif" alt="Gif11" width="375"/><br/>Change links</td>
+    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/4_fullscreen-ezgif.com-video-to-gif-converter.gif" alt="Gif12" width="375"/><br/>Full screen in jupyter</td>
   </tr>
     </table>
 </div>
