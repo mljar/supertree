@@ -7,6 +7,41 @@
 - collapse and expand selected nodes, 
 - explore the structure of the tree in an intuitive and visually appealing manner.
 
+## Features
+
+<div style="overflow: hidden;">
+  <table style="table-layout: fixed; width: 100%; position: absolute;'">
+  <tr>
+    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/2_regression_details-ezgif.com-video-to-gif-converter.gif" alt="Gif1" width="375"/><br/>See all deatils</td>
+    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/1_supertree_zoom_an_reset-ezgif.com-video-to-gif-converter.gif" alt="Gif2" width="375"/><br/>Zoom</td>
+  </tr>
+  </table>
+  <table style="table-layout: fixed; width: 100%; position: absolute;'">
+    <tr>
+    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/4_fullscreen-ezgif.com-video-to-gif-converter.gif" alt="Gif3" width="375"/><br/>Fullscreen in jupyter</td>
+    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/6_change_depth_dynamicaly-ezgif.com-video-to-gif-converter.gif" alt="Gif4" width="375"/><br/>Change depth</td>
+  </tr>
+    </table>
+   <table style="table-layout: fixed; width: 100%; position: absolute;'">
+    <tr>
+    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/change_palette.gif" alt="Gif5" width="375"/><br/>Change colors</td>
+    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/switch_tree_in_forest.gif" alt="Gif6" width="375"/><br/>Navigate in forest</td>
+  </tr>
+    </table>
+   <table style="table-layout: fixed; width: 100%; position: absolute;'">
+    <tr>
+    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/sample_path.gif" alt="Gif7" width="375"/><br/>Show specific sample path</td>
+    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/save_svg.gif" alt="Gif8" width="375"/><br/>Save svg</td>
+  </tr>
+    </table>
+  <table style="table-layout: fixed; width: 100%; position: absolute;'">
+    <tr>
+    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/3_amount_of_sample_visualized-ezgif.com-video-to-gif-converter.gif" alt="Gif11" width="375"/><br/>Change links</td>
+    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/4_fullscreen-ezgif.com-video-to-gif-converter.gif" alt="Gif12" width="375"/><br/>Full screen in jupyter</td>
+  </tr>
+    </table>
+</div>
+
 ## Examples
 
 ### Decision Tree classifier on iris data 
@@ -116,41 +151,6 @@ The package is compatible with a wide range of classifiers and regressors from t
 - `Booster`
 
 If we do not support the model you want to use, please let us know.
-
-## Features
-
-<div style="overflow: hidden;">
-  <table style="table-layout: fixed; width: 100%; position: absolute;'">
-  <tr>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/2_regression_details-ezgif.com-video-to-gif-converter.gif" alt="Gif1" width="375"/><br/>See all deatils</td>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/1_supertree_zoom_an_reset-ezgif.com-video-to-gif-converter.gif" alt="Gif2" width="375"/><br/>Zoom</td>
-  </tr>
-  </table>
-  <table style="table-layout: fixed; width: 100%; position: absolute;'">
-    <tr>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/4_fullscreen-ezgif.com-video-to-gif-converter.gif" alt="Gif3" width="375"/><br/>Fullscreen in jupyter</td>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/6_change_depth_dynamicaly-ezgif.com-video-to-gif-converter.gif" alt="Gif4" width="375"/><br/>Change depth</td>
-  </tr>
-    </table>
-   <table style="table-layout: fixed; width: 100%; position: absolute;'">
-    <tr>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/change_palette.gif" alt="Gif5" width="375"/><br/>Change colors</td>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/switch_tree_in_forest.gif" alt="Gif6" width="375"/><br/>Navigate in forest</td>
-  </tr>
-    </table>
-   <table style="table-layout: fixed; width: 100%; position: absolute;'">
-    <tr>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/sample_path.gif" alt="Gif7" width="375"/><br/>Show specific sample path</td>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/save_svg.gif" alt="Gif8" width="375"/><br/>Save svg</td>
-  </tr>
-    </table>
-  <table style="table-layout: fixed; width: 100%; position: absolute;'">
-    <tr>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/3_amount_of_sample_visualized-ezgif.com-video-to-gif-converter.gif" alt="Gif11" width="375"/><br/>Change links</td>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/4_fullscreen-ezgif.com-video-to-gif-converter.gif" alt="Gif12" width="375"/><br/>Full screen in jupyter</td>
-  </tr>
-    </table>
-</div>
 
 ## Support
 
