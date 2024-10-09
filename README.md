@@ -154,6 +154,12 @@ The package is compatible with a wide range of classifiers and regressors from t
 
 If we do not support the model you want to use, please let us know.
 
+## Articles
+
+- https://mljar.com/blog/visualize-lightgbm-tree/
+- https://mljar.com/blog/visualize-xgboost-tree/
+- https://mljar.com/blog/visualize-decision-tree/
+
 ## Support
 
 If you encounter any issues, find a bug, or have a feature request, we would love to hear from you! Please don't hesitate to reach out to us at supertree/issues. We are committed to improving this package and appreciate any feedback or suggestions you may have.
