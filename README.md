@@ -156,9 +156,10 @@ If we do not support the model you want to use, please let us know.
 
 ## Articles
 
-- https://mljar.com/blog/visualize-lightgbm-tree/
-- https://mljar.com/blog/visualize-xgboost-tree/
-- https://mljar.com/blog/visualize-decision-tree/
+- [Visualize decision tree from scikit-learn package](https://mljar.com/blog/visualize-decision-tree/)
+- [4 ways to vizualize decision tree from LightGBM](https://mljar.com/blog/visualize-lightgbm-tree/)
+- [How to visualize decision tree from Xgboost](https://mljar.com/blog/visualize-xgboost-tree/)
+
 
 ## Support
 
