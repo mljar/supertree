@@ -101,11 +101,11 @@ justify-content: center;
 
 
 
-select {
-    appearance: none; 
-    text-align: center;
-    box-sizing: border-box; 
-}
+/* select { */
+/*     appearance: none;  */
+/*     text-align: center; */
+/*     box-sizing: border-box;  */
+/* } */
 
 
 .st-svg {
