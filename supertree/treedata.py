@@ -7,14 +7,16 @@ class TreeData:
     def __init__(
         self, tree_type, feature_names, target_names, data_feature, data_target, model_name
     ):
-        self.feature_names = feature_names
+        self.feature_names = self.extract_values_if_dataframe_or_ndarray(feature_names)
         self.target_names = None
         if  isinstance(self.target_names,str):
             self.target_names = [target_names]
         else:
             self.target_names = target_names
-        self.data_feature = self.extract_values_if_dataframe(data_feature)
-        self.data_target = self.extract_values_if_dataframe(data_target)
+
+        self.target_names = self.extract_values_if_dataframe_or_ndarray(self.target_names)
+        self.data_feature = self.extract_values_if_dataframe_or_ndarray(data_feature)
+        self.data_target = self.extract_values_if_dataframe_or_ndarray(data_target)
         self.data_target = self.convert_target_strings(data_target)
         self.feature_names_size = len(feature_names)
         self.tree_type = tree_type
@@ -68,14 +70,15 @@ class TreeData:
 
         return tree_data_dict
 
-    def extract_values_if_dataframe(self, data):
+    def extract_values_if_dataframe_or_ndarray(self, data):
         """
         Conver dataframe.
         """
         if isinstance(data, pd.DataFrame):
             return data.values
+        elif isinstance(data, np.ndarray):
+            return data.tolist()
         return data
-        
 
     def convert_target_strings(self, data_target):
         """
@@ -106,4 +109,3 @@ class TreeData:
 
     def set_which_tree(self,which):
         self.which_tree = which
-
