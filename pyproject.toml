@@ -45,4 +45,4 @@ packages = ["supertree"]
 include-package-data = false
 
 [tool.setuptools.package-data]
-supertree = ["js/*.js", "js/*.css", "js/dependencies/*.js"]
+supertree = ["js/*.js", "js/*.css", "js/dependencies/*.js", "js/src/*.js"]

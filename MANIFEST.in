@@ -4,3 +4,4 @@ include supertree/js/style.css
 include supertree/js/script.js
 include supertree/js/supertree.min.js
 include supertree/js/dependencies/d3vs.js
+recursive-include supertree/js/src *.js

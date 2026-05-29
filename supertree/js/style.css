@@ -111,6 +111,10 @@ justify-content: center;
 .st-svg {
   width: 100% !important;
   height: 1000px !important;
+  border: 1px solid #e6edf2 !important;
+  border-radius: 7px !important;
+  background: #ffffff !important;
+  box-sizing: border-box !important;
 }
 
 
@@ -328,6 +332,11 @@ justify-content: center;
     display: flex;
     justify-content: center; 
     align-items: center;
+    border: 1px solid #edf2f6;
+    border-radius: 7px;
+    background: #ffffff;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 

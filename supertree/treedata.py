@@ -5,7 +5,15 @@ import pandas as pd
 class TreeData:
 
     def __init__(
-        self, tree_type, feature_names, target_names, data_feature, data_target, model_name
+        self,
+        tree_type,
+        feature_names,
+        target_names,
+        data_feature,
+        data_target,
+        model_name,
+        palette=1,
+        show_palette_control=False,
     ):
         self.feature_names = self.extract_values_if_dataframe_or_ndarray(feature_names)
         self.target_names = None
@@ -24,6 +32,8 @@ class TreeData:
         self.show_sample = "nodata"
         self.model_name = model_name
         self.which_tree = 0
+        self.palette = palette
+        self.show_palette_control = show_palette_control
 
     def to_dict(self):
         def convert(value):
@@ -66,6 +76,8 @@ class TreeData:
             "show_sample": convert(self.show_sample),
             "model_name": convert(self.model_name),
             "which_tree": convert(self.which_tree),
+            "palette": convert(self.palette),
+            "show_palette_control": convert(self.show_palette_control),
         }
 
         return tree_data_dict

@@ -2,7 +2,7 @@
 ## Description
 The main class responsible for converting, displaying, and saving HTML models.
 ### Methods
- - **`__init__(model,feature_data, target_data, feature_names, target_names)`**
+- **`__init__(model,feature_data, target_data, feature_names, target_names, color_palette=1, show_palette_control=False)`**
     - **Desription**: The constructor of the SuperTree class validates a large portion of the attributes.
     - **Atributes**:
         - `model` decision tree model required argument

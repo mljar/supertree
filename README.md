@@ -29,7 +29,7 @@ model = DecisionTreeClassifier()
 model.fit(X, y)
 
 # Initialize supertree
-super_tree = SuperTree(model, X, y, iris.feature_names, iris.target_names)
+super_tree = SuperTree(model, X, y, iris.feature_names, iris.target_names, color_palette=1)
 
 # show tree in your notebook
 super_tree.show_tree()
@@ -78,16 +78,23 @@ Conda support coming soon.
 
 ## JavaScript Source
 
-The interactive frontend is developed in source form in:
+The interactive frontend is authored in:
 
-- `supertree/js/script.js`
+- `supertree/js/src/`
 - `supertree/js/dependencies/d3vs.js`
 
-The packaged runtime keeps using `supertree/js/supertree.min.js`, which is a generated artifact. To rebuild it after editing the source files, run:
+The packaged runtime still ships:
+
+- `supertree/js/script.js` as the generated readable bundle
+- `supertree/js/supertree.min.js` as the generated packaged runtime
+
+To rebuild both after editing the source files, run:
 
 ```bash
 ./scripts/build_js.sh
 ```
+
+Maintainer notes and a frontend smoke checklist are in `docs/frontend_development.md`.
 
 ## Supported Libraries
 

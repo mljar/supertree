@@ -24,6 +24,8 @@ class SuperTree:
                                     pd.DataFrame, pd.Series]] = None,
         feature_names: Optional[List[str]] = None,
         target_names: Optional[Union[str, List[str]]] = None,
+        color_palette: int = 1,
+        show_palette_control: bool = False,
     ):
 
         valid_model_classes = [
@@ -77,6 +79,12 @@ class SuperTree:
                 raise TypeError(
                     "Invalid target_names type. Expected a string, list of strings, numpy array, or pandas DataFrame.")
 
+        if not isinstance(color_palette, int) or color_palette < 1:
+            raise TypeError("Invalid color_palette type. Expected an integer greater than or equal to 1.")
+
+        if not isinstance(show_palette_control, bool):
+            raise TypeError("Invalid show_palette_control type. Expected a boolean.")
+
         self.nodes = []
         self.node_list = []
         self.model = model
@@ -86,6 +94,8 @@ class SuperTree:
         self.which_iteration = 0
         self.feature_names = feature_names
         self.target_names = target_names
+        self.color_palette = color_palette
+        self.show_palette_control = show_palette_control
         if not self.is_model_fitted() and self.model_name not in ("ModelProto") and self.model_name not in ("ModelLoader"):
             raise TypeError("Model is not fitted")
 
@@ -165,7 +175,9 @@ class SuperTree:
             self.target_names,
             self.feature_data,
             self.target_data,
-            self.model_name
+            self.model_name,
+            palette=self.color_palette,
+            show_palette_control=self.show_palette_control,
         )
 
         self.target_data = self.tree_data.data_target
