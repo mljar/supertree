@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "supertree"
+version = "1.0.0"
+description = "Visualize decision tree in Python"
+readme = "README.md"
+requires-python = ">=3.7.1"
+license = "Apache-2.0"
+authors = [
+  { name = "MLJAR Sp. z o.o.", email = "contact@mljar.com" },
+]
+dependencies = [
+  "pandas",
+  "numpy",
+  "ipython",
+  "ipywidgets",
+]
+keywords = [
+  "visualization",
+  "decision-tree",
+  "machine-learning",
+  "data-analysis",
+  "data-mining",
+  "classification",
+  "regression",
+  "mljar",
+]
+classifiers = [
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+]
+
+[project.urls]
+Homepage = "https://github.com/mljar/supertree"
+
+[tool.setuptools]
+packages = ["supertree"]
+include-package-data = false
+
+[tool.setuptools.package-data]
+supertree = ["js/*.js", "js/*.css", "js/dependencies/*.js"]

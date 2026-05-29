@@ -76,6 +76,19 @@ pip install supertree
 
 Conda support coming soon.
 
+## JavaScript Source
+
+The interactive frontend is developed in source form in:
+
+- `supertree/js/script.js`
+- `supertree/js/dependencies/d3vs.js`
+
+The packaged runtime keeps using `supertree/js/supertree.min.js`, which is a generated artifact. To rebuild it after editing the source files, run:
+
+```bash
+./scripts/build_js.sh
+```
+
 ## Supported Libraries
 
 - **scikit-learn** (`sklearn`)
@@ -168,8 +181,4 @@ If you encounter any issues, find a bug, or have a feature request, we would lov
 
 ## License 
 
-`supertree` is a commercial software with two licenses available:
-
-- AGPL-3.0 license
-- Commercial license with support and maintenance included. Pricing website https://mljar.com/supertree/ License [supertree-commercial-license.pdf](supertree-commercial-license.pdf).
-
+`supertree` is open source under the Apache License 2.0.

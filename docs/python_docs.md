@@ -2,7 +2,7 @@
 ## Description
 The main class responsible for converting, displaying, and saving HTML models.
 ### Methods
- - **`__init__(model,feature_data, target_data, feature_names, target_names, license_key)`**
+ - **`__init__(model,feature_data, target_data, feature_names, target_names)`**
     - **Desription**: The constructor of the SuperTree class validates a large portion of the attributes.
     - **Atributes**:
         - `model` decision tree model required argument
@@ -10,7 +10,6 @@ The main class responsible for converting, displaying, and saving HTML models.
         - `taget_data` Attribute data that can be in the form of a list, np.array, pd.DataFrame, or pd.Series. An optional argument that must be provided along with `feature_data`.
         - `feature_names` A list of feature names. An optional argument that must be provided along with the previous arguments and `target_names`.
         - `target_names` A list of target names for classification or single string for regression. An optional argument that must be provided along with the previous arguments and `feature_names`.
-        - `license_key` An optional argument unlocking premium features.
  - **`show_tree(which_tree,which_iteration, start_depth, max_samples, show_sample)`** 
     - **Description:** A method that displays an HTML file in a notebook using IPython, which   contains the SuperTree model.
     - **Atributes:**
@@ -19,7 +18,7 @@ The main class responsible for converting, displaying, and saving HTML models.
         - `start_depth` *(int)* An optional attribute that sets the initial display height of the tree. Useful for large trees that take time to render. Deafault to 5.
         - `max_samples` *(int)* An optional attribute that sets the maximum number of data points to be used for visualization. Useful when dealing with large datasets, especially in regression, where displaying tens of thousands of samples can take several seconds. Default is set to 7,500.
          At the moment, in scikit-learn trees, the  smaller data can be inconsistent, especially in the leaves, because the model stores the base distribution of the data within the model.
-        - `show_sample` *(list(int))* An optional argument that only works with a valid license. It adds a button to the visualization that shows the path of a given sample in the tree.
+        - `show_sample` *(list(int))* An optional argument that adds a button to the visualization that shows the path of a given sample in the tree.
  - **`save_html(filename,which_tree, which_iteration, start_depth, max_samples, show_sample)`**
     - **Description:** A method that save html file with SuperTree model.
     - **Atributes:**
@@ -29,7 +28,7 @@ The main class responsible for converting, displaying, and saving HTML models.
         - `start_depth` *(int)* An optional attribute that sets the initial display height of the tree. Useful for large trees that take time to render. Deafault to 5.
         - `max_samples` *(int)* An optional attribute that sets the maximum number of data points to be used for visualization. Useful when dealing with large datasets, especially in regression, where displaying tens of thousands of samples can take several seconds. Default is set to 7,500.
          At the moment, in scikit-learn trees, the  smaller data can be inconsistent, especially in the leaves, because the model stores the base distribution of the data within the model.
-        - `show_sample` *(list(int))* An optional argument that only works with a valid license. It adds a button to the visualization that shows the path of a given sample in the tree.
+        - `show_sample` *(list(int))* An optional argument that adds a button to the visualization that shows the path of a given sample in the tree.
  - **`save_json_tree(filename, which_tree, which_iteration, max_samples, show_sample)`**
      - **Description** A method that save tree data in json format.
      - **Atributes:**
@@ -39,7 +38,7 @@ The main class responsible for converting, displaying, and saving HTML models.
         - `start_depth` *(int)* An optional attribute that sets the initial display height of the tree. Useful for large trees that take time to render. Deafault to 5.
         - `max_samples` *(int)* An optional attribute that sets the maximum number of data points to be used for visualization. Useful when dealing with large datasets, especially in regression, where displaying tens of thousands of samples can take several seconds. Default is set to 7,500.
          At the moment, in scikit-learn trees, the  smaller data can be inconsistent, especially in the leaves, because the model stores the base distribution of the data within the model.
-        - `show_sample` *(list(int))* An optional argument that only works with a valid license. It adds a button to the visualization that shows the path of a given sample in the tree.
+        - `show_sample` *(list(int))* An optional argument that adds a button to the visualization that shows the path of a given sample in the tree.
  - **`_get_combined_data()`**: 
     - **Description**: A private method that combines and return two variables in JSON format into one: data describing the entire tree and data concerning individual nodes.
  - **`_get_json_tree_data()`**:

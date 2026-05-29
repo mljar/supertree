@@ -1,0 +1,3901 @@
+var DEBUG_LEVEL = "debug";
+var yAxisMargin = 25;
+
+function stLog(level, obj, message = "Data;") {
+  const levels = ["debug", "custom", "info", "warning", "error"];
+
+  if (levels.indexOf(level) >= levels.indexOf(DEBUG_LEVEL)) {
+    console.log(`[${level.toUpperCase()}]:`, message, obj);
+  }
+}
+ 
+function buildTree(
+  pathJson = "data/bugdata.json",
+  pytree = "$treetemplate",
+) {
+  async function checkD3Element(selector, timeout = 5000) {
+    const interval = 100;
+    const startTime = Date.now();
+
+    const divElement = document.querySelector(selector);
+    if (!divElement) {
+      throw new Error(`Div with selector ${selector} does not exist.`);
+    }
+
+    while (Date.now() - startTime < timeout) {
+      if (typeof d3 !== "undefined") {
+        stLog("info", "D3.js successfully loaded");
+        return true;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, interval));
+    }
+
+    stLog("warning", "D3.js not loaded after timeout");
+
+    divElement.innerHTML = `
+    <div style="color: red; font-weight: bold;">
+      D3.js library is not loaded. Try Again :(.
+    </div>`;
+
+    return false;
+  }
+  checkD3Element("#graph-div-treeID")
+    .then(() => {
+      const svgLine = `<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-vector-spline"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M17 3m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" /><path d="M3 17m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" /><path d="M17 5c-6.627 0 -12 5.373 -12 12" /></svg>`
+
+      const svgXAxis = `<svg style="display: inline" xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 13v.01" /><path d="M4 9v.01" /><path d="M4 5v.01" /><path d="M17 20l3 -3l-3 -3" /><path d="M4 17h16" /></svg>`;
+
+      const svgYAxis = `<svg style="display: inline" xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11 20h-.01" /><path d="M15 20h-.01" /><path d="M19 20h-.01" /><path d="M4 7l3 -3l3 3" /><path d="M7 20v-16" /></svg>`;
+
+      const svgZoom = `<svg style="display: inline" xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg>`;
+
+      const svgWindow = `<svg style="display: inline" xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 8v-2a2 2 0 0 1 2 -2h2" /><path d="M4 16v2a2 2 0 0 0 2 2h2" /><path d="M16 4h2a2 2 0 0 1 2 2v2" /><path d="M16 20h2a2 2 0 0 0 2 -2v-2" /></svg>`;
+
+      const svgDownload = `<svg style="display: inline"  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg>`;
+
+      const svgSample = `<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-test-pipe-2"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 3v15a3 3 0 0 1 -6 0v-15" /><path d="M9 12h6" /><path d="M8 3h8" /></svg>`
+
+      d3.select("#openModalBtn").attr("class", "st-option-button");
+      d3.select("#graph-div-treeID").attr("class", "st-body-tree-div-treeID");
+
+      let myid = Math.random();
+
+      function addModalToFirstBody() {
+        let firstBody = document.getElementsByTagName("body")[0];
+        let modalHtml = `
+    <div id="myModal-treeID" class="st-modal">
+        <div class="st-modal-content">
+           <span id="closeBtn-treeID" class="st-closeBtn">&times;</span>
+            <div id="st-info-div-treeID" class="st-info-div"></div>
+            <div id = "toolbar-treeID" class="st-toolbar"></div>
+            <div id ="graph-div-treeID" class ="st-tree-div-${myid}"></div>     
+      <div id="st-side-panel-treeID" class="st-side-panel">
+            <span id="st-close-button-treeID" class="st-close-button">&times;</span>
+        <div>
+        </div>
+    </div>
+    `;
+        firstBody.insertAdjacentHTML("beforeend", modalHtml);
+      }
+
+      addModalToFirstBody();
+
+      var stjupyter = false;
+
+      if (document.body.getAttribute('data-jp-theme-name') !== null) {
+        stjupyter = true;
+      }
+
+      let Modalbutton = d3
+        .select("#toolbar-treeID")
+        .append("button")
+        .html(svgWindow)
+        .attr("class", "st-option-button")
+        .attr("id", "openModalBtn-treeID");
+
+      if (!stjupyter) {
+        Modalbutton.style("display", "none");
+      }
+
+      let modal = document.getElementById("myModal-treeID");
+      let btn = document.getElementById("openModalBtn-treeID");
+      let span = document.getElementById("closeBtn-treeID");
+
+      var lastDropdowDepthValue = "$depth"
+      const regr = "regression";
+      const classification = "classification";
+      const nodata = "nodata";
+      let boldLinks = true;
+      let globalX = true;
+      let globalY = true;
+      const yMultiplayer = 1;
+      const xMultiplayer = 1;
+      let isLocked = false;
+      let globalMaxSample = 0;
+      const pieHeight = 100;
+      const pieWidth = 100;
+      const histogramWidth = 150;
+      const histogramHeight = 80;
+      const scatterplotWidth = histogramWidth;
+      const scatterplotHeight = histogramHeight;
+      const scatterplotLeafWidth = histogramHeight + 10;
+      const scatterplotLeafHeight = histogramHeight;
+      const rectHeight = 110;
+      const rectWidth = 195;
+      var maxSample =0;
+
+      const allColors = [
+        "#FEFEBB",
+        "#c7e9b4",
+        "#41b6c4",
+        "#FEFECD",
+        "#CFE2D4",
+        "#4575B4",
+        "#313695",
+        "#FEE090",
+        "#006400",
+        "#A6BDDB",
+        "#444443",
+        "#FFFF00",
+        "#00FF00",
+        "#0000FF",
+        "#FFA500",
+        "#800080",
+        "#FF00FF",
+        "#00FFFF",
+        "#FFC0CB",
+        "#808080",
+        "#800000",
+        "#008000",
+        "#000080",
+        "#FFFFE0",
+        "#00FA9A",
+        "#ADD8E6",
+        "#FF4500",
+        "#EE82EE",
+        "#20B2AA",
+        "#778899",
+        "#B22222",
+        "#7FFF00",
+        "#4682B4",
+        "#DAA520",
+        "#4B0082",
+        "#D2691E",
+        "#5F9EA0",
+        "#FF1493",
+        "#696969",
+        "#DC143C",
+        "#00CED1",
+        "#FFD700",
+        "#9932CC",
+        "#8B4513",
+        "#00BFFF",
+        "#FF69B4",
+        "#A9A9A9",
+        "#B22222",
+        "#32CD32",
+        "#1E90FF",
+        "#FF8C00",
+        "#BA55D3",
+        "#8B0000",
+        "#48D1CC",
+        "#DDA0DD",
+        "#FF6347",
+        "#2E8B57",
+        "#6495ED",
+        "#FFA07A",
+        "#9370DB",
+        "#8B008B",
+        "#FF0000",
+        "#bfd2bf",
+        "#a37774",
+        "#124559",
+        "#00FF00",
+        "#46351d",
+        "#0000FF",
+        "#01161e",
+        "#FF00FF",
+        "#FFFF00",
+        "#FF0000",
+        "#93b7be",
+        "#785964",
+        "#00FF00",
+        "#598392",
+        "#eaf0ce",
+        "#0000FF",
+        "#FF00FF",
+        "#FFFF00",
+        "#d75841",
+        "#228B22",
+        "#79625d",
+        "#1E90FF",
+        "#fba64c",
+        "#32CD32",
+        "#a46848",
+        "#4682B4",
+        "#453e2a",
+        "#c8b496",
+        "#00CED1",
+        "#2e1515",
+        "#be9668",
+        "#541e13",
+        "#715a3b",
+        "#17090c",
+        "#dcd1b8",
+        "#3f2926",
+        "#d03c32",
+        "#9e8676",
+        "#e3aa71",
+        "#de5d70",
+        "#544540",
+        "#335f9e",
+        "#ab9682",
+        "#150a2b",
+        "#171559",
+        "#d6d169",
+        "#450c3d",
+        "#913362",
+        "#2b7873",
+        "#2b9e62",
+        "#65aacf",
+        "#1f1718",
+        "#67d95f",
+        "#a61e49",
+        "#f2c6b8",
+        "#e6e3d8",
+        "#eb9494",
+        "#794d81",
+        "#ffd8a9",
+        "#ff5b4f",
+        "#4a3778",
+        "#ffb366",
+        "#ad82cf",
+        "#7e9770",
+        "#f39d91",
+        "#a9548a",
+        "#d38e84",
+        "#8455a9",
+        "#814d6e",
+        "#5d7668",
+        "#f2af92",
+        "#533a44",
+        "#ffffe1",
+        "#9e2081",
+        "#235a63",
+        "#c92e70",
+        "#c37289",
+        "#a83a94",
+        "#db5989",
+        "#4c55ba",
+        "#77c1eb",
+        "#f68484",
+        "#acfff1",
+        "#ffce96",
+        "#512b8c",
+        "#1f4572",
+        "#221330",
+        "#422452",
+        "#d4ffb0",
+        "#50cc9a",
+        "#74ff86",
+        "#201a47",
+        "#2c8a9a",
+        "#000000",
+        "#782b8c",
+        "#fffab2",
+        "#fdffef",
+        "#094d18",
+        "#449481",
+        "#f0cc69",
+        "#df5f36",
+        "#555555",
+        "#497a3a",
+        "#beb866",
+        "#819650",
+        "#7294d6",
+        "#5b2b7c",
+        "#ffffff",
+        "#aaaaaa",
+        "#000000",
+        "#8cdaff",
+        "#f0a34a",
+        "#9f1d2e",
+        "#5b59b3",
+        "#4b0f37",
+        "#63b9bb",
+        "#227944",
+      ];
+      const colorSize = 20;
+
+
+      var tooltipModal = d3
+        .selectAll("#myModal-treeID")
+        .append("div")
+        .attr("class", "st-tooltip")
+        .style("position", "absolute")
+        .style("opacity", 0)
+        .style("-webkit-user-select", "none")
+        .style("-moz-user-select", "none")
+        .style("-ms-user-select", "none")
+        .style("font-size", "18px")
+        .style("background-color", "rgba(0, 0, 0, 0.7)")
+        .style("color", "white")
+        .style("padding", "8px")
+        .style("border-radius", "4px")
+        .style("box-shadow", "0px 4px 8px rgba(0, 0, 0, 0.3)")
+        .style("max-width", "200px")
+        .style("text-align", "center")
+        .style("z-index", "1000")
+        .style("transition", "opacity 0.3s ease");
+
+      var tooltipBody = d3
+        .selectAll("body")
+        .append("div")
+        .attr("class", "st-tooltip")
+        .style("position", "absolute")
+        .style("opacity", 0)
+        .style("user-select", "none")
+        .style("-webkit-user-select", "none")
+        .style("-moz-user-select", "none")
+        .style("-ms-user-select", "none")
+        .style("font-size", "18px")
+        .style("background-color", "rgba(0, 0, 0, 0.7)")
+        .style("color", "white")
+        .style("padding", "8px")
+        .style("border-radius", "4px")
+        .style("box-shadow", "0px 4px 8px rgba(0, 0, 0, 0.3)")
+        .style("max-width", "200px")
+        .style("text-align", "center")
+        .style("z-index", "1000")
+        .style("transition", "opacity 0.3s ease");
+
+
+          function startWatcher() {
+        const treeID = "st-body-tree-div-treeID";
+        const modalID = "myModal-treeID";
+
+        function callback(mutationsList, observer) {
+            const treeElement = d3.select("." + treeID);
+            if (treeElement.empty()) {
+                const modalElement = d3.select("#" + modalID);
+                if (!modalElement.empty()) {
+                    modalElement.remove();
+                }
+                observer.disconnect();
+            }
+        }
+
+        const observer = new MutationObserver(callback);
+
+        const config = { childList: true, subtree: true };
+
+        observer.observe(document.body, config);
+    }
+      startWatcher();
+
+      async function loadJSONFiles() {
+        try {
+          let data;
+
+          if (pytree != "$treetemplate") {
+            var treeData = pytree;
+
+            data = {
+              nodeData: treeData.node_data,
+              treeData: treeData.tree_data,
+            };
+          } else {
+            const [treeDataResponse] = await Promise.all([fetch(pathJson)]);
+
+            if (!treeDataResponse.ok) {
+              throw new Error("Network response was not ok");
+            }
+
+            const treeData = await treeDataResponse.json();
+            stLog("debug", treeData);
+            data = {
+              nodeData: treeData.node_data,
+              treeData: treeData.tree_data,
+            };
+          }
+          return data;
+        } catch (error) {
+          stLog("error", "Error loading JSON files:");
+        }
+      }
+
+      loadJSONFiles().then((data) => {
+        if (data) {
+          const { nodeData, treeData } = data;
+
+          let nodeIdCounter = 0;
+
+          function convertData(node) {
+            node.id = nodeIdCounter++;
+            if (node.is_leaf) {
+              return { children: [], ...node };
+            } else {
+              return {
+                children: [
+                  convertData(node.left_node),
+                  convertData(node.right_node),
+                ],
+                ...node,
+              };
+            }
+          }
+
+          let treeDataConverted = convertData(nodeData);
+          const treeLeafSpacing = 300;
+          const treeLevelSpacing = 180;
+          const treeDepthSpacing = 400;
+
+          function createHierarchyFromData() {
+            const hierarchy = d3.hierarchy(treeDataConverted);
+            hierarchy.each(function(node) {
+              node.id = node.data.id;
+            });
+            return hierarchy;
+          }
+
+          function computeStableLayout(rootData) {
+            const fullHierarchy = d3.hierarchy(rootData);
+            let fullMaxDepth = 0;
+            let fullLeafs = 0;
+
+            fullHierarchy.each(function(node) {
+              fullMaxDepth = Math.max(fullMaxDepth, node.depth);
+              if (!node.children || node.children.length === 0) {
+                fullLeafs++;
+              }
+            });
+
+            const layoutWidth = Math.max(fullLeafs, 1) * treeLeafSpacing;
+            const layoutHeight = Math.max(fullMaxDepth, 1) * treeDepthSpacing;
+            const laidOutHierarchy = d3.tree().size([layoutWidth, layoutHeight])(fullHierarchy);
+            const stableNodePositions = new Map();
+
+            laidOutHierarchy.descendants().forEach(function(node) {
+              stableNodePositions.set(node.data.id, {
+                x: node.x,
+                y: node.depth * treeLevelSpacing,
+              });
+            });
+
+            return {
+              layoutWidth,
+              layoutHeight,
+              stableNodePositions,
+            };
+          }
+
+          function applyStableLayout(hierarchyRoot) {
+            hierarchyRoot.each(function(node) {
+              node.id = node.data.id;
+              const stablePosition = stableLayout.stableNodePositions.get(node.data.id);
+
+              node.x = stablePosition.x;
+              node.y = stablePosition.y;
+
+              if (!node.hasOwnProperty("cx")) {
+                node.cx = node.x * xMultiplayer;
+              }
+              if (!node.hasOwnProperty("cy")) {
+                node.cy = node.y * yMultiplayer;
+              }
+              if (node.x0 === undefined) {
+                node.x0 = node.x;
+              }
+              if (node.y0 === undefined) {
+                node.y0 = node.y;
+              }
+            });
+          }
+
+          const stableLayout = computeStableLayout(treeDataConverted);
+
+
+          let featureNumber = treeData.data_feature[0].length;
+          var globalXExtent = Array.from({ length: featureNumber }, () => [
+            Infinity,
+            -Infinity,
+          ]);
+          var globalYExtent = Array.from({ length: featureNumber }, () => [
+            0,
+            -Infinity,
+          ]);
+          function click(event, d) {
+            if (isLocked) return;
+            if (d.children == null && d._children == null) {
+              return;
+            }
+            stLog("debug", " Collapse click event");
+            isLocked = true;
+            d3.selectAll("#st-depth-dropdown").attr("disabled", "disabled");
+
+            if (d.children) {
+              d._children = d.children;
+              d.children = null;
+            } else {
+              d.children = d._children;
+              d._children = null;
+            }
+            update(d, false);
+            stLog("debug", d, "Node w click")
+            setTimeout(() => {
+              resetZoom();
+              isLocked = false;
+              d3.selectAll("#st-depth-dropdown").attr("disabled", null);
+            }, duration);
+          }
+
+          let nodeTreeMargin = { top: 20, right: 90, bottom: 160, left: 90 },
+            treeWidth = stableLayout.layoutWidth,
+            treeHeight = stableLayout.layoutHeight;
+
+          var i = 0;
+          const duration = 1250;
+
+
+          let colors = allColors.slice(0, colorSize);
+
+          if (treeData.feature_names.length > colors.length) {
+            let missingColors = treeData.feature_names.length - colors.length;
+
+            function getRandomColor() {
+              let letters = '0123456789ABCDEF';
+              let color = '#';
+              for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+              }
+              return color;
+            }
+
+            for (let i = 0; i < missingColors; i++) {
+              colors.push(getRandomColor());
+            }
+          }
+
+          var zoom = d3.zoom().scaleExtent([0.05, 5]).on("zoom", zoomed);
+
+          function zoomed(event) {
+            treeSVG.attr("transform", event.transform);
+          }
+
+          function isModalVisible() {
+            var modal = document.getElementById("myModal-treeID");
+            return modal.style.display === "block";
+          }
+
+          function getViewportContext() {
+            if (isModalVisible()) {
+              const divElement = document.getElementsByClassName(`st-tree-div-${myid}`)[0];
+              return {
+                divWidth: divElement.clientWidth,
+                divHeight: divElement.clientHeight,
+                svgElement: d3.select(divElement).select("svg#mySVG-treeID"),
+              };
+            }
+
+            const divElement = document.getElementsByClassName("st-body-tree-div-treeID")[0];
+            return {
+              divWidth: divElement.clientWidth,
+              divHeight: divElement.clientHeight,
+              svgElement: d3.select(divElement).select("svg#mySVG-treeID"),
+            };
+          }
+
+          function getRenderedTreeBounds() {
+            const treeNode = treeSVG.node();
+
+            if (!treeNode) {
+              return null;
+            }
+
+            const treeBounds = treeNode.getBBox();
+
+            if (!Number.isFinite(treeBounds.width) || !Number.isFinite(treeBounds.height)) {
+              return null;
+            }
+
+            const horizontalPadding = rectWidth / 2 + 40;
+            const verticalPadding = rectHeight / 2 + 40;
+
+            return {
+              minX: treeBounds.x - horizontalPadding,
+              maxX: treeBounds.x + treeBounds.width + horizontalPadding,
+              minY: treeBounds.y - verticalPadding,
+              maxY: treeBounds.y + treeBounds.height + verticalPadding,
+              width: Math.max(treeBounds.width + horizontalPadding * 2, 1),
+              height: Math.max(treeBounds.height + verticalPadding * 2, 1),
+            };
+          }
+
+          span.onclick = function() {
+            modal.style.display = "none";
+            resetZoom();
+          };
+
+          function handleModalBackdropClick(event) {
+            if (event.target == modal) {
+              modal.style.display = "none";
+              resetZoom();
+            }
+          }
+
+          window.addEventListener("click", handleModalBackdropClick);
+
+          btn.onclick = function() {
+            modal.style.display = "block";
+            resetZoom();
+          };
+
+          function getVisibleTreeBounds() {
+            const renderedBounds = getRenderedTreeBounds();
+
+            if (renderedBounds !== null) {
+              return renderedBounds;
+            }
+
+            const visibleNodes = treeRoot.descendants();
+            const horizontalPadding = rectWidth / 2 + 40;
+            const verticalPadding = rectHeight / 2 + 40;
+
+            let minX = Infinity;
+            let maxX = -Infinity;
+            let minY = Infinity;
+            let maxY = -Infinity;
+
+            visibleNodes.forEach(function(node) {
+              minX = Math.min(minX, node.x - horizontalPadding);
+              maxX = Math.max(maxX, node.x + horizontalPadding);
+              minY = Math.min(minY, node.y - verticalPadding);
+              maxY = Math.max(maxY, node.y + verticalPadding);
+            });
+
+            return {
+              minX,
+              maxX,
+              minY,
+              maxY,
+              width: Math.max(maxX - minX, 1),
+              height: Math.max(maxY - minY, 1),
+            };
+          }
+
+          function getFullTreeBounds() {
+            const horizontalPadding = rectWidth / 2 + 40;
+            const verticalPadding = rectHeight / 2 + 40;
+            const positions = Array.from(stableLayout.stableNodePositions.values());
+
+            let minX = Infinity;
+            let maxX = -Infinity;
+            let minY = Infinity;
+            let maxY = -Infinity;
+
+            positions.forEach(function(position) {
+              minX = Math.min(minX, position.x - horizontalPadding);
+              maxX = Math.max(maxX, position.x + horizontalPadding);
+              minY = Math.min(minY, position.y - verticalPadding);
+              maxY = Math.max(maxY, position.y + verticalPadding);
+            });
+
+            return {
+              minX,
+              maxX,
+              minY,
+              maxY,
+              width: Math.max(maxX - minX, 1),
+              height: Math.max(maxY - minY, 1),
+            };
+          }
+
+          function getFitTransform(mode = "visible") {
+            const { divWidth, divHeight } = getViewportContext();
+            const fitBounds = mode === "full" ? getFullTreeBounds() : getVisibleTreeBounds();
+            const topViewportPadding = 20;
+            const availableWidth = Math.max(divWidth - nodeTreeMargin.left - nodeTreeMargin.right, 1);
+            const availableHeight = Math.max(divHeight - nodeTreeMargin.top - nodeTreeMargin.bottom, 1);
+            let currentScale = Math.min(
+              availableWidth / fitBounds.width,
+              availableHeight / fitBounds.height,
+            );
+            currentScale = Math.min(Math.max(0.05, currentScale), 2);
+
+            const centeredX = (fitBounds.minX + fitBounds.maxX) / 2;
+            let rootTransform = d3.zoomIdentity
+              .translate(
+                -centeredX * currentScale + divWidth / 2,
+                -fitBounds.minY * currentScale + topViewportPadding,
+              )
+              .scale(currentScale);
+
+            return rootTransform;
+          }
+
+          function resetZoom(mode = "visible") {
+            const { svgElement } = getViewportContext();
+            const rootTransform = getFitTransform(mode);
+
+            svgElement
+              .transition()
+              .duration(duration)
+              .call(zoom.transform, rootTransform);
+          }
+
+          var treeRoot = createHierarchyFromData();
+          applyStableLayout(treeRoot);
+          treeRoot.x0 = treeRoot.x;
+          treeRoot.y0 = treeRoot.y;
+
+          var treeSVG = d3
+            .selectAll("#graph-div-treeID")
+            .append("svg")
+            .attr(
+              "width",
+              treeWidth + nodeTreeMargin.right + nodeTreeMargin.left,
+            )
+            .attr(
+              "height",
+              treeHeight + nodeTreeMargin.top + nodeTreeMargin.bottom,
+            )
+            .attr("id", "mySVG-treeID")
+            .attr("class", "st-svg")
+            .call(zoom)
+            .append("g")
+            .attr(
+              "transform",
+              "translate(" +
+              nodeTreeMargin.left +
+              "," +
+              nodeTreeMargin.top +
+              ")",
+            );
+
+          var sideSVG = d3.selectAll("#st-side-panel-treeID").append("svg")
+            .attr("id", "st-side-svg-treeID")
+            .attr("class", "st-svg-2")
+            .attr("width", "100%")
+            .attr("height", 1000)
+            .style("background-color", "#f3f9fb");
+
+
+
+          var startDepth = "$depth"
+
+          if (typeof startDepth == "string") {
+            startDepth = 4;
+          }
+
+          stLog("debug", startDepth, "start depth value");
+
+          collapse(treeRoot, 0, startDepth);
+          update(treeRoot, false);
+          resetZoom();
+
+          function update(source, resetTree) {
+            var maxDepthReset = 0;
+            if (resetTree) {
+
+              function DFS(node, depth, maxDepth) {
+                depth++;
+                if (node.children) {
+                  node.children.forEach(function(child) {
+                    maxDepthReset = Math.max(depth, maxDepthReset);
+                    DFS(child, depth, maxDepth);
+                  })
+                }
+              }
+              DFS(treeRoot, 0, maxDepthReset);
+
+              treeSVG.selectAll(".treeNode").remove();
+              treeSVG.selectAll("#st-link-treeID").remove();
+              treeSVG.selectAll("g").remove();
+              treeRoot = createHierarchyFromData();
+              collapse(treeRoot, 0, maxDepthReset + 1);
+              applyStableLayout(treeRoot);
+              stLog("debug", treeSVG, "treeSVG")
+              i = 0;
+            }
+            d3.selectAll("#st-link-treeID").style("stroke", "black");
+            minSample = Infinity;
+            applyStableLayout(treeRoot);
+            let nodes = treeRoot.descendants(),
+              links = treeRoot.descendants().slice(1);
+
+            var treeNode = treeSVG
+              .selectAll(".treeNode")
+              .data(treeRoot.descendants(), function(d) {
+                return d.id;
+              });
+
+            function getDescendants(sourceRoot, myDescendants = []) {
+              if (sourceRoot._children) {
+                sourceRoot._children.forEach(function(d) {
+                  myDescendants.push(d);
+                  getDescendants(d, myDescendants);
+                });
+              }
+
+              if (sourceRoot.children) {
+                sourceRoot.children.forEach(function(d) {
+                  myDescendants.push(d);
+                  getDescendants(d, myDescendants);
+                });
+              }
+
+              return myDescendants;
+            }
+
+            function getAscentors(sourceRoot, myAscentors = []) {
+              if (sourceRoot.parent) {
+                myAscentors.push(sourceRoot.parent);
+                getDescendants(sourceRoot.parent, myAscentors);
+              }
+
+              return myAscentors;
+            }
+
+            let enterDescendants = getDescendants(source);
+
+            let idsArrayDescendants = enterDescendants.map(function(d) {
+              return d.id;
+            });
+
+            idsArrayDescendants.push(source.id);
+
+            var treeNodeEnter = treeNode
+              .enter()
+              .append("g")
+              .attr("class", "treeNode")
+              .attr(
+                "transform",
+                (d) => "translate(" + source.cx + "," + source.cy + ")",
+              )
+              .on("click", click);
+
+            globalXExtent = Array.from({ length: featureNumber }, () => [
+              Infinity,
+              -Infinity,
+            ]);
+            globalYExtent = Array.from({ length: featureNumber }, () => [
+              0,
+              -Infinity,
+            ]);
+
+
+            for (let i = 0; i < featureNumber; i++) {
+              let tempArr = [];
+              for (let j = 0; j < treeData.data_feature.length; j++) {
+                tempArr.push(treeData.data_feature[j][i]);
+              }
+              let tempGlobalXExtent = d3.extent(tempArr);
+              globalXExtent[i][0] = Math.min(
+                globalXExtent[i][0],
+                tempGlobalXExtent[0],
+              );
+              globalXExtent[i][1] = Math.max(
+                globalXExtent[i][1],
+                tempGlobalXExtent[1],
+              );
+            }
+
+            for (let i = 0; i < featureNumber; i++) {
+              globalXExtent[i][0] -= 0.2;
+              globalXExtent[i][1] += 0.2;
+            }
+
+            if (treeData.tree_type == regr) {
+              treeNodeEnter.each(function(d) {
+                processRegressionNode.call(
+                  this,
+                  d,
+                  treeData,
+                  scatterplotWidth,
+                  scatterplotHeight,
+                  histogramWidth,
+                  histogramHeight,
+                  rectWidth,
+                  rectHeight,
+                  tooltipBody,
+                  tooltipModal,
+                  colors
+                );
+              });
+              treeNodeEnter.each(function(d) {
+                processRegressionLeaf.call(
+                  this,
+                  d,
+                  treeData,
+                  scatterplotLeafWidth,
+                  scatterplotLeafHeight,
+                  rectHeight,
+                  tooltipBody,
+                  tooltipModal,
+                  click,
+                  showpath
+                );
+              });
+            }
+
+            if (treeData.tree_type == classification) {
+              treeNodeEnter.each(function(d) {
+                processClassificationNode.call(
+                  this,
+                  treeData,
+                  tooltipBody,
+                  tooltipModal,
+                  globalX,
+                  globalXExtent,
+                  globalY,
+                  globalYExtent,
+                  click,
+                  histogramWidth,
+                  histogramHeight,
+                  rectWidth,
+                  rectHeight,
+                  colors,
+                  d
+                );
+              });
+
+              treeNodeEnter.each(function(d) {
+                if (d.data.is_leaf) {
+                  var sum = 0;
+                  for (
+                    let i = 0;
+                    i < d.data.class_distribution[0].length;
+                    i++
+                  ) {
+                    sum = sum + parseFloat(d.data.class_distribution[0][i]);
+                  }
+                  maxSample = Math.max(maxSample, sum);
+                  minSample = Math.min(minSample, sum);
+                }
+              });
+              if (maxSample > 0) {
+                globalMaxSample = Math.max(maxSample,globalMaxSample);
+              }
+
+              treeNodeEnter.each(function(d) {
+                processClassificationLeaf.call(
+                  this,
+                  treeData,
+                  pieWidth,
+                  pieHeight,
+                  rectWidth,
+                  rectHeight,
+                  scatterplotWidth,
+                  scatterplotHeight,
+                  colors,
+                  maxSample,
+                  showpath,
+                  d3,
+                  tooltipBody,
+                  tooltipModal,
+                  d
+                );
+              });
+            }
+            if (treeData.tree_type.startsWith(nodata)) {
+              treeNodeEnter.each(function(d) {
+                if (!d.data.is_leaf) {
+                  d3.select(this)
+                    .append("rect")
+                    .attr("class", "histogram-background")
+                    .attr("x", -(scatterplotWidth / 2) - 25)
+                    .attr("y", -10)
+                    .attr("width", rectWidth)
+                    .attr("height", rectHeight)
+                    .attr("stroke-width", 1)
+                    .attr("stroke", "#545454")
+                    .attr("rx", 10)
+                    .attr("ry", 10)
+                    .style("fill", "#ffffff");
+
+                  d3.select(this)
+                    .append("text")
+                    .attr("dy", ".0em")
+                    .attr("y", 10)
+                    .attr("class", "st-target")
+                    .style("text-anchor", "middle")
+                    .text((d) => "Threshold " + parseFloat(d.data.threshold).toFixed(3))
+                    .style("-webkit-user-select", "none")
+                    .style("-moz-user-select", "none")
+                    .style("-ms-user-select", "none");
+
+                  d3.select(this)
+                    .append("text")
+                    .attr("dy", ".0em")
+                    .attr("y", 30)
+                    .attr("class", "st-target")
+                    .style("text-anchor", "middle")
+                    .text((d) => "Impurity: " + d.data.impurity)
+                    .style("-webkit-user-select", "none")
+                    .style("-moz-user-select", "none")
+                    .style("-ms-user-select", "none");
+
+                  d3.select(this)
+                    .append("text")
+                    .attr("dy", ".0em")
+                    .attr("y", 50)
+                    .attr("class", "st-target")
+                    .style("text-anchor", "middle")
+                    .text((d) => "Samples " + d.data.samples)
+                    .style("-webkit-user-select", "none")
+                    .style("-moz-user-select", "none")
+                    .style("-ms-user-select", "none");
+
+                  d3.select(this)
+                    .append("text")
+                    .attr("dy", ".0em")
+                    .attr("y", 70)
+                    .attr("class", "st-target")
+                    .style("text-anchor", "middle")
+                    .text((d) => "Value [" + d.data.class_distribution + "]")
+                    .style("-webkit-user-select", "none")
+                    .style("-moz-user-select", "none")
+                    .style("-ms-user-select", "none");
+
+                  d3.select(this)
+                    .append("text")
+                    .attr("dy", ".0em")
+                    .attr("y", 90)
+                    .attr("class", "st-target")
+                    .style("text-anchor", "middle")
+                    .text((d) => "Class " + d.data.treeclass)
+                    .style("-webkit-user-select", "none")
+                    .style("-moz-user-select", "none")
+                    .style("-ms-user-select", "none");
+
+
+
+                }
+                if (d.data.is_leaf) {
+                  d3.select(this)
+                    .append("rect")
+                    .attr("class", "histogram-background")
+                    .attr("x", -(scatterplotWidth / 2) - 5)
+                    .attr("y", -10)
+                    .attr("width", rectWidth - 40)
+                    .attr("height", rectHeight)
+                    .attr("stroke-width", 1)
+                    .attr("stroke", "#545454")
+                    .attr("rx", 10)
+                    .attr("ry", 10)
+                    .style("fill", "#ffffff");
+
+
+                  d3.select(this)
+                    .append("text")
+                    .attr("dy", ".0em")
+                    .attr("y", 10)
+                    .attr("class", "st-target")
+                    .style("text-anchor", "middle")
+                    .text((d) => "Samples " + d.data.samples)
+                    .style("-webkit-user-select", "none")
+                    .style("-moz-user-select", "none")
+                    .style("-ms-user-select", "none");
+
+
+                  d3.select(this)
+                    .append("text")
+                    .attr("dy", ".0em")
+                    .attr("y", 40)
+                    .attr("class", "st-target")
+                    .style("text-anchor", "middle")
+                    .text((d) => "Value [" + d.data.class_distribution + "]")
+                    .style("-webkit-user-select", "none")
+                    .style("-moz-user-select", "none")
+                    .style("-ms-user-select", "none");
+
+
+                  d3.select(this)
+                    .append("text")
+                    .attr("dy", ".0em")
+                    .attr("y", 70)
+                    .attr("class", "st-target")
+                    .style("text-anchor", "middle")
+                    .text((d) => "Class " + d.data.treeclass)
+                    .style("-webkit-user-select", "none")
+                    .style("-moz-user-select", "none")
+                    .style("-ms-user-select", "none");
+
+
+
+                }
+              });
+
+
+            }
+
+            var treeNodeUpdate = treeNodeEnter.merge(treeNode);
+
+            treeNodeUpdate
+              .transition()
+              .duration(duration)
+              .tween("logging", function(d) {
+                let interpolateX = d3.interpolate(
+                  source.x0 * xMultiplayer,
+                  d.x * xMultiplayer,
+                );
+                let interpolateY = d3.interpolate(
+                  source.y * yMultiplayer,
+                  d.y * yMultiplayer,
+                );
+
+                return function(t) {
+                  let x = interpolateX(t);
+                  let y = interpolateY(t);
+                  d.cx = x;
+                  d.cy = y;
+                };
+              })
+              .attr("transform", function(d) {
+                return (
+                  "translate(" +
+                  d.x * xMultiplayer +
+                  "," +
+                  d.y * yMultiplayer +
+                  ")"
+                );
+              });
+
+            let exitDescendants = [];
+
+            exitDescendants = getDescendants(source);
+
+            let descendantIds = new Set(exitDescendants.map((d) => d.id));
+
+            let treeNodeExit = treeNode
+              .exit()
+              .filter(function(d) {
+                return descendantIds.has(d.id);
+              })
+              .transition()
+              .duration(duration)
+              .attr("transform", function(d) {
+                return (
+                  "translate(" +
+                  (source.x + rectWidth / 2) +
+                  "," +
+                  (source.y0 + rectHeight / 2) +
+                  ")"
+                );
+              })
+              .attr("font-size", "1em")
+              .remove();
+
+            treeNodeExit
+              .selectAll(".st-target")
+              .style("fill-opacity", 1e-6)
+              .style("font-size", "0px")
+              .attr("x", -rectWidth / 2)
+              .attr("y", 0);
+
+            treeNodeExit
+              .selectAll(".st-triangle")
+              .style("stroke-width", 0)
+              .style("fill-opacity", 0)
+              .attr("transform", function(d) {
+                return "translate(" + (-source.x / 6) + "," + (-source.y0 / 6) + ")";
+              })
+              .size(0);
+
+            const smallScaleX = d3.scaleLinear().domain(0, 10).range([0, 1]);
+            const smallScaleY = d3.scaleLinear().domain(10, 0).range([1, 0]);
+
+            treeNodeExit
+              .selectAll(".xAxis")
+              .attr("transform", "translate(" + -rectWidth / 2 + "," + 0 + ")")
+              .call(
+                d3
+                  .axisBottom(smallScaleX)
+                  .tickSize(0)
+                  .tickPadding(8)
+                  .ticks(2)
+                  .tickFormat(d3.format(",.1f")),
+              );
+
+            treeNodeExit
+              .selectAll(".yAxis")
+              .attr("transform", "translate(" + -rectWidth / 2 + "," + 0 + ")")
+              .call(
+                d3
+                  .axisRight(smallScaleY)
+                  .tickSize(0)
+                  .tickPadding(8)
+                  .ticks(2)
+                  .tickFormat(d3.format(",.1f")),
+              );
+
+            treeNodeExit
+              .selectAll("rect.histogram-background")
+              .attr("width", 1e-6)
+              .attr("height", 1e-6)
+              .attr("x", -rectWidth / 2)
+              .attr("y", 0);
+
+            treeNodeExit
+              .selectAll("rect.bar")
+              .attr("width", 1e-6)
+              .attr("height", 1e-6)
+              .attr("x", -histogramWidth / 2 + 70)
+              .attr("y", 0);
+
+            treeNodeExit
+              .selectAll("circle")
+              .attr("r", 1e-6)
+              .attr("cx", -scatterplotWidth / 2 + 20)
+              .attr("cy", 0);
+
+            treeNodeExit
+              .selectAll("path.piechart")
+              .attr("transform", "translate(" + -rectWidth / 2 + "," + 0 + ")")
+              .attr("d", d3.arc().innerRadius(0).outerRadius(1));
+            let gridAnimation = treeNodeExit.select(".st-grid");
+
+            treeNodeExit
+              .selectAll("line.threshold-line")
+              .attr("transform", "translate(" + -rectWidth + "," + -40 + ")")
+              .attr("x1", rectWidth / 2)
+              .attr("x2", rectWidth / 2)
+              .attr("y1", rectHeight / 2 - 15)
+              .attr("y2", rectHeight / 2)
+              .attr("stroke-width", 0);
+
+            treeNodeExit
+              .selectAll("line.average-line")
+              .attr("transform", "translate(" + -rectWidth + "," + -40 + ")")
+              .attr("x1", rectWidth / 2)
+              .attr("x2", rectWidth / 2)
+              .attr("y1", rectHeight / 2 - 15)
+              .attr("y2", rectHeight / 2 - 15)
+              .attr("stroke-width", 0);
+
+            gridAnimation.selectAll("line").attr("x2", 0).attr("y2", 0);
+
+            treeNodeExit
+              .selectAll(".yAxis-text")
+              .attr("transform", "translate(" + 0 + "," + -40 + ")")
+              .style("fill-opacity", 1e-6)
+              .style("font-size", "0px")
+              .attr("x", 0);
+
+            treeNodeExit
+              .selectAll(".xAxis-text")
+              .attr("transform", "translate(" + 0 + "," + -40 + ")")
+              .style("fill-opacity", 1e-6)
+              .style("font-size", "0px");
+
+            treeNodeExit
+              .selectAll(".st-pie-target")
+              .attr("y", function(d, i) {
+                const radius = Math.max(
+                  20,
+                  (Math.min(pieWidth, pieHeight) / 2) *
+                  Math.sqrt(d.data.classDistributionValue / globalMaxSample),
+                );
+
+                return -10 - radius * 2 - i * 40;
+              })
+              .attr("transform", "translate(" + -rectWidth / 2 + "," + 0 + ")")
+              .style("fill-opacity", 1e-6)
+              .style("font-size", "0px");
+
+            treeNodeExit
+              .selectAll(".st-pie-target2")
+              .attr("y", function(d, i) {
+                const radius = Math.max(
+                  20,
+                  (Math.min(pieWidth, pieHeight) / 2) *
+                  Math.sqrt(d.data.classDistributionValue / globalMaxSample),
+                );
+
+                return -10 - radius * 2 - i * 40;
+              })
+              .attr("transform", "translate(" + -rectWidth / 2 + "," + 0 + ")")
+              .style("fill-opacity", 1e-6)
+              .style("font-size", "0px");
+
+            let link = treeSVG.selectAll("#st-link-treeID").data(links, function(d) {
+              return d.id;
+            });
+
+            const mouseover = function(d) {
+
+              const currentStroke = d3.select(this).style("stroke");
+
+              tooltipBody.style("opacity", 1);
+              tooltipModal.style("opacity", 1);
+
+              if (currentStroke !== "blue") {
+                d3.select(this).style("stroke", "#EF4A60");
+              }
+              else {
+                d3.select(this).style("stroke", "violet");
+              }
+            };
+
+            const mouseleave = function(d) {
+
+              const currentStroke = d3.select(this).style("stroke");
+
+              tooltipBody
+                .style("opacity", 0)
+                .style("top", -2000 + "px")
+                .style("left", -2000 + "px");
+
+              tooltipModal
+                .style("opacity", 0)
+                .style("top", -2000 + "px")
+                .style("left", -2000 + "px");
+
+              if (currentStroke !== "blue") {
+                d3.select(this).style("stroke", "black");
+              }
+              if (currentStroke === "violet") {
+                d3.select(this).style("stroke", "blue");
+              }
+            };
+
+            const mousemove = function(event, d) {
+              if (treeData.tree_type == classification) {
+                var currentDistribution = 0;
+                for (let i = 0; i < d.data.class_distribution[0].length; i++) {
+                  currentDistribution =
+                    currentDistribution +
+                    parseInt(d.data.class_distribution[0][i]);
+                }
+
+                tooltipModal
+                  .html(
+                    `<b>Class distribution in link:</b>: ${currentDistribution}`,
+                  )
+                  .style("top", event.pageY - 10 + "px")
+                  .style("left", event.pageX + 10 + "px");
+
+                tooltipBody
+                  .html(
+                    `<b>Class distribution in link:</b>: ${currentDistribution}`,
+                  )
+                  .style("top", event.pageY - 10 + "px")
+                  .style("left", event.pageX + 10 + "px");
+              }
+              if (treeData.tree_type == regr) {
+                var currentDistribution = d.data.samples;
+
+                tooltipModal
+                  .html(`<b>Samples in link:</b>: ${currentDistribution}`)
+                  .style("top", event.pageY - 10 + "px")
+                  .style("left", event.pageX + 10 + "px");
+
+                tooltipBody
+                  .html(`<b>Samples in link:</b>: ${currentDistribution}`)
+                  .style("top", event.pageY - 10 + "px")
+                  .style("left", event.pageX + 10 + "px");
+              }
+            };
+
+            var linkEnter = link
+              .enter()
+              .insert("path", "g")
+              .attr("class", "st-link")
+              .attr("id", "st-link-treeID")
+              .attr("d", function(d) {
+                var o = { x: source.cx, y: source.cy };
+                return diagonal(o, o);
+              })
+              .style("fill", "none") // Ustawienie fill inline
+             .style("stroke", "#000") // Ustawienie stroke inline
+              .style("stroke-width", "2px") 
+              .on("mouseover", mouseover)
+              .on("mouseleave", mouseleave)
+              .on("mousemove", mousemove);
+
+            var allSamples = 0;
+            var allSamplesRegr = 0;
+            if (treeData.tree_type == regr) {
+              allSamplesRegr = nodeData.samples;
+            }
+            for (let i = 0; i < nodeData.class_distribution[0].length; i++) {
+              allSamples =
+                allSamples + parseInt(nodeData.class_distribution[0][i]);
+            }
+            if (boldLinks == true) {
+              if (treeData.tree_type == classification) {
+                linkEnter.each(function(d) {
+                  var currentDistribution = 0;
+                  for (
+                    let i = 0;
+                    i < d.data.class_distribution[0].length;
+                    i++
+                  ) {
+                    currentDistribution =
+                      currentDistribution +
+                      parseInt(d.data.class_distribution[0][i]);
+                  }
+                  d3.select(this).style(
+                    "stroke-width",
+                    Math.max(20 * (currentDistribution / allSamples), 1),
+                  );
+                });
+              }
+              if (treeData.tree_type == regr) {
+                linkEnter.each(function(d) {
+                  var currentDistribution = 0;
+                  currentSamples = d.data.samples;
+                  d3.select(this).style(
+                    "stroke-width",
+                    Math.max(20 * (currentSamples / allSamplesRegr), 1),
+                  );
+                });
+              }
+            }
+
+            var linkUpdate = linkEnter.merge(link);
+
+            linkUpdate
+              .transition()
+              .duration(duration)
+              .attr("d", function(d) {
+                return diagonal(d.parent, d);
+              });
+
+            var linkExit = link
+              .exit()
+              .filter(function(d) {
+                return descendantIds.has(d.id);
+              })
+              .transition()
+              .duration(duration)
+              .attr("d", function(d) {
+                var o = { x: source.x, y: source.y0 };
+                return diagonal(o, o);
+              })
+              .remove();
+
+
+            function diagonal(s, d) {
+              path = `M ${s.x * xMultiplayer} ${s.y * yMultiplayer}
+            C ${(s.x * xMultiplayer + d.x * xMultiplayer) / 2} ${s.y * yMultiplayer},
+              ${(s.x * xMultiplayer + d.x * xMultiplayer) / 2} ${d.y * yMultiplayer},
+              ${d.x * xMultiplayer} ${d.y * yMultiplayer}`;
+
+              return path;
+            }
+
+          }
+          if (treeData.model_name != "DecisionTreeClassifier" && treeData.model_name != "DecisionTreeRegressor") {
+            stLog("debug","hello");
+            d3.selectAll("#st-info-div-treeID")
+              .append("p")
+              .text(`${treeData.model_name} ${treeData.which_tree}`)
+              .style("font-size", "12px")
+              .style("color", "black");
+          }
+          const mouseover = function(d) {
+            tooltipBody.style("opacity", 1);
+            tooltipModal.style("opacity", 1);
+          };
+
+          const mouseleave = function(d) {
+            tooltipBody
+              .style("opacity", 0)
+              .style("top", -2000 + "px")
+              .style("left", -2000 + "px");
+            tooltipModal
+              .style("opacity", 0)
+              .style("top", -2000 + "px")
+              .style("left", -2000 + "px");
+          };
+
+          const mousemoveButton = function(event, d) {
+            tooltipBody
+              .html(`<b>${d}</b>`)
+              .style("top", event.pageY - 10 + "px")
+              .style("left", event.pageX + 10 + "px");
+
+            tooltipModal
+              .html(`<b>${d}</b>`)
+              .style("top", event.pageY - 10 + "px")
+              .style("left", event.pageX + 10 + "px");
+          };
+
+          d3.select("#openModalBtn-treeID")
+            .on("mouseover", mouseover)
+            .on("mouseleave", mouseleave)
+            .on("mousemove", function(d) {
+              mousemoveButton(event, "Open modal window");
+            });
+
+          var toolbar = d3.selectAll("#toolbar-treeID");
+
+          var saveSvgbutton = toolbar
+            .append("button")
+            .html(svgDownload)
+            .attr("id", "svgButton")
+            .attr("class", "st-option-button")
+            .on("click", saveSvg)
+            .on("mouseover", mouseover)
+            .on("mouseleave", mouseleave)
+            .on("mousemove", function(d) {
+              mousemoveButton(event, "Save SVG");
+            });
+
+          if (treeData.show_sample !== undefined && treeData.show_sample != "nodata" && !treeData.tree_type.startsWith("nodata")) {
+            var showSampleButton = d3
+              .selectAll("#toolbar-treeID")
+              .append("button")
+              .html(svgSample)
+              .attr("id", "showSampleButton")
+              .attr("class", "st-option-button")
+              .on("click", showSample)
+              .on("mouseover", mouseover)
+              .on("mouseleave", mouseleave)
+              .on("mousemove", function(d) {
+                mousemoveButton(event, "Show sample path");
+              });
+          }
+
+          function showSample() {
+            var sampleNode = null;
+            showSampleDFS(treeRoot);
+            function showSampleDFS(node) {
+              if (node.children) {
+                node.children.forEach(function(child) {
+                  showSampleDFS(child)
+                })
+              }
+              else if (node._children) {
+                node._children.forEach(function(child) {
+                  showSampleDFS(child)
+                })
+              }
+              else {
+                var isSampleExistInThisNode = true;
+                node.data.start_end_x_axis.forEach((currentElement, i) => {
+                  const sampleValue = treeData.show_sample[i];
+
+                  if (currentElement[0] != "notexist" && sampleValue > currentElement[0]) {
+                    isSampleExistInThisNode = false;
+                  }
+
+                  if (currentElement[1] != "notexist" && sampleValue < currentElement[1]) {
+                    isSampleExistInThisNode = false;
+                  }
+                });
+                if (isSampleExistInThisNode) {
+                  sampleNode = node;
+                }
+              }
+            }
+            stLog("debug", sampleNode, "SampleNode");
+            if (isLocked) {
+              return
+            };
+            isLocked = true;
+            d3.selectAll("#st-depth-dropdown").attr("disabled", "disabled");
+            showDepth(treeRoot, 0, sampleNode.depth + 1, true);
+            update(treeRoot, false);
+            dropdownDepth.property("value", optionsDepth[sampleNode.depth]);
+            setTimeout(() => {
+              resetZoom();
+              isLocked = false;
+              d3.selectAll("#st-depth-dropdown").attr("disabled", null);
+            }, duration);
+            showpath(sampleNode);
+
+
+          }
+
+          function showpath(d) {
+            d3.selectAll("#st-link-treeID").style("stroke", "black");
+            pathData = getLinksIds(d);
+            ids = pathData.ids;
+            nodedata = pathData.nodedata;
+
+
+
+            var newHeight = nodedata.length * 250;
+            newHeight = Math.max(newHeight, 1000);
+
+            sideSVG.attr("height", newHeight);
+
+            d3.selectAll("#st-link-treeID")
+              .filter(function(d) {
+                return ids.includes(d.id);
+              })
+              .style("stroke", "blue");
+
+            const sidePanel = d3.selectAll("#st-side-panel-treeID");
+
+            if (sidePanel.classed("show")) {
+              sidePanel.classed("show", false).classed("hide", true);
+
+              setTimeout(function() {
+                sideSVG.selectAll("g").remove();
+
+                sidePanel.classed("hide", false).classed("show", true);
+
+                renderNodeData(nodedata);
+
+              }, 300);
+            } else {
+              sidePanel.classed("hide", false).classed("show", true);
+              renderNodeData(nodedata);
+            }
+          }
+
+          function renderNodeData(nodedata) {
+            nodedata.slice().reverse().forEach(function(node, i) {
+              let translateX = 150;
+              let translateY = 200 * i + 100;
+
+              if (treeData.tree_type == regr && node.data.is_leaf) {
+                translateX -= 10; 
+              }
+
+              const group = sideSVG.append("g")
+                .attr("class", "node-group")
+                .attr("transform", `translate(${translateX}, ${translateY})`)
+                .datum(node);
+
+              group.each(function(d) {
+                if (treeData.tree_type == classification) {
+                  if (!node.data.is_leaf) {
+                    processClassificationNode.call(
+                      this,
+                      treeData,
+                      tooltipBody,
+                      tooltipModal,
+                      globalX,
+                      globalXExtent,
+                      globalY,
+                      globalYExtent,
+                      click,
+                      histogramWidth,
+                      histogramHeight,
+                      rectWidth,
+                      rectHeight,
+                      colors,
+                      node
+                    );
+                  }
+                  if (node.data.is_leaf) {
+
+            
+                    processClassificationLeaf.call(
+                      this,
+                      treeData,
+                      pieWidth,
+                      pieHeight,
+                      rectWidth,
+                      rectHeight,
+                      scatterplotWidth,
+                      scatterplotHeight,
+                      colors,
+                      globalMaxSample,
+                      showpath,
+                      d3,
+                      tooltipBody,
+                      tooltipModal,
+                      d
+                    );
+                  }
+                }
+                if (treeData.tree_type == regr) {
+                  if (!node.data.is_leaf) {
+                    processRegressionNode.call(
+                      this,
+                      d,
+                      treeData,
+                      scatterplotWidth,
+                      scatterplotHeight,
+                      histogramWidth,
+                      histogramHeight,
+                      rectWidth,
+                      rectHeight,
+                      tooltipBody,
+                      tooltipModal,
+                      colors
+                    );
+                  }
+                  if (node.data.is_leaf) {
+                    processRegressionLeaf.call(
+                      this,
+                      d,
+                      treeData,
+                      scatterplotLeafWidth,
+                      scatterplotLeafHeight,
+                      rectHeight,
+                      tooltipBody,
+                      tooltipModal,
+                      click,
+                      showpath
+                    );
+                  }
+                }
+              });
+            });
+
+          }
+
+
+
+          function getLinksIds(node) {
+            var ids = []
+            var nodedata = []
+            function linkDFS(node) {
+              stLog("debug", node, "Node w dfsie");
+              ids.push(node.id)
+              nodedata.push(node)
+              if (node.parent) {
+                linkDFS(node.parent);
+              }
+            }
+            linkDFS(node)
+            let pathData = {
+              ids: ids,
+              nodedata: nodedata
+            }
+            return pathData;
+          }
+
+
+
+          if (!treeData.tree_type.startsWith(nodata))
+            var Linkbutton = d3
+              .selectAll("#toolbar-treeID")
+              .append("button")
+              .html(svgLine)
+              .attr("id", "boldLink")
+              .attr("class", "st-option-button")
+              .on("click", boldClick)
+              .on("mouseover", mouseover)
+              .on("mouseleave", mouseleave)
+              .on("mousemove", function(d) {
+                mousemoveButton(
+                  event,
+                  "Change line tickness scalling in reference to samples in child node",
+                );
+              });
+
+
+          d3.selectAll("#st-close-button-treeID").on("click", function() {
+            d3.selectAll("#st-side-panel-treeID").classed("show", false).classed("hide", true);
+            setTimeout(function() {
+              sideSVG.selectAll("g").remove();
+            }, 300);
+          });
+
+          var resetZoomButton = d3
+            .selectAll("#toolbar-treeID")
+            .append("button")
+            .html(svgZoom)
+            .attr("id", "resetZoom")
+            .attr("class", "st-option-button")
+            .on("click", () => resetZoom())
+            .on("mouseover", mouseover)
+            .on("mouseleave", mouseleave)
+            .on("mousemove", function(d) {
+              mousemoveButton(event, "Zoom reset");
+            });
+
+          if (treeData.tree_type == classification) {
+            var xButton = d3
+              .selectAll("#toolbar-treeID")
+              .append("button")
+              .html(svgXAxis)
+              .attr("id", "changeXAxis")
+              .attr("class", "st-option-button")
+              .on("click", xClick)
+              .on("mouseover", mouseover)
+              .on("mouseleave", mouseleave)
+              .on("mousemove", function(d) {
+                mousemoveButton(event, "Change Scale on X Axis");
+              });
+
+            var yButton = d3
+              .selectAll("#toolbar-treeID")
+              .append("button")
+              .html(svgYAxis)
+              .attr("id", "changeYAxis")
+              .attr("class", "st-option-button")
+              .on("click", yClick)
+              .on("mouseover", mouseover)
+              .on("mouseleave", mouseleave)
+              .on("mousemove", function(d) {
+                mousemoveButton(event, "Change Scale on Y Axis");
+              });
+          }
+
+
+
+          function boldClick() {
+            boldLinks = !boldLinks;
+            update(treeRoot, true);
+          }
+
+          function saveSvg() {
+            var svgElement = document.getElementById("mySVG-treeID");
+
+            var serializer = new XMLSerializer();
+            var svgString = serializer.serializeToString(svgElement);
+
+            var blob = new Blob([svgString], {
+              type: "image/svg+xml;charset=utf-8",
+            });
+
+            var downloadLink = document.createElement("a");
+            downloadLink.href = URL.createObjectURL(blob);
+            downloadLink.download = "myDiagram.svg";
+
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+
+            document.body.removeChild(downloadLink);
+          }
+
+          function xClick() {
+            globalX = !globalX;
+            update(treeRoot, true);
+          }
+
+          function yClick() {
+            globalY = !globalY;
+            update(treeRoot, true);
+          }
+
+          const myToolbar = d3.selectAll("#toolbar-treeID");
+
+          var dropdownDepth = myToolbar
+            .append("select")
+            .attr("id", "st-depth-dropdown")
+            .attr("class", "st-dropdown")
+            .on("change",
+              handleDepthChange
+            )
+            ;
+
+          function handleDepthChange(event, optDepth = "optional") {
+            var depth = 0;
+            if (optDepth !== "optional") {
+              depth = optDepth;
+            }
+            else {
+              depth = extractNumber(this.value) + 1;
+            }
+            if (depth != null) {
+              if (isLocked) {
+                return;
+              }
+              isLocked = true;
+              d3.selectAll("#st-depth-dropdown").attr("disabled", "disabled");
+              showDepth(treeRoot, 0, depth, true);
+              update(treeRoot, false);
+              dropdownDepth.property("value", optionsDepth[depth - 1]);
+
+              setTimeout(() => {
+                resetZoom();
+                isLocked = false;
+                d3.selectAll("#st-depth-dropdown").attr("disabled", null);
+              }, duration);
+            }
+          }
+
+
+          if (treeData.tree_type == classification) {
+            let dropdownColors = myToolbar
+              .append("select")
+              .attr("id", "st-color-dropdown")
+              .attr("class", "st-dropdown")
+              .on("change", function() {
+                var number = extractNumber(this.value);
+                colors = allColors.slice((number - 1) * colorSize, number * colorSize);
+                if (treeData.feature_names.length > colors.length) {
+                  let missingColors = treeData.feature_names.length - colors.length;
+
+                  function getRandomColor() {
+                    let letters = '0123456789ABCDEF';
+                    let color = '#';
+                    for (let i = 0; i < 6; i++) {
+                      color += letters[Math.floor(Math.random() * 16)];
+                    }
+                    return color;
+                  }
+
+                  for (let i = 0; i < missingColors; i++) {
+                    colors.push(getRandomColor());
+                  }
+                }
+                update(treeRoot, true);
+              });
+
+
+
+            let optionsColors = [];
+
+            d3.selectAll(".st-option-button")
+              .style("user-select", "none")
+              .style("-webkit-user-select", "none")
+              .style("-moz-user-select", "none")
+              .style("-ms-user-select", "none");
+
+            for (let i = 1; i <= allColors.length / 20; i++) {
+              optionsColors.push(`Palette = ${i}`);
+            }
+
+            dropdownColors
+              .selectAll("option")
+              .data(optionsColors)
+              .enter()
+              .append("option")
+              .attr("value", (d) => d)
+              .text((d) => d);
+          }
+
+          function redirectToPage() {
+            window.location.href = "https://mljar.com/";
+          }
+
+          setTimeout(function() {
+
+            logoURL = "https://mljar.com/images/logo/logo_blue_white.svg";
+            let logo = d3
+              .select("#toolbar-treeID")
+              .append("button")
+              .attr("class", "st-option-button")
+              .style("background", "transparent")
+              .style("border", "none")
+              .style("cursor", "pointer")
+              .style("padding", "0")
+              .style("position", "relative")
+              .append("img")
+              .attr("src", logoURL)
+              .style("height", "50px")
+          }, 100);
+
+
+          function showDepth(d, currentDepth, depth, colapse) {
+            currentDepth++;
+            if (currentDepth < depth) {
+              if (d._children) {
+                d.children = d._children;
+                d._children = null;
+              }
+              if (d.children) {
+                d.children.forEach(function(child) {
+                  showDepth(child, currentDepth, depth, colapse);
+                });
+              }
+            } else if (currentDepth > depth) {
+              if (d.children) {
+                d._children = d.children;
+                d.children = null;
+              }
+              if (d._children) {
+                d._children.forEach(function(child) {
+                  showDepth(child, currentDepth, depth, colapse);
+                });
+              }
+            } else if (currentDepth == depth) {
+              if (d.children) {
+                d._children = d.children;
+                d.children = null;
+              }
+              if (d._children) {
+                d._children.forEach(function(child) {
+                  showDepth(child, currentDepth, depth, colapse);
+                });
+              }
+            }
+          }
+
+          var maxDepth = 0;
+
+          function getTreeDepth(d, depth) {
+            depth++;
+            maxDepth = Math.max(depth, maxDepth);
+            if (d.children) {
+              d.children.forEach(function(child) {
+                getTreeDepth(child, depth);
+              });
+            }
+            if (d._children) {
+              d._children.forEach(function(child) {
+                getTreeDepth(child, depth);
+              });
+            }
+          }
+          getTreeDepth(treeRoot, maxDepth);
+
+          var optionsDepth = [];
+
+          for (let i = 1; i <= maxDepth; i++) {
+            optionsDepth.push(`Depth = ${i - 1}`);
+          }
+
+          dropdownDepth
+            .selectAll("option")
+            .data(optionsDepth)
+            .enter()
+            .append("option")
+            .attr("value", (d) => d)
+            .text((d) => d);
+
+          dropdownDepth.property("value", optionsDepth[Math.min(startDepth - 1, optionsDepth.length - 1)]);
+
+
+          function collapse(d, depth, maxdepth) {
+            depth++;
+            if (d.children && depth == maxdepth) {
+              d._children = d.children;
+              d.children = null;
+            }
+            else if(d.children) {
+              d.children.forEach(function(child) {
+                collapse(child, depth, maxdepth);
+              });
+            }
+          }
+          function extractNumber(str) {
+            const match = str.match(/\d+/);
+
+            if (match) {
+              return parseInt(match[0], 10);
+            }
+
+            return null;
+          }
+
+        }
+      });
+    })
+    .catch((error) => {
+      stLog("error", error.message);
+    });
+}
+buildTree(
+);
+
+
+function processClassificationNode(treeData, tooltipBody, tooltipModal, globalX, globalXExtent, globalY, globalYExtent, click, histogramWidth, histogramHeight, rectWidth, rectHeight, colors, d) {
+  var isSampleExist = false;
+  if (!d.data.is_leaf) {
+    if (treeData.show_sample != "nodata" && treeData.show_sample != undefined) {
+      isSampleExist = true;
+    }
+    var isSampleExistInThisNode = true;
+    if (isSampleExist) {
+      isSampleExistInThisNode = true;
+    }
+    else {
+      isSampleExistInThisNode = false;
+    }
+
+    const featureIndex = d.data.feature;
+
+    const uniqueTargets = [...new Set(treeData.data_target)];
+    const maxTarget = Math.max(...uniqueTargets);
+    let filteredData = Array.from({ length: maxTarget + 1 }, () => []);
+    stLog("debug", filteredData, "filtered");
+    stLog("debug", treeData.data_target, "data_target");
+    treeData.data_feature.forEach((row, index) => {
+      const target = treeData.data_target[index];
+      filteredData[target].push(row);
+    });
+
+    var xExtent = [Infinity, -Infinity];
+
+    d.data.start_end_x_axis.forEach((currentElement, index) => {
+      if (currentElement[0] != "notexist") {
+        filteredData.forEach((twoDimArray, i) => {
+          filteredData[i] = twoDimArray.filter(
+            (rowArray) => rowArray[index] < currentElement[0],
+          );
+        });
+      }
+      if (currentElement[1] != "notexist") {
+        filteredData.forEach((twoDimArray, i) => {
+          filteredData[i] = twoDimArray.filter(
+            (rowArray) => rowArray[index] > currentElement[1],
+          );
+        });
+      }
+    });
+
+
+    if (isSampleExist) {
+
+      d.data.start_end_x_axis.forEach((currentElement, i) => {
+        const sampleValue = treeData.show_sample[i];
+
+        if (currentElement[0] != "notexist" && sampleValue > currentElement[0]) {
+          isSampleExistInThisNode = false;
+        }
+
+        if (currentElement[1] != "notexist" && sampleValue < currentElement[1]) {
+          isSampleExistInThisNode = false;
+        }
+      });
+    }
+
+    let featureData = filteredData.map((subArray) =>
+      subArray.map((innerArray) => innerArray[featureIndex]),
+    );
+
+    const removedIndices = [];
+
+    let indicesArray = Array.from(
+      { length: featureData.length + removedIndices.length },
+      (_, i) => i,
+    );
+
+    featureData = featureData
+      .map((twoDimArray, index) => {
+        const filteredArray = twoDimArray.filter(
+          (value) => value !== undefined && value !== null,
+        );
+        if (filteredArray.length === 0) {
+          removedIndices.push(index);
+        }
+        return filteredArray;
+      })
+      .filter((twoDimArray) => twoDimArray.length > 0);
+
+    let removedSet = new Set(removedIndices);
+
+    indicesArray = indicesArray.filter(
+      (value) => !removedSet.has(value),
+    );
+
+    featureData.map((currentValue) => {
+      var tempxExtent = d3.extent(currentValue);
+      xExtent[0] = Math.min(xExtent[0], tempxExtent[0]);
+      xExtent[1] = Math.max(xExtent[1], tempxExtent[1]);
+    });
+
+    xExtent[0] = xExtent[0] - 0.2;
+    xExtent[1] = xExtent[1] + 0.2;
+
+    if (globalX) {
+      xExtent = globalXExtent[featureIndex];
+    }
+
+    if (xExtent[0] > d.data.threshold) {
+      xExtent[0] = d.data.threshold - 0.2
+    }
+    if (xExtent[1] < d.data.threshold) {
+      xExtent[1] = d.data.threshold + 0.2
+    }
+
+  if(isSampleExistInThisNode){
+    if (xExtent[0] > treeData.show_sample[featureIndex]) {
+      xExtent[0] = treeData.show_sample[featureIndex] - 0.2
+    }
+    if (xExtent[1] < treeData.show_sample[featureIndex]) {
+      xExtent[1] = treeData.show_sample[featureIndex] + 0.2
+    }
+    }
+
+    const xScale = d3
+      .scaleLinear()
+      .domain(xExtent)
+      .range([0, histogramWidth]);
+
+    d3.select(this)
+      .append("rect")
+      .attr("class", "histogram-background")
+      .attr("x", -(histogramWidth / 2) - 25)
+      .attr("y", -10)
+      .attr("width", rectWidth)
+      .attr("height", rectHeight)
+      .attr("stroke-width", isSampleExistInThisNode ? 4 : 1)
+      .attr("stroke", "#545454")
+      .attr("rx", 10)
+      .attr("ry", 10)
+      .style("fill", "#ffffff")
+      .on("click", click);
+
+    const mousemoveAllData = function(event, d) {
+      stLog("debug", d, "mousemoveAllData")
+      tooltipBody
+        .html(
+          `<b>All Data</b>:<br>Class distribution: ${d.data.class_distribution}
+              <br>Impurity: ${d.data.impurity}
+              <br>Samples: ${d.data.samples}
+              <br>Threshold: ${parseFloat(d.data.threshold).toFixed(3)}
+              <br>Treeclass: ${d.data.treeclass}`,
+        )
+        .style("top", event.pageY - 10 + "px")
+        .style("left", event.pageX + 10 + "px")
+        .style("opacity", 1);
+
+      tooltipModal
+        .html(
+          `<b>All Data</b>:<br>Class distribution: ${d.data.class_distribution}
+              <br>Impurity: ${d.data.impurity}
+              <br>Samples: ${d.data.samples}
+              <br>Threshold: ${parseFloat(d.data.threshold).toFixed(3)}
+              <br>Treeclass: ${d.data.treeclass}`,
+        )
+        .style("top", event.pageY - 10 + "px")
+        .style("left", event.pageX + 10 + "px")
+        .style("opacity", 1);
+    };
+
+    const mouseleaveAllData = function(event, d) {
+      tooltipBody.style("opacity", 0)
+        .style("top", -2000 + "px")
+        .style("left", -2000 + "px");
+
+      tooltipModal.style("opacity", 0)
+        .style("top", -2000 + "px")
+        .style("left", -2000 + "px");
+
+    };
+
+    stLog("debug", this, "This");
+
+    d3.select(this)
+      .append("text")
+      .attr("class", "st-target")
+      .attr("x", 0)
+      .attr("y", rectHeight + 15)
+      .style("text-anchor", "middle")
+      .style("font-size", "18px")
+      .text(treeData.feature_names[featureIndex])
+      .on("mousemove", mousemoveAllData)
+      .on("mouseleave", mouseleaveAllData)
+      .style("user-select", "none")
+      .style("-webkit-user-select", "none")
+      .style("-moz-user-select", "none")
+      .style("-ms-user-select", "none");
+
+    const xDomain = xScale.domain();
+    const xTickValues = [
+      xDomain[0],
+      d.data.threshold,
+      xDomain[1],
+    ];
+
+    d3.select(this)
+      .append("g")
+      .attr("class", "xAxis")
+      .attr(
+        "transform",
+        `translate(${-histogramWidth / 2}, ${histogramHeight})`,
+      )
+
+      .call(
+        d3
+          .axisBottom(xScale)
+          .tickSize(0)
+          .tickPadding(8)
+          .tickValues(xTickValues)
+          .tickFormat(d3.format(",.1f")),
+      )
+      .selectAll(".tick")
+      .attr("class", "xAxis-text")
+      .style("user-select", "none")
+      .style("-webkit-user-select", "none")
+      .style("-moz-user-select", "none")
+      .style("-ms-user-select", "none")
+      .style("fill", "black");
+
+
+    d3.select(this).selectAll(".domain")
+      .style("stroke", "black");
+
+    const yScale = d3.scaleLinear().range([histogramHeight, 0]);
+
+    const yAxis = d3.select(this).append("g");
+
+    /*
+  const GridLine = () => d3.axisLeft().scale(yScale);
+  d3.select(this)
+    .append("g")
+    .attr("class", "grid")
+    .attr("transform", `translate(${-histogramWidth / 2},0)`)
+    .call(
+      GridLine()
+        .tickSize(-histogramWidth, 0, 0)
+        .tickFormat("")
+        .ticks(10),
+    );
+*/
+    const histogram = d3
+      .bin()
+      .domain(xScale.domain())
+      .thresholds(xScale.ticks(20));
+
+    const binsData = featureData.map((data) => histogram(data));
+
+    stLog("debug", binsData, "binsData")
+
+    const stackedData = d3
+      .stack()
+      .keys(d3.range(featureData.length))
+      .value((d, key) => (d[key] ? d[key].length : 0))(
+        d3.transpose(binsData),
+      );
+
+
+
+    var yExtent = [0, 0];
+    yExtent[0] = 0;
+    yExtent[1] = d3.max(stackedData, (d) =>
+      d3.max(d, (d) => d[1]),
+    );
+
+    globalYExtent[featureIndex][1] = Math.max(
+      globalYExtent[featureIndex][1],
+      d3.max(stackedData, (d) => d3.max(d, (d) => d[1])),
+    );
+    if (globalY) {
+      yExtent = globalYExtent[featureIndex];
+    }
+    yScale.domain(yExtent);
+
+    const yDomain = yScale.domain();
+    const yTickValues = [
+      yDomain[0],
+      yDomain[0] + (yDomain[1] - yDomain[0]) / 2,
+      yDomain[1],
+    ];
+    stLog("debug", yTickValues, "YTICKVALUES")
+    if (yTickValues.every(value => !isNaN(value))) {
+      yAxis
+        .call(
+          d3
+            .axisRight(yScale)
+            .tickSize(0)
+            .tickPadding(4)
+            .tickValues(yTickValues)
+            .tickFormat(d3.format(",.0f")),
+        )
+        .attr("class", "yAxis")
+        .attr("transform", `translate(${-histogramWidth / 2 - yAxisMargin},0)`)
+        .call((d) => d.select(".domain").remove())
+        .style("user-select", "none")
+        .style("-webkit-user-select", "none")
+        .style("-moz-user-select", "none")
+        .style("-ms-user-select", "none")
+        .style("fill", "black");
+    }
+
+
+    d3.select(this).selectAll(".domain")
+      .style("stroke", "black");
+
+    const mouseover = function(d) {
+      tooltipModal.style("opacity", 1);
+      tooltipBody.style("opacity", 1);
+
+      d3.select(this).style("stroke", "#EF4A60");
+    };
+
+    const mouseleave = function(d) {
+      tooltipModal
+        .style("opacity", 0)
+        .style("top", -2000 + "px")
+        .style("left", -2000 + "px");
+
+      tooltipBody
+        .style("opacity", 0)
+        .style("top", -2000 + "px")
+        .style("left", -2000 + "px");
+
+      d3.select(this).style("stroke", "black");
+    };
+
+    const mousemove = function(event, d) {
+      tooltipBody
+        .html(
+          `<b>${treeData.target_names[d.class]}</b>: ${d[1] - d[0]}`,
+        )
+        .style("top", event.pageY - 10 + "px")
+        .style("left", event.pageX + 10 + "px");
+
+      tooltipModal
+        .html(
+          `<b>${treeData.target_names[d.class]}</b>: ${d[1] - d[0]}`,
+        )
+        .style("top", event.pageY - 10 + "px")
+        .style("left", event.pageX + 10 + "px");
+    };
+
+    let nodeToClick = d;
+
+    stLog("debug", stackedData, "stackedData");
+    stLog("debug", d.data, "node:");
+
+    d3.select(this)
+      .selectAll("g.layer")
+      .data(stackedData)
+      .enter()
+      .append("g")
+      .attr("class", "layer")
+      .style("fill", (d, i) => colors[indicesArray[i]])
+      .on("click", function() {
+        click(source, nodeToClick);
+      })
+      .selectAll("rect.bar")
+      .data((d, i) =>
+        d.map((item) => ({ ...item, class: indicesArray[i] })),
+      )
+      .enter()
+      .append("rect")
+      .attr("class", "bar")
+      .attr("x", (d) => {
+        return xScale(d.data[0].x0);
+      })
+      .attr("y", (d) => {
+        if (isNaN(yScale(d[1]))) {
+          return 0;
+        }
+        else {
+          return yScale(d[1]);
+        }
+      })
+      .attr("height", (d) => {
+        if (isNaN(yScale(d[0]) - yScale(d[1]))) {
+          return 0;
+        }
+        else {
+          return yScale(d[0]) - yScale(d[1]);
+        }
+      })
+      .attr(
+        "width",
+        (d) => xScale(d.data[0].x1) - xScale(d.data[0].x0),
+      )
+      .attr("transform", `translate(${-histogramWidth / 2},0)`)
+      .attr("stroke", "black")
+      .on("mouseover", mouseover)
+      .on("mouseleave", mouseleave)
+      .on("mousemove", mousemove);
+    stLog("debug", "abc")
+    var threshold = parseFloat(d.data.threshold).toFixed(3);
+    d3.select(this)
+      .append("line")
+      .attr("class", "threshold-line")
+      .attr("x1", xScale(threshold))
+      .attr("x2", xScale(threshold))
+      .attr("y1", 0)
+      .attr("y2", histogramHeight)
+      .attr("stroke", "black")
+      .attr("transform", `translate(${-histogramWidth / 2},0)`)
+      .attr("stroke-width", 2)
+      .attr("stroke-dasharray", "5,5");
+
+    var mouseovertriangle = function(d) {
+
+
+      tooltipBody.style("opacity", 1);
+      tooltipModal.style("opacity", 1);
+
+      d3.select(this).style("fill", "red").style("stroke", "red");
+    };
+
+    var mouseleavetriangle = function(d) {
+
+
+      tooltipBody
+        .style("opacity", 0)
+        .style("top", -2000 + "px")
+        .style("left", -2000 + "px");
+
+      tooltipModal
+        .style("opacity", 0)
+        .style("top", -2000 + "px")
+        .style("left", -2000 + "px");
+
+      d3.select(this).style("fill", "green").style("stroke", "green");
+    };
+
+
+    var mousemovetriangle = function(event, d) {
+
+      tooltipModal
+        .html(
+          treeData.feature_names.map((feature, index) => {
+            const sampleValue = treeData.show_sample[index];
+            const formattedValue = !isNaN(parseFloat(sampleValue)) ? parseFloat(sampleValue).toFixed(3) : 'N/A';
+            return `<b>${feature}:</b> ${formattedValue}`;
+          }).join(",")
+        )
+        .style("top", event.pageY - 10 + "px")
+        .style("left", event.pageX + 10 + "px");
+
+      tooltipBody
+        .html(
+          treeData.feature_names.map((feature, index) => {
+            const sampleValue = treeData.show_sample[index];
+            const formattedValue = !isNaN(parseFloat(sampleValue)) ? parseFloat(sampleValue).toFixed(3) : 'N/A';
+            return `<b>${feature}:</b> ${formattedValue}`;
+          }).join(",")
+        )
+        .style("top", event.pageY - 10 + "px")
+        .style("left", event.pageX + 10 + "px");
+    };
+    var color = "green";
+    var triangleSize = 25;
+    var verticalTransform = histogramHeight - Math.sqrt(triangleSize) + 15;
+
+    var triangle = d3.symbol()
+      .type(d3.symbolTriangle)
+      .size(triangleSize);
+
+    if (isSampleExistInThisNode) {
+      stLog("debug", d, "Exist");
+      d3.select(this).append("path")
+        .attr("d", triangle)
+        .attr("class", "st-triangle")
+        .style("fill", color)
+        .style("stroke-width", 1)
+        .style("stroke-opacity", 1)
+        .attr("transform", function(d) {
+          return "translate(" + (-histogramWidth / 2 + xScale(treeData.show_sample[featureIndex])) + "," + verticalTransform + ")";
+        })
+        .on("mouseover", mouseovertriangle)
+        .on("mouseleave", mouseleavetriangle)
+        .on("mousemove", mousemovetriangle);
+    }
+
+
+
+  }
+
+}
+
+
+function processClassificationLeaf(
+  treeData,
+  pieWidth,
+  pieHeight,
+  rectWidth,
+  rectHeight,
+  scatterplotWidth,
+  scatterplotHeight,
+  colors,
+  maxSample,
+  showpath,
+  d3,
+  tooltipBody,
+  tooltipModal,
+  d
+) {
+  var formatNumber = d3.format(",.0f");
+
+
+  if (d.data.is_leaf) {
+
+    const featureIndex = d.data.feature;
+
+    if (treeData.show_sample != "nodata") {
+      stLog("debug", treeData.show_sample, "treedatasample");
+      isSampleExist = true;
+    }
+    var isSampleExistInThisNode = true;
+    if (isSampleExist) {
+      isSampleExistInThisNode = true;
+    }
+    else {
+      isSampleExistInThisNode = false;
+    }
+    const classDistribution = d.data.class_distribution[0];
+    const removedIndexes = [];
+    const data = classDistribution
+      .map((value, index) => {
+        return {
+          target_name: `${treeData.target_names[index]}`,
+          classDistributionValue: value,
+          index: index,
+        };
+      })
+      .filter((item) => {
+        if (item.classDistributionValue === 0) {
+          removedIndexes.push(item.index);
+          return false;
+        }
+        return true;
+      })
+      .map((item) => {
+        return {
+          target_name: item.target_name,
+          classDistributionValue: item.classDistributionValue,
+        };
+      });
+    var isSampleExist = false;
+
+
+    if (treeData.show_sample != "nodata" && treeData.show_sample !== undefined) {
+      stLog("debug", treeData.show_sample, "treedatasample");
+      isSampleExist = true;
+    }
+    var isSampleExistInThisNode = true;
+    if (isSampleExist) {
+      isSampleExistInThisNode = true;
+    }
+    else {
+      isSampleExistInThisNode = false;
+    }
+
+    let indicesArray = Array.from(
+      { length: classDistribution.length },
+      (_, i) => i,
+    );
+
+    let removedSet = new Set(removedIndexes);
+
+    indicesArray = indicesArray.filter(
+      (value) => !removedSet.has(value),
+    );
+
+
+    if (isSampleExistInThisNode) {
+
+      d.data.start_end_x_axis.forEach((currentElement, i) => {
+        const sampleValue = treeData.show_sample[i];
+
+        if (currentElement[0] != "notexist" && sampleValue > currentElement[0]) {
+          isSampleExistInThisNode = false;
+        }
+
+        if (currentElement[1] != "notexist" && sampleValue < currentElement[1]) {
+          isSampleExistInThisNode = false;
+        }
+      });
+    }
+
+    var allCurrentSamples = 0;
+
+    for (
+      let i = 0;
+      i < d.data.class_distribution[0].length;
+      i++
+    ) {
+      allCurrentSamples =
+        allCurrentSamples +
+        parseInt(d.data.class_distribution[0][i]);
+    }
+
+    const radius = Math.max(
+      20,
+      (Math.min(pieWidth, pieHeight) / 2) *
+      Math.sqrt(allCurrentSamples / maxSample),
+    );
+    stLog("debug", allCurrentSamples,"current sample");
+    stLog("debug", maxSample,"max sample");
+
+    const pie = d3
+      .pie()
+      .value((d) => d.classDistributionValue)
+      .sort(null);
+
+    const dataPrepared = pie(data);
+
+    const arc = d3.arc().innerRadius(0).outerRadius(radius);
+
+    stLog("debug", "treeID","tree id");
+    stLog("debug",radius, "srednicaaaaaaaa");
+    stLog("debug",allCurrentSamples, "current samples");
+    stLog("debug",maxSample, "max sample");
+
+    data.forEach(function(d) {
+      d.classDistributionValue = +d.classDistributionValue;
+      d.enabled = true;
+    });
+
+    const total = d3.sum(
+      data.map(function(d) {
+        return d.enabled ? d.classDistributionValue : 0;
+      }),
+    );
+
+    const mouseover = function(d) {
+      tooltipBody.style("opacity", 1);
+      tooltipModal.style("opacity", 1);
+      d3.select(this).style("stroke", "#EF4A60");
+    };
+
+    const mouseleave = function(d) {
+      tooltipBody
+        .style("opacity", 0)
+        .style("top", -2000 + "px")
+        .style("left", -2000 + "px");
+
+      tooltipModal
+        .style("opacity", 0)
+        .style("top", -2000 + "px")
+        .style("left", -2000 + "px");
+
+      d3.select(this).style("stroke", "black");
+    };
+
+    const mousemove = function(event, d) {
+      tooltipBody
+        .html(
+          `<b>${d.data.target_name}</b>: ${d.data.classDistributionValue}`,
+        )
+        .style("top", event.pageY - 10 + "px")
+        .style("left", event.pageX + 10 + "px");
+
+      tooltipModal
+        .html(
+          `<b>${d.data.target_name}</b>: ${d.data.classDistributionValue}`,
+        )
+        .style("top", event.pageY - 10 + "px")
+        .style("left", event.pageX + 10 + "px");
+    };
+
+    if (dataPrepared[0] && 'data' in dataPrepared[0]) {
+      let nodeToClick = d3.select(this).datum()
+      d3.select(this)
+        .selectAll("path")
+        .data(dataPrepared)
+        .join("path")
+        .attr("class", "piechart")
+        .attr("d", arc)
+        .attr("fill", (d, i) => colors[indicesArray[i]])
+        .attr("transform", `translate(${10},${radius-2})`)
+        .attr("stroke", "black")
+        .on("mouseover", mouseover)
+        .on("mouseleave", mouseleave)
+        .on("mousemove", mousemove)
+        .on("click", function() {
+          showpath(nodeToClick)
+        })
+        .style("stroke-width", isSampleExistInThisNode ? "4px" : "2px")
+        .each(function(d) {
+          this._current = d;
+        })
+      stLog("debug", isSampleExistInThisNode, "Exist Sample true false");
+
+
+      d3.select(this)
+        .append("g")
+        .attr("class", "st-text-pie")
+        .attr("text-anchor", "middle")
+        .selectAll(".st-text-pie")
+        .data(dataPrepared)
+        .join("g")
+        .attr(
+          "transform",
+          (d, i) => `translate(10,${radius * 2 + 20 + i * 40})`,
+        )
+        .each(function(d, i) {
+          const group = d3.select(this);
+
+          group
+            .append("text")
+            .attr("class", "st-pie-target")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("fill", "black")
+            .style("text-anchor", "middle")
+            .style("font-size", "18px")
+            .text(d.data.target_name)
+            .style("user-select", "none")
+            .style("-webkit-user-select", "none")
+            .style("-moz-user-select", "none")
+            .style("-ms-user-select", "none");
+
+
+          group
+            .append("text")
+            .attr("class", "st-pie-target2")
+            .attr("x", 0)
+            .attr("y", 20)
+            .attr("fill", "black")
+            .style("text-anchor", "middle")
+            .style("font-size", "18px")
+            .text(formatNumber(d.data.classDistributionValue))
+            .style("user-select", "none")
+            .style("-webkit-user-select", "none")
+            .style("-moz-user-select", "none")
+            .style("-ms-user-select", "none");
+
+        });
+    }
+    else {
+
+      d3.select(this)
+        .append("rect")
+        .attr("class", "histogram-background")
+        .attr("x", -(scatterplotWidth / 2) - 5)
+        .attr("y", -10)
+        .attr("width", rectWidth - 40)
+        .attr("height", rectHeight)
+        .attr("stroke-width", 1)
+        .attr("stroke", "#545454")
+        .attr("rx", 10)
+        .attr("ry", 10)
+        .style("fill", "#ffffff");
+
+
+      d3.select(this)
+        .append("text")
+        .attr("dy", ".0em")
+        .attr("y", 10)
+        .attr("class", "st-target")
+        .style("text-anchor", "middle")
+        .text((d) => "Samples " + d.data.samples)
+        .style("-webkit-user-select", "none")
+        .style("-moz-user-select", "none")
+        .style("-ms-user-select", "none");
+
+
+      d3.select(this)
+        .append("text")
+        .attr("dy", ".0em")
+        .attr("y", 40)
+        .attr("class", "st-target")
+        .style("text-anchor", "middle")
+        .text((d) => "Value [" + d.data.class_distribution + "]")
+        .style("-webkit-user-select", "none")
+        .style("-moz-user-select", "none")
+        .style("-ms-user-select", "none");
+
+
+      d3.select(this)
+        .append("text")
+        .attr("dy", ".0em")
+        .attr("y", 70)
+        .attr("class", "st-target")
+        .style("text-anchor", "middle")
+        .text((d) => "Class " + d.data.treeclass)
+        .style("-webkit-user-select", "none")
+        .style("-moz-user-select", "none")
+        .style("-ms-user-select", "none");
+
+    }
+  }
+}
+
+function processRegressionNode(
+  d,
+  treeData,
+  scatterplotWidth,
+  scatterplotHeight,
+  histogramWidth,
+  histogramHeight,
+  rectWidth,
+  rectHeight,
+  tooltipBody,
+  tooltipModal,
+  colors
+) {
+
+  if (!d.data.is_leaf) {
+
+    const featureIndex = d.data.feature;
+    let filteredData = treeData.data_feature.map(
+      (row) => row[d.data.feature],
+    );
+
+    let combinedData = filteredData.map((value, index) => [
+      value,
+      treeData.data_target[index],
+    ]);
+    let indexSet = new Set();
+
+    d.data.start_end_x_axis.forEach((currentElement, index) => {
+      if (currentElement[0] != "notexist") {
+        treeData.data_feature.forEach((value, innerIndex) => {
+          if (value[index] > currentElement[0]) {
+            indexSet.add(innerIndex);
+          }
+        });
+      }
+      if (currentElement[1] != "notexist") {
+        treeData.data_feature.forEach((value, innerIndex) => {
+          if (value[index] < currentElement[1]) {
+            indexSet.add(innerIndex);
+          }
+        });
+      }
+    });
+
+
+    var isSampleExist = false;
+
+
+    if (treeData.show_sample != "nodata" && treeData.show_sample != undefined) {
+      stLog("debug", treeData.show_sample, "treedatasample");
+      isSampleExist = true;
+    }
+    var isSampleExistInThisNode = true;
+    if (isSampleExist) {
+      isSampleExistInThisNode = true;
+    }
+    else {
+      isSampleExistInThisNode = false;
+    }
+
+
+    if (isSampleExist) {
+
+      d.data.start_end_x_axis.forEach((currentElement, i) => {
+        const sampleValue = treeData.show_sample[i];
+
+        if (currentElement[0] != "notexist" && sampleValue > currentElement[0]) {
+          isSampleExistInThisNode = false;
+        }
+
+        if (currentElement[1] != "notexist" && sampleValue < currentElement[1]) {
+          isSampleExistInThisNode = false;
+        }
+      });
+    }
+
+    let indexesToRemove = Array.from(new Set([...indexSet]));
+
+    indexesToRemove.sort((a, b) => b - a);
+
+    indexesToRemove.forEach((index) => {
+      if (index >= 0 && index < combinedData.length) {
+        combinedData.splice(index, 1);
+      }
+    });
+
+    d3.select(this)
+      .append("rect")
+      .attr("class", "histogram-background")
+      .attr("x", -(scatterplotWidth / 2) - 25)
+      .attr("y", -10)
+      .attr("width", rectWidth)
+      .attr("height", rectHeight)
+      .attr("stroke-width", isSampleExistInThisNode ? 4 : 1)
+      .attr("stroke", "#545454")
+      .attr("rx", 10)
+      .attr("ry", 10)
+      .style("fill", "#ffffff");
+
+    let combinedDataValues = combinedData.map((item) => item[0]);
+
+    function calculateAverages(data, threshold) {
+      let sumBelowThreshold = 0;
+      let countBelowThreshold = 0;
+      let sumAboveOrEqualThreshold = 0;
+      let countAboveOrEqualThreshold = 0;
+
+      data.forEach((item) => {
+        if (item[0] < threshold) {
+          sumBelowThreshold += item[1];
+          countBelowThreshold++;
+        } else {
+          sumAboveOrEqualThreshold += item[1];
+          countAboveOrEqualThreshold++;
+        }
+      });
+
+      const averageBelowThreshold =
+        sumBelowThreshold / countBelowThreshold;
+      const averageAboveOrEqualThreshold =
+        sumAboveOrEqualThreshold / countAboveOrEqualThreshold;
+
+      return {
+        averageBelowThreshold,
+        averageAboveOrEqualThreshold,
+      };
+    }
+
+    const average = calculateAverages(
+      combinedData,
+      d.data.threshold,
+    );
+    xExtent = d3.extent(combinedDataValues)
+    if (xExtent[0] === NaN || xExtent[0] === undefined || xExtent[0] > d.data.threshold) {
+      xExtent[0] = d.data.threshold - 0.2;
+    }
+    if (xExtent[1] === NaN || xExtent[1] === undefined || xExtent[1] < d.data.threshold) {
+      xExtent[1] = d.data.threshold + 0.2;
+    }
+
+    if(isSampleExistInThisNode){
+    if (xExtent[0] > treeData.show_sample[featureIndex]) {
+      xExtent[0] = treeData.show_sample[featureIndex] - 0.2
+    }
+    if (xExtent[1] < treeData.show_sample[featureIndex]) {
+      xExtent[1] = treeData.show_sample[featureIndex] + 0.2
+    }
+    }
+
+
+    const xScale = d3
+      .scaleLinear()
+      .domain(xExtent)
+      .nice()
+      .range([0, scatterplotWidth]);
+
+    const xDomain = xScale.domain();
+
+    const xTickValues = [
+      xDomain[0],
+      d.data.threshold,
+      xDomain[1],
+    ];
+
+    d3.select(this)
+      .append("g")
+      .attr(
+        "transform",
+        `translate(${-scatterplotWidth / 2}, ${scatterplotHeight})`,
+      )
+      .attr("class", "xAxis")
+      .call(
+        d3
+          .axisBottom(xScale)
+          .tickSize(0)
+          .tickValues(xTickValues)
+          .tickPadding(8),
+      )
+      .selectAll(".tick")
+      .attr("class", "xAxis-text")
+      .style("user-select", "none")
+      .style("-webkit-user-select", "none")
+      .style("-moz-user-select", "none")
+      .style("-ms-user-select", "none")
+      .style("fill", "black");
+
+    d3.select(this).selectAll(".domain")
+      .style("stroke", "black");
+    yExtent = d3.extent(treeData.data_target)
+    const yScale = d3
+      .scaleLinear()
+      .domain(yExtent)
+      .nice()
+      .range([scatterplotHeight, 0]);
+
+      const yDomain = yScale.domain();
+
+      const yTickValues = [
+      yDomain[0],
+      yDomain[0] + (yDomain[1] - yDomain[0]) / 2,
+      yDomain[1],
+    ];
+
+    stLog("debug", yTickValues, "yTickValues");
+
+
+    d3.select(this)
+      .append("g")
+      .call(
+            d3
+            .axisRight(yScale)
+            .tickSize(0)
+            .tickPadding(4)
+            .tickValues(yTickValues)
+            .tickFormat(d3.format(",.0f")),
+      )
+      .call((d) => d.select(".domain").remove())
+      .attr("transform", `translate(${-scatterplotWidth / 2 - yAxisMargin}, 0)`)
+      .attr("class", "yAxis")
+      .selectAll(".tick")
+      .attr("class", "yAxis-text")
+      .style("user-select", "none")
+      .style("-webkit-user-select", "none")
+      .style("-moz-user-select", "none")
+      .style("-ms-user-select", "none")
+      .style("fill", "black");
+
+
+    d3.select(this).selectAll(".domain")
+      .style("stroke", "black");
+
+    /*
+                const GridLineH = function () {
+                    return d3.axisLeft().scale(yScale);
+                };
+    
+                d3.select(this)
+                    .append("g")
+                    .attr("class", "st-grid")
+                    .call(
+                        GridLineH()
+                            .tickSize(-histogramWidth, 0, 0)
+                            .tickFormat("")
+                            .ticks(6),
+                    )
+                    .attr("transform", `translate(${-histogramWidth / 2}, ${0})`);
+ 
+                const GridLineV = function () {
+                    return d3.axisBottom().scale(xScale);
+                };
+ 
+                d3.select(this)
+                    .append("g")
+                    .attr("class", "st-grid")
+                    .call(
+                        GridLineV()
+                            .tickSize(histogramHeight, 0, 0)
+                            .tickFormat("")
+                            .ticks(5),
+                    )
+                    .attr("transform", `translate(${-histogramWidth / 2}, ${0})`);
+   */
+
+    const mouseover = function(d) {
+      tooltipBody.style("opacity", 1);
+      d3.select(this).style("fill", "red");
+
+      tooltipModal.style("opacity", 1);
+      d3.select(this).style("fill", "red");
+    };
+
+    const mouseleave = function(d) {
+      tooltipBody
+        .style("opacity", 0)
+        .style("top", -2000 + "px")
+        .style("left", -2000 + "px");
+      d3.select(this).style("fill", "blue");
+
+      tooltipModal
+        .style("opacity", 0)
+        .style("top", -2000 + "px")
+        .style("left", -2000 + "px");
+
+      d3.select(this).style("fill", "blue");
+    };
+
+    const mouseoverline = function(d) {
+      tooltipBody.style("opacity", 1);
+      d3.select(this).style("stroke", "red");
+
+      tooltipModal.style("opacity", 1);
+      d3.select(this).style("stroke", "red");
+    };
+
+    const mouseleaveline = function(d) {
+      tooltipBody.style("opacity", 0)
+        .style("top", -2000 + "px")
+        .style("left", -2000 + "px");
+
+      d3.select(this).style("stroke", "black");
+
+      tooltipModal.style("opacity", 0)
+        .style("top", -2000 + "px")
+        .style("left", -2000 + "px");
+
+      d3.select(this).style("stroke", "black");
+    };
+
+    const mousemovecircle = function(event, d) {
+      tooltipBody
+        .html(`<b>(X,Y):</b> (${parseFloat(d[0]).toFixed(3)}) (${parseFloat(d[1]).toFixed(3)})`)
+        .style("top", event.pageY - 10 + "px")
+        .style("left", event.pageX + 10 + "px");
+
+      tooltipModal
+        .html(`<b>(X,Y):</b> (${parseFloat(d[0]).toFixed(3)}) (${parseFloat(d[1]).toFixed(3)})`)
+        .style("top", event.pageY - 10 + "px")
+        .style("left", event.pageX + 10 + "px");
+    };
+
+    d3.select(this)
+      .append("g")
+      .selectAll("g")
+      .data(combinedData)
+      .join("circle")
+      .attr("cx", (d, i) => xScale(combinedData[i][0]))
+      .attr("cy", (d, i) => yScale(combinedData[i][1]))
+      .attr("r", 2)
+      .attr(
+        "transform",
+        `translate(${-scatterplotWidth / 2}, ${0})`,
+      )
+      .style("fill", "blue")
+      .style("fill-opacity", 0.5)
+      .on("mouseover", mouseover)
+      .on("mouseleave", mouseleave)
+      .on("mousemove", mousemovecircle);
+
+    const mousemoveavaragebelow = function(event, d) {
+      tooltipBody
+        .html(`<b>Average:</b> ${parseFloat(average.averageBelowThreshold).toFixed(3)} `)
+        .style("top", event.pageY - 10 + "px")
+        .style("left", event.pageX + 10 + "px");
+
+      tooltipModal
+        .html(`<b>Average:</b> ${parseFloat(average.averageBelowThreshold).toFixed(3)} `)
+        .style("top", event.pageY - 10 + "px")
+        .style("left", event.pageX + 10 + "px");
+    };
+
+    const mousemoveavarageabove = function(event, d) {
+      tooltipBody
+        .html(
+          `<b>Average:</b> ${parseFloat(average.averageAboveOrEqualThreshold).toFixed(3)} `,
+        )
+        .style("top", event.pageY - 10 + "px")
+        .style("left", event.pageX + 10 + "px");
+
+      tooltipModal
+        .html(
+          `<b>Averge:</b> ${parseFloat(average.averageAboveOrEqualThreshold).toFixed(3)} `,
+        )
+        .style("top", event.pageY - 10 + "px")
+        .style("left", event.pageX + 10 + "px");
+    };
+
+    const mousemoveAllData = function(event, d) {
+      tooltipBody
+        .html(
+          `<b>All Data</b>
+              <br>Impurity: ${d.data.impurity}
+              <br>Samples: ${d.data.samples}
+              <br>Threshold: ${parseFloat(d.data.threshold).toFixed(3)}`,
+        )
+        .style("top", event.pageY - 10 + "px")
+        .style("left", event.pageX + 10 + "px")
+        .style("opacity", 1);
+
+      tooltipModal
+        .html(
+          `<b>All Data</b>:<br>
+              <br>Impurity: ${d.data.impurity}
+              <br>Samples: ${d.data.samples}
+              <br>Threshold: ${parseFloat(d.data.threshold).toFixed(3)}`,
+        )
+        .style("top", event.pageY - 10 + "px")
+        .style("left", event.pageX + 10 + "px")
+        .style("opacity", 1);
+    };
+
+    const mouseleaveAllData = function(event, d) {
+      tooltipBody
+        .style("opacity", 0)
+        .style("top", -2000 + "px")
+        .style("left", -2000 + "px");
+
+      tooltipModal
+        .style("opacity", 0)
+        .style("top", -2000 + "px")
+        .style("left", -2000 + "px");
+    };
+
+    var threshold = parseFloat(d.data.threshold).toFixed(3);
+    d3.select(this)
+      .append("line")
+      .attr("class", "threshold-line")
+      .attr("x1", xScale(threshold))
+      .attr("x2", xScale(threshold))
+      .attr("y1", 0)
+      .attr("y2", scatterplotHeight)
+      .attr("stroke", "black")
+
+      .attr("transform", `translate(${-scatterplotWidth / 2},0)`)
+      .attr("stroke-width", 2)
+      .attr("stroke-dasharray", "5,5")
+      .style("user-select", "none")
+      .style("-webkit-user-select", "none")
+      .style("-moz-user-select", "none")
+      .style("-ms-user-select", "none");
+
+    stLog("debug", average.averageBelowThreshold, "avarage 1:")
+    if (!isNaN(average.averageBelowThreshold)) {
+      d3.select(this)
+        .append("line")
+        .attr("class", "average-line")
+        .attr("x1", 0)
+        .attr("x2", xScale(threshold))
+        .attr("y1", yScale(average.averageBelowThreshold))
+        .attr("y2", yScale(average.averageBelowThreshold))
+        .attr("stroke", "black")
+        .attr("transform", `translate(${-histogramWidth / 2},0)`)
+        .attr("stroke-width", 2)
+        .attr("stroke-dasharray", "5,5")
+        .on("mouseover", mouseoverline)
+        .on("mouseleave", mouseleaveline)
+        .on("mousemove", mousemoveavaragebelow)
+        .style("user-select", "none")
+        .style("-webkit-user-select", "none")
+        .style("-moz-user-select", "none")
+        .style("-ms-user-select", "none");
+    }
+
+
+    if (!isNaN(average.averageAboveOrEqualThreshold)) {
+      d3.select(this)
+        .append("line")
+        .attr("class", "average-line")
+        .attr("x1", xScale(threshold))
+        .attr("x2", xScale(xDomain[1]))
+        .attr("y1", yScale(average.averageAboveOrEqualThreshold))
+        .attr("y2", yScale(average.averageAboveOrEqualThreshold))
+        .attr("stroke", "black")
+        .attr("transform", `translate(${-histogramWidth / 2},0)`)
+        .attr("stroke-width", 2)
+        .attr("stroke-dasharray", "5,5")
+        .on("mouseover", mouseoverline)
+        .on("mouseleave", mouseleaveline)
+        .on("mousemove", mousemoveavarageabove);
+    }
+
+    d3.select(this)
+      .append("text")
+      .attr("class", "st-target")
+      .attr("x", 0)
+      .attr("y", rectHeight + 15)
+      .style("text-anchor", "middle")
+      .style("font-size", "18px")
+      .text(treeData.feature_names[d.data.feature])
+      .on("mousemove", mousemoveAllData)
+      .on("mouseleave", mouseleaveAllData)
+      .style("user-select", "none")
+      .style("-webkit-user-select", "none")
+      .style("-moz-user-select", "none")
+      .style("-ms-user-select", "none");
+
+    var mouseovertriangle = function(d) {
+
+
+      tooltipBody.style("opacity", 1);
+      tooltipModal.style("opacity", 1);
+
+      d3.select(this).style("fill", "red").style("stroke", "red");
+    };
+
+    var mouseleavetriangle = function(d) {
+
+
+      tooltipBody
+        .style("opacity", 0)
+        .style("top", -2000 + "px")
+        .style("left", -2000 + "px");
+
+      tooltipModal
+        .style("opacity", 0)
+        .style("top", -2000 + "px")
+        .style("left", -2000 + "px");
+
+      d3.select(this).style("fill", "green").style("stroke", "green");
+    };
+
+
+    var mousemovetriangle = function(event, d) {
+
+      tooltipModal
+
+        .html(
+          treeData.feature_names.map((feature, index) => {
+            const sampleValue = treeData.show_sample[index];
+            const formattedValue = !isNaN(parseFloat(sampleValue)) ? parseFloat(sampleValue).toFixed(3) : 'N/A';
+            return `<b>${feature}:</b> ${formattedValue}`;
+          }).join(",")
+        )
+        .style("top", event.pageY - 10 + "px")
+        .style("left", event.pageX + 10 + "px");
+
+      tooltipBody
+        .html(
+          treeData.feature_names.map((feature, index) => {
+            const sampleValue = treeData.show_sample[index];
+            const formattedValue = !isNaN(parseFloat(sampleValue)) ? parseFloat(sampleValue).toFixed(3) : 'N/A';
+            return `<b>${feature}:</b> ${formattedValue}`;
+          }).join(",")
+        )
+        .style("top", event.pageY - 10 + "px")
+        .style("left", event.pageX + 10 + "px");
+    };
+
+    var color = "green";
+    var triangleSize = 25;
+    var verticalTransform = histogramHeight - Math.sqrt(triangleSize) + 15;  // Dostosuj wysokość transformacji
+
+    var triangle = d3.symbol()
+      .type(d3.symbolTriangle)
+      .size(triangleSize);
+
+    if (isSampleExistInThisNode) {
+      stLog("debug", d, "Exist");
+      d3.select(this).append("path")
+        .attr("d", triangle)
+        .attr("class", "st-triangle")
+        .style("stroke-width", 1)
+        .style("stroke-opacity", 1)
+        .style("fill", color)
+        .attr("transform", function(d) {
+          return "translate(" + (-histogramWidth / 2 + xScale(treeData.show_sample[featureIndex])) + "," + verticalTransform + ")";
+        })
+        .on("mouseover", mouseovertriangle)
+        .on("mouseleave", mouseleavetriangle)
+        .on("mousemove", mousemovetriangle);
+    }
+  }
+
+}
+
+function processRegressionLeaf(
+  d,
+  treeData,
+  scatterplotLeafWidth,
+  scatterplotLeafHeight,
+  rectHeight,
+  tooltipBody,
+  tooltipModal,
+  click,
+  showpath
+) {
+  if (d.data.is_leaf) {
+    const featureIndex = d.data.feature;
+    var isSampleExist = false;
+
+
+    if (treeData.show_sample != "nodata" && treeData.show_sample !== undefined) {
+      isSampleExist = true;
+    }
+    var isSampleExistInThisNode = isSampleExist;
+    let filteredData = treeData.data_feature.map(
+      (row) => row[d.parent.data.feature],
+    );
+
+    let combinedData = filteredData.map((value, index) => [
+      value,
+      treeData.data_target[index],
+    ]);
+    let indexSet = new Set();
+
+    d.data.start_end_x_axis.forEach((currentElement, index) => {
+      if (currentElement[0] != "notexist") {
+        treeData.data_feature.forEach((value, innerIndex) => {
+          if (value[index] > currentElement[0]) {
+            indexSet.add(innerIndex);
+          }
+        });
+      }
+      if (currentElement[1] != "notexist") {
+        treeData.data_feature.forEach((value, innerIndex) => {
+          if (value[index] < currentElement[1]) {
+            indexSet.add(innerIndex);
+          }
+        });
+      }
+    });
+
+    let indexesToRemove = Array.from(new Set([...indexSet]));
+
+    indexesToRemove.sort((a, b) => b - a);
+
+    indexesToRemove.forEach((index) => {
+      if (index >= 0 && index < combinedData.length) {
+        combinedData.splice(index, 1);
+      }
+    });
+
+
+
+    if (isSampleExist) {
+
+      d.data.start_end_x_axis.forEach((currentElement, i) => {
+        const sampleValue = treeData.show_sample[i];
+
+        if (currentElement[0] != "notexist" && sampleValue > currentElement[0]) {
+          isSampleExistInThisNode = false;
+        }
+
+        if (currentElement[1] != "notexist" && sampleValue < currentElement[1]) {
+          isSampleExistInThisNode = false;
+        }
+      });
+    }
+
+    var nodeToClick = d;
+
+    d3.select(this)
+      .append("rect")
+      .attr("class", "histogram-background")
+      .attr("x", -(scatterplotLeafWidth / 2) - 10)
+      .attr("y", -10)
+      .attr("width", rectHeight + 20)
+      .attr("height", rectHeight - 10)
+      .attr("stroke-width", isSampleExistInThisNode ? 4 : 1)
+      .attr("stroke", "#545454")
+      .attr("rx", 10)
+      .attr("ry", 10)
+      .style("fill", "#ffffff")
+      .on("click", click)
+      .on("click", function() {
+        showpath(nodeToClick)
+      });
+
+    let combinedDataValues = combinedData.map((item) => item[0]);
+
+    function calculateAverage(data) {
+      const length = data.length;
+      const sum = data.reduce((accumulator, currentValue) => {
+        return accumulator + currentValue[1];
+      }, 0);
+
+      return sum / length;
+    }
+
+    const average = calculateAverage(combinedData);
+    var xExtent = d3.extent(combinedDataValues);
+    xExtent[0] = xExtent[0] - 0.2;
+    xExtent[1] = xExtent[1] + 0.2;
+
+
+    if(isSampleExistInThisNode){
+    if (xExtent[0] > treeData.show_sample[featureIndex]) {
+      xExtent[0] = treeData.show_sample[featureIndex] - 0.2
+    }
+    if (xExtent[1] < treeData.show_sample[featureIndex]) {
+      xExtent[1] = treeData.show_sample[featureIndex] + 0.2
+    }
+  }
+
+    const xScale = d3
+      .scaleLinear()
+      .domain(xExtent)
+      .nice()
+      .range([0, scatterplotLeafWidth]);
+    //TODO makeXAxis
+    // const xTickValues = [
+    //   xDomain[0],
+    //   xDomain[0]+(xDomain[1]-xDomain[0])/2,
+    //   xDomain[1],
+    // ];
+    //
+    //
+    //
+    // d3.select(this)
+    //   .append("g")
+    //   .attr(
+    //     "transform",
+    //     `translate(${-scatterplotLeafWidth / 2 + 15}, ${scatterplotLeafHeight})`,
+    //   )
+    //   .call(
+    //     d3.axisBottom(xScale)
+    //         .tickSize(0)
+    //         .tickPadding(4)
+    //         .tickValues(xTickValues)
+    //         .tickFormat(d3.format(",.0f")),
+    //   );
+    
+
+
+    yExtent = d3.extent(treeData.data_target)
+
+    const yScale = d3
+      .scaleLinear()
+      .domain(d3.extent(yExtent))
+      .nice()
+      .range([scatterplotLeafHeight, 0]);
+
+
+    const yDomain = yScale.domain();
+
+      const yTickValues = [
+      yDomain[0],
+      yDomain[0] + (yDomain[1] - yDomain[0]) / 2,
+      yDomain[1],
+    ];
+
+    stLog("debug", yTickValues, "yTickValues");
+
+
+    d3.select(this)
+      .append("g")
+      .call(
+            d3
+            .axisRight(yScale)
+            .tickSize(0)
+            .tickPadding(4)
+            .tickValues(yTickValues)
+            .tickFormat(d3.format(",.0f")),
+      )
+      .call((d) => d.select(".domain").remove())
+      .attr(
+        "transform",
+        `translate(${-scatterplotLeafWidth / 2 + 15 - yAxisMargin}, 0)`,
+      )
+      .attr("class", "yAxis")
+      .style("user-select", "none")
+      .style("-webkit-user-select", "none")
+      .style("-moz-user-select", "none")
+      .style("-ms-user-select", "none")
+      .style("fill", "black");
+
+
+    d3.select(this).selectAll(".domain")
+      .style("stroke", "black");
+    /*
+    const GridLineH = function () {
+        return d3.axisLeft().scale(yScale);
+    };
+ 
+    d3.select(this)
+        .append("g")
+        .attr("class", "st.grid")
+        .call(
+            GridLineH()
+                .tickSize(-histogramWidth, 0, 0)
+                .tickFormat("")
+                .ticks(6),
+        )
+        .attr("transform", `translate(${-histogramWidth / 2}, ${0})`);
+ 
+    const GridLineV = function () {
+        return d3.axisBottom().scale(xScale);
+    };
+    d3.select(this)
+        .append("g")
+        .attr("class", "st.grid")
+        .call(
+            GridLineV()
+                .tickSize(histogramHeight, 0, 0)
+                .tickFormat("")
+                .ticks(5),
+        )
+        .attr("transform", `translate(${-histogramWidth / 2}, ${0})`);
+      */
+
+    const mouseover = function(d) {
+      tooltipBody.style("opacity", 1);
+      d3.select(this).style("fill", "red");
+
+      tooltipModal.style("opacity", 1);
+      d3.select(this).style("fill", "red");
+    };
+
+    const mouseleave = function(d) {
+      tooltipBody
+        .style("opacity", 0)
+        .style("top", -2000 + "px")
+        .style("left", -2000 + "px");
+
+      d3.select(this).style("fill", "blue");
+
+      tooltipModal
+        .style("opacity", 0)
+        .style("top", -2000 + "px")
+        .style("left", -2000 + "px");
+
+      d3.select(this).style("fill", "blue");
+    };
+
+    const mouseoverline = function(d) {
+      tooltipBody.style("opacity", 1);
+      d3.select(this).style("stroke", "red");
+
+      tooltipModal.style("opacity", 1);
+      d3.select(this).style("stroke", "red");
+    };
+
+    const mouseleaveline = function(d) {
+      tooltipBody
+        .style("opacity", 0)
+        .style("top", -2000 + "px")
+        .style("left", -2000 + "px");
+
+      d3.select(this).style("stroke", "black");
+
+      tooltipModal
+        .style("opacity", 0)
+        .style("top", -2000 + "px")
+        .style("left", -2000 + "px");
+
+      d3.select(this).style("stroke", "black");
+    };
+
+    const mousemovecircle = function(event, d) {
+      tooltipBody
+        .html(`<b>(X,Y):</b> (${parseFloat(d[0]).toFixed(3)}) (${parseFloat(d[1]).toFixed(3)})`)
+        .style("top", event.pageY - 10 + "px")
+        .style("left", event.pageX + 10 + "px");
+
+      tooltipModal
+        .html(`<b>(X,Y):</b> (${parseFloat(d[0]).toFixed(3)}) (${parseFloat(d[1]).toFixed(3)})`)
+        .style("top", event.pageY - 10 + "px")
+        .style("left", event.pageX + 10 + "px");
+    };
+
+    const mousemoveavarage = function(event, d) {
+      tooltipBody
+        .html(`<b>Average:</b> ${parseFloat(average).toFixed(3)} `)
+        .style("top", event.pageY - 10 + "px")
+        .style("left", event.pageX + 10 + "px");
+
+      tooltipModal
+        .html(`<b>Average:</b> ${parseFloat(average).toFixed(3)} `)
+        .style("top", event.pageY - 10 + "px")
+        .style("left", event.pageX + 10 + "px");
+    };
+
+    d3.select(this)
+      .append("g")
+      .selectAll("g")
+      .data(combinedData)
+      .join("circle")
+      .attr("cx", (d, i) => xScale(combinedData[i][0]))
+      .attr("cy", (d, i) => yScale(combinedData[i][1]))
+      .attr("r", 2)
+      .attr(
+        "transform",
+        `translate(${-scatterplotLeafWidth / 2 + 15}, ${0})`,
+      )
+      .style("fill", "blue")
+      .style("fill-opacity", 0.5)
+      .on("mouseover", mouseover)
+      .on("mouseleave", mouseleave)
+      .on("mousemove", mousemovecircle);
+
+
+
+    if (!isNaN(average)) {
+      d3.select(this)
+        .append("line")
+        .attr("class", "average-line")
+        .attr("x1", 0)
+        .attr("x2", scatterplotLeafWidth)
+        .attr("y1", yScale(average))
+        .attr("y2", yScale(average))
+        .attr("stroke", "black")
+        .attr(
+          "transform",
+          `translate(${-scatterplotLeafWidth / 2 + 15},0)`,
+        )
+        .attr("stroke-width", 2)
+        .attr("stroke-dasharray", "5,5")
+        .on("mouseover", mouseoverline)
+        .on("mouseleave", mouseleaveline)
+        .on("mousemove", mousemoveavarage);
+    }
+
+    function wrapText(text, width) {
+      text.each(function() {
+        var textElement = d3.select(this),
+          words = textElement.text().split(/\s+/).reverse(),
+          word,
+          line = [],
+          lineNumber = 0,
+          lineHeight = 1.1,
+          x = textElement.attr("x"),
+          y = textElement.attr("y"),
+          dy = 0,
+          tspan = textElement.text(null).append("tspan").attr("x", x).attr("y", y);
+
+        while (word = words.pop()) {
+          line.push(word);
+          tspan.text(line.join(" "));
+          if (tspan.node().getComputedTextLength() > width && line.length > 1) {
+            line.pop();
+            tspan.text(line.join(" "));
+            line = [word];
+            tspan = textElement.append("tspan")
+              .attr("class", "st-target")
+              .attr("x", x)
+              .attr("y", y)
+              .attr("dy", ++lineNumber * lineHeight + "em")
+              .text(word);
+          }
+        }
+      });
+    }
+
+    var maxWidth = 100;
+
+    var textElement = d3.select(this)
+      .append("text")
+      .attr("class", "st-target")
+      .attr("x", 15)
+      .attr("y", rectHeight + 5)
+      .style("text-anchor", "middle")
+      .style("font-size", "18px")
+      .text(`${d.data.treeclass} = ${parseFloat(d.data.class_distribution[0][0].toFixed(3))}`)
+      .style("user-select", "none")
+      .style("-webkit-user-select", "none")
+      .style("-moz-user-select", "none")
+      .style("-ms-user-select", "none")
+      .call(wrapText, maxWidth);
+
+    var lineCount = textElement.selectAll("tspan").size();
+    var lineHeightEm = 1.1;
+    var fontSizePx = 18;
+    var textSpacing = 5;
+
+    var nTextY = rectHeight + (lineCount * lineHeightEm * fontSizePx) + textSpacing;
+
+    d3.select(this)
+      .append("text")
+      .attr("class", "st-target")
+      .attr("x", 15)
+      .attr("y", nTextY)
+      .style("text-anchor", "middle")
+      .style("font-size", "18px")
+      .text(`n = ${d.data.samples}`)
+      .style("user-select", "none")
+      .style("-webkit-user-select", "none")
+      .style("-moz-user-select", "none")
+      .style("-ms-user-select", "none");
+
+
+
+
+    var mouseovertriangle = function(d) {
+
+
+      tooltipBody.style("opacity", 1);
+      tooltipModal.style("opacity", 1);
+
+      d3.select(this).style("fill", "red").style("stroke", "red");
+    };
+
+    var mouseleavetriangle = function(d) {
+
+
+      tooltipBody
+        .style("opacity", 0)
+        .style("top", -2000 + "px")
+        .style("left", -2000 + "px");
+
+      tooltipModal
+        .style("opacity", 0)
+        .style("top", -2000 + "px")
+        .style("left", -2000 + "px");
+
+      d3.select(this).style("fill", "green")
+        .style("stroke", "green");
+    };
+
+
+    var mousemovetriangle = function(event, d) {
+
+      tooltipModal
+        .html(
+          treeData.feature_names.map((feature, index) => {
+            const sampleValue = treeData.show_sample[index];
+            const formattedValue = !isNaN(parseFloat(sampleValue)) ? parseFloat(sampleValue).toFixed(3) : 'N/A';
+            return `<b>${feature}:</b> ${formattedValue}`;
+          }).join(",")
+        )
+        .style("top", event.pageY - 10 + "px")
+        .style("left", event.pageX + 10 + "px");
+
+      tooltipBody
+        .html(
+          treeData.feature_names.map((feature, index) => {
+            const sampleValue = treeData.show_sample[index];
+            const formattedValue = !isNaN(parseFloat(sampleValue)) ? parseFloat(sampleValue).toFixed(3) : 'N/A';
+            return `<b>${feature}:</b> ${formattedValue}`;
+          }).join(",")
+        )
+        .style("top", event.pageY - 10 + "px")
+        .style("left", event.pageX + 10 + "px");
+    };
+
+
+    var color = "green";
+    var triangleSize = 25;
+
+    var triangle = d3.symbol()
+      .type(d3.symbolTriangle)
+      .size(triangleSize);
+    stLog("debug", d, "XSCALE");
+    if (isSampleExistInThisNode) {
+      stLog("debug", d, "Existtt");
+      d3.select(this).append("path")
+        .attr("d", triangle)
+        .attr("class", "st-triangle")
+        .style("stroke", color)
+        .style("stroke-width", 1)
+        .style("stroke-opacity", 1)
+        .style("fill", color)
+        .attr("transform", function(d) {
+          return "translate(" + (-scatterplotLeafWidth / 2 + 15 + xScale(treeData.show_sample[d.parent.data.feature])) + "," + scatterplotLeafHeight + ")";
+        })
+        .on("mouseover", mouseovertriangle)
+        .on("mouseleave", mouseleavetriangle)
+        .on("mousemove", mousemovetriangle);
+    }
+  }
+}
+
+function ipytest(){
+  stLog("debug","to działa","lolxd")
+}

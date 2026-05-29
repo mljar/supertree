@@ -24,7 +24,6 @@ class SuperTree:
                                     pd.DataFrame, pd.Series]] = None,
         feature_names: Optional[List[str]] = None,
         target_names: Optional[Union[str, List[str]]] = None,
-        license_key: str = "key",
     ):
 
         valid_model_classes = [
@@ -181,8 +180,6 @@ class SuperTree:
                 "Invalid target_names length"
             )
 
-        self.license_key = license_key
-
     def show_tree(self, which_tree=0, which_iteration=0, start_depth=5, max_samples=7500, show_sample=None, widgets=False):
         """
         Displaying model HTMl template and create json tree model.
@@ -221,7 +218,7 @@ class SuperTree:
             combined_data_str = self._get_combined_data()
 
             display(HTML(templatehtml.get_d3_html(
-                combined_data_str, start_depth, self.license_key)))
+                combined_data_str, start_depth)))
 
             self.node_list = []
             self.nodes = []
@@ -264,17 +261,9 @@ class SuperTree:
         self.which_iteration = which_iteration
         self.tree_data.set_which_tree(self.which_tree)
 
-        d3script = """
-    <script src="https://cdn.jsdelivr.net/npm/d3@7" charset="utf-8"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tweetnacl-util@0.15.1/nacl-util.min.js"></script>
-"""
-
         combined_data_str = self._get_combined_data()
 
-        html = d3script + \
-            templatehtml.get_d3_html(
-                combined_data_str, start_depth, self.license_key)
+        html = templatehtml.get_d3_html(combined_data_str, start_depth)
 
         with open(filename, "w", encoding="utf-8") as file:
             file.write(html)
@@ -1047,7 +1036,7 @@ class SuperTree:
                 self.tree_data.set_which_tree(self.which_tree)
                 combined_data_str = self._get_combined_data()
                 display(HTML(templatehtml.get_d3_html(
-                combined_data_str, start_depth, self.license_key)))
+                combined_data_str, start_depth)))
                 self.node_list = []
                 self.nodes = []
 
@@ -1064,7 +1053,7 @@ class SuperTree:
                 self.tree_data.set_which_tree(self.which_tree)
                 combined_data_str = self._get_combined_data()
                 display(HTML(templatehtml.get_d3_html(
-                combined_data_str, start_depth, self.license_key)))
+                combined_data_str, start_depth)))
                 self.node_list = []
                 self.nodes = []
 
@@ -1075,7 +1064,7 @@ class SuperTree:
                 self.tree_data.set_which_tree(self.which_tree)
                 combined_data_str = self._get_combined_data()
                 display(HTML(templatehtml.get_d3_html(
-                    combined_data_str, start_depth, self.license_key)))
+                    combined_data_str, start_depth)))
                 self.node_list = []
                 self.nodes = []
 
@@ -1100,7 +1089,7 @@ class SuperTree:
         with output:
             combined_data_str = self._get_combined_data()
             display(HTML(templatehtml.get_d3_html(
-                    combined_data_str, start_depth, self.license_key)))
+                    combined_data_str, start_depth)))
 
 
         self.node_list = []
