@@ -18,6 +18,7 @@ export function createViewportController(config) {
 
   let isLocked = false;
   let lastViewportTransform = null;
+  let resizeTimer = null;
 
   function setControlsLocked(locked) {
     isLocked = locked;
@@ -39,9 +40,9 @@ export function createViewportController(config) {
     setTimeout(callback, 0);
   }
 
-  function runAfterRenderSettled(callback) {
+  function runAfterRenderSettled(callback, delay = 30) {
     runAfterRender(function() {
-      setTimeout(callback, 30);
+      setTimeout(callback, delay);
     });
   }
 
@@ -135,6 +136,30 @@ export function createViewportController(config) {
     };
   }
 
+  function shouldAutoFitAfterInternalToggle(previousBounds) {
+    if (!previousBounds) {
+      return false;
+    }
+
+    const nextBounds = getVisibleTreeBounds({
+      fallbackToFullForSingleRoot: true,
+      useRenderedBounds: true,
+    });
+    const widthRatio = nextBounds.width / Math.max(previousBounds.width, 1);
+    const heightRatio = nextBounds.height / Math.max(previousBounds.height, 1);
+    const currentTransform = d3.zoomTransform(getTreeSVG().node());
+    const fitTransform = getFitTransform("visible", {
+      fallbackToFullForSingleRoot: true,
+      useRenderedBounds: true,
+    });
+    const currentScale = currentTransform?.k ?? 1;
+    const fitScale = fitTransform?.k ?? 1;
+    const isMaterialShrink = widthRatio < 0.72 || heightRatio < 0.72;
+    const isTooZoomedInForExpandedTree = currentScale > fitScale * 1.18;
+
+    return isMaterialShrink || isTooZoomedInForExpandedTree;
+  }
+
   function getFullTreeBounds() {
     const horizontalPadding = rectWidth / 2 + 40;
     const verticalPadding = rectHeight / 2 + 40;
@@ -192,18 +217,28 @@ export function createViewportController(config) {
 
     if (transitionDuration <= 0) {
       svgElement.call(zoom.transform, rootTransform);
-      return;
+      return rootTransform;
     }
 
     svgElement
       .transition()
       .duration(transitionDuration)
       .call(zoom.transform, rootTransform);
+    return rootTransform;
   }
 
-  function rememberViewport() {
-    const currentTransform = d3.zoomTransform(getTreeSVG().node());
-    lastViewportTransform = currentTransform;
+  function rememberViewport(transform = null) {
+    if (transform) {
+      lastViewportTransform = transform;
+      return;
+    }
+
+    const treeNode = getTreeSVG().node();
+    if (!treeNode) {
+      return;
+    }
+
+    lastViewportTransform = d3.zoomTransform(treeNode);
   }
 
   function restoreViewport(transitionDuration = fallbackDuration) {
@@ -230,31 +265,57 @@ export function createViewportController(config) {
     }, delay);
   }
 
-  function applyViewportPolicy(actionType) {
+  function handleViewportResize() {
+    if (isLocked) {
+      return;
+    }
+
+    if (resizeTimer) {
+      clearTimeout(resizeTimer);
+    }
+
+    resizeTimer = setTimeout(function() {
+      resizeTimer = null;
+      runAfterRenderSettled(function() {
+        rememberViewport(resetZoom("visible", 160, {
+          fallbackToFullForSingleRoot: true,
+          useRenderedBounds: true,
+        }));
+      }, 40);
+    }, 120);
+  }
+
+  function applyViewportPolicy(actionType, options = {}) {
     switch (actionType) {
       case "initial":
         lastViewportTransform = null;
         runAfterRenderSettled(function() {
-          resetZoom("visible", 0, {
+          rememberViewport(resetZoom("visible", 0, {
             fallbackToFullForSingleRoot: false,
             maxScale: 3.5,
             useRenderedBounds: true,
-          });
-          rememberViewport();
-        });
+          }));
+          runAfterRenderSettled(function() {
+            rememberViewport(resetZoom("visible", 0, {
+              fallbackToFullForSingleRoot: false,
+              maxScale: 3.5,
+              useRenderedBounds: true,
+            }));
+          }, 140);
+        }, 60);
         return;
       case "root-toggle":
         runAfterRender(function() {
-          resetZoom("full", durations.rootFit);
-          rememberViewport();
+          rememberViewport(resetZoom("full", durations.rootFit));
         });
         finishActionAfter(durations.rootFit);
         return;
       case "depth-change":
       case "sample-path":
         runAfterRender(function() {
-          resetZoom("visible", durations.fit, { fallbackToFullForSingleRoot: true });
-          rememberViewport();
+          rememberViewport(
+            resetZoom("visible", durations.fit, { fallbackToFullForSingleRoot: true }),
+          );
         });
         if (actionType === "depth-change" || actionType === "sample-path") {
           finishActionAfter(durations.fit);
@@ -262,17 +323,15 @@ export function createViewportController(config) {
         return;
       case "fit-visible":
         runAfterRenderSettled(function() {
-          resetZoom("visible", Math.min(durations.fit, 220), {
+          rememberViewport(resetZoom("visible", Math.min(durations.fit, 220), {
             fallbackToFullForSingleRoot: true,
             useRenderedBounds: true,
-          });
-          rememberViewport();
+          }));
         });
         return;
       case "fit-full":
         runAfterRender(function() {
-          resetZoom("full", durations.fit);
-          rememberViewport();
+          rememberViewport(resetZoom("full", durations.fit));
         });
         return;
       case "modal-open":
@@ -287,10 +346,18 @@ export function createViewportController(config) {
         });
         return;
       case "inner-toggle":
-        runAfterRender(function() {
+        runAfterRenderSettled(function() {
+          if (shouldAutoFitAfterInternalToggle(options.previousBounds)) {
+            rememberViewport(resetZoom("visible", Math.min(durations.fit, 220), {
+              fallbackToFullForSingleRoot: true,
+              useRenderedBounds: true,
+            }));
+            finishActionAfter(Math.min(durations.fit, 220));
+            return;
+          }
           rememberViewport();
-        });
-        finishActionAfter(durations.toggle);
+          finishActionAfter(0);
+        }, durations.toggle);
         return;
       default:
         return;
@@ -314,11 +381,16 @@ export function createViewportController(config) {
     modal.style.display = "block";
   };
 
+  if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+    window.addEventListener("resize", handleViewportResize);
+  }
+
   return {
     getIsLocked,
     setControlsLocked,
     applyViewportPolicy,
     resetZoom,
     rememberViewport,
+    getVisibleTreeBounds,
   };
 }

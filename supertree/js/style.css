@@ -110,7 +110,7 @@ justify-content: center;
 
 .st-svg {
   width: 100% !important;
-  height: 1000px !important;
+  height: 580px !important;
   border: 1px solid #e6edf2 !important;
   border-radius: 7px !important;
   background: #ffffff !important;
@@ -206,7 +206,7 @@ justify-content: center;
 
 
 .st-body-tree-div {
-  min-height: 1000px;
+  min-height: 580px;
 }
 
 

@@ -1034,6 +1034,7 @@
     const fallbackDuration = durations.fit;
     let isLocked = false;
     let lastViewportTransform = null;
+    let resizeTimer = null;
     function setControlsLocked(locked) {
       isLocked = locked;
       onControlsLockedChange(locked);
@@ -1050,9 +1051,9 @@
       }
       setTimeout(callback, 0);
     }
-    function runAfterRenderSettled(callback) {
+    function runAfterRenderSettled(callback, delay = 30) {
       runAfterRender(function() {
-        setTimeout(callback, 30);
+        setTimeout(callback, delay);
       });
     }
     function isModalVisible() {
@@ -1124,6 +1125,28 @@
         height: Math.max(maxY - minY, 1)
       };
     }
+    function shouldAutoFitAfterInternalToggle(previousBounds) {
+      var _a, _b;
+      if (!previousBounds) {
+        return false;
+      }
+      const nextBounds = getVisibleTreeBounds({
+        fallbackToFullForSingleRoot: true,
+        useRenderedBounds: true
+      });
+      const widthRatio = nextBounds.width / Math.max(previousBounds.width, 1);
+      const heightRatio = nextBounds.height / Math.max(previousBounds.height, 1);
+      const currentTransform = d3.zoomTransform(getTreeSVG().node());
+      const fitTransform = getFitTransform("visible", {
+        fallbackToFullForSingleRoot: true,
+        useRenderedBounds: true
+      });
+      const currentScale = (_a = currentTransform == null ? void 0 : currentTransform.k) != null ? _a : 1;
+      const fitScale = (_b = fitTransform == null ? void 0 : fitTransform.k) != null ? _b : 1;
+      const isMaterialShrink = widthRatio < 0.72 || heightRatio < 0.72;
+      const isTooZoomedInForExpandedTree = currentScale > fitScale * 1.18;
+      return isMaterialShrink || isTooZoomedInForExpandedTree;
+    }
     function getFullTreeBounds() {
       const horizontalPadding = rectWidth / 2 + 40;
       const verticalPadding = rectHeight / 2 + 40;
@@ -1172,13 +1195,21 @@
       svgElement.interrupt();
       if (transitionDuration <= 0) {
         svgElement.call(zoom.transform, rootTransform);
-        return;
+        return rootTransform;
       }
       svgElement.transition().duration(transitionDuration).call(zoom.transform, rootTransform);
+      return rootTransform;
     }
-    function rememberViewport() {
-      const currentTransform = d3.zoomTransform(getTreeSVG().node());
-      lastViewportTransform = currentTransform;
+    function rememberViewport(transform = null) {
+      if (transform) {
+        lastViewportTransform = transform;
+        return;
+      }
+      const treeNode = getTreeSVG().node();
+      if (!treeNode) {
+        return;
+      }
+      lastViewportTransform = d3.zoomTransform(treeNode);
     }
     function restoreViewport(transitionDuration = fallbackDuration) {
       if (!lastViewportTransform) {
@@ -1197,31 +1228,54 @@
         setControlsLocked(false);
       }, delay);
     }
-    function applyViewportPolicy(actionType) {
+    function handleViewportResize() {
+      if (isLocked) {
+        return;
+      }
+      if (resizeTimer) {
+        clearTimeout(resizeTimer);
+      }
+      resizeTimer = setTimeout(function() {
+        resizeTimer = null;
+        runAfterRenderSettled(function() {
+          rememberViewport(resetZoom("visible", 160, {
+            fallbackToFullForSingleRoot: true,
+            useRenderedBounds: true
+          }));
+        }, 40);
+      }, 120);
+    }
+    function applyViewportPolicy(actionType, options = {}) {
       switch (actionType) {
         case "initial":
           lastViewportTransform = null;
           runAfterRenderSettled(function() {
-            resetZoom("visible", 0, {
+            rememberViewport(resetZoom("visible", 0, {
               fallbackToFullForSingleRoot: false,
               maxScale: 3.5,
               useRenderedBounds: true
-            });
-            rememberViewport();
-          });
+            }));
+            runAfterRenderSettled(function() {
+              rememberViewport(resetZoom("visible", 0, {
+                fallbackToFullForSingleRoot: false,
+                maxScale: 3.5,
+                useRenderedBounds: true
+              }));
+            }, 140);
+          }, 60);
           return;
         case "root-toggle":
           runAfterRender(function() {
-            resetZoom("full", durations.rootFit);
-            rememberViewport();
+            rememberViewport(resetZoom("full", durations.rootFit));
           });
           finishActionAfter(durations.rootFit);
           return;
         case "depth-change":
         case "sample-path":
           runAfterRender(function() {
-            resetZoom("visible", durations.fit, { fallbackToFullForSingleRoot: true });
-            rememberViewport();
+            rememberViewport(
+              resetZoom("visible", durations.fit, { fallbackToFullForSingleRoot: true })
+            );
           });
           if (actionType === "depth-change" || actionType === "sample-path") {
             finishActionAfter(durations.fit);
@@ -1229,17 +1283,15 @@
           return;
         case "fit-visible":
           runAfterRenderSettled(function() {
-            resetZoom("visible", Math.min(durations.fit, 220), {
+            rememberViewport(resetZoom("visible", Math.min(durations.fit, 220), {
               fallbackToFullForSingleRoot: true,
               useRenderedBounds: true
-            });
-            rememberViewport();
+            }));
           });
           return;
         case "fit-full":
           runAfterRender(function() {
-            resetZoom("full", durations.fit);
-            rememberViewport();
+            rememberViewport(resetZoom("full", durations.fit));
           });
           return;
         case "modal-open":
@@ -1254,10 +1306,18 @@
           });
           return;
         case "inner-toggle":
-          runAfterRender(function() {
+          runAfterRenderSettled(function() {
+            if (shouldAutoFitAfterInternalToggle(options.previousBounds)) {
+              rememberViewport(resetZoom("visible", Math.min(durations.fit, 220), {
+                fallbackToFullForSingleRoot: true,
+                useRenderedBounds: true
+              }));
+              finishActionAfter(Math.min(durations.fit, 220));
+              return;
+            }
             rememberViewport();
-          });
-          finishActionAfter(durations.toggle);
+            finishActionAfter(0);
+          }, durations.toggle);
           return;
         default:
           return;
@@ -1277,12 +1337,16 @@
       applyViewportPolicy("modal-open");
       modal.style.display = "block";
     };
+    if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+      window.addEventListener("resize", handleViewportResize);
+    }
     return {
       getIsLocked,
       setControlsLocked,
       applyViewportPolicy,
       resetZoom,
-      rememberViewport
+      rememberViewport,
+      getVisibleTreeBounds
     };
   }
 
@@ -1365,9 +1429,9 @@
       var maxSample = 0;
       let minSample = Infinity;
       const interactionDurations = {
-        toggle: 280,
-        fit: 420,
-        rootFit: 460,
+        toggle: 560,
+        fit: 260,
+        rootFit: 520,
         modal: 220
       };
       const allColors = [
@@ -1607,6 +1671,10 @@
             }
             stLog("debug", " Collapse click event");
             setControlsLocked(true);
+            const previousBounds = d.parent ? getVisibleTreeBounds({
+              fallbackToFullForSingleRoot: true,
+              useRenderedBounds: false
+            }) : null;
             if (d.children) {
               d._children = d.children;
               d.children = null;
@@ -1618,7 +1686,7 @@
             const transitionDuration = viewportAction === "inner-toggle" ? duration : 0;
             update(d, false, transitionDuration);
             stLog("debug", d, "Node w click");
-            applyViewportPolicy(viewportAction);
+            applyViewportPolicy(viewportAction, { previousBounds });
           }, zoomed = function(event2) {
             treeSVG.attr("transform", event2.transform);
           }, getNodeDisplayLabel = function(node) {
@@ -1854,7 +1922,7 @@
               });
             }
             var treeNodeUpdate = treeNodeEnter.merge(treeNode);
-            treeNodeUpdate.transition().duration(transitionDuration).tween("logging", function(d) {
+            treeNodeUpdate.transition().duration(transitionDuration).ease(d3.easeCubicInOut).tween("logging", function(d) {
               let interpolateX = d3.interpolate(
                 source2.x0 * xMultiplayer,
                 d.x * xMultiplayer
@@ -1877,7 +1945,7 @@
             let descendantIds = new Set(exitDescendants.map((d) => d.id));
             let treeNodeExit = treeNode.exit().filter(function(d) {
               return descendantIds.has(d.id);
-            }).transition().duration(transitionDuration).attr("transform", function(d) {
+            }).transition().duration(transitionDuration).ease(d3.easeCubicInOut).attr("transform", function(d) {
               return "translate(" + (source2.x + rectWidth / 2) + "," + (source2.y0 + rectHeight / 2) + ")";
             }).attr("font-size", "1em").remove();
             treeNodeExit.selectAll(".st-target").style("fill-opacity", 1e-6).style("font-size", "0px").attr("x", -rectWidth / 2).attr("y", 0);
@@ -1996,12 +2064,12 @@
               }
             }
             var linkUpdate = linkEnter.merge(link);
-            linkUpdate.transition().duration(transitionDuration).attr("d", function(d) {
+            linkUpdate.transition().duration(transitionDuration).ease(d3.easeCubicInOut).attr("d", function(d) {
               return diagonal(getSourceAnchor(d.parent, d), getTargetAnchor(d));
             });
             var linkExit = link.exit().filter(function(d) {
               return descendantIds.has(d.id);
-            }).transition().duration(transitionDuration).attr("d", function(d) {
+            }).transition().duration(transitionDuration).ease(d3.easeCubicInOut).attr("d", function(d) {
               var o = getSourceAnchor(source2, d, { useExitPosition: true });
               return diagonal(o, o);
             }).remove();
@@ -2358,6 +2426,7 @@
           });
           const setControlsLocked = viewportController.setControlsLocked;
           const applyViewportPolicy = viewportController.applyViewportPolicy;
+          const getVisibleTreeBounds = viewportController.getVisibleTreeBounds;
           var startDepth = "$depth";
           if (typeof startDepth == "string") {
             startDepth = 4;

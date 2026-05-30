@@ -120,9 +120,9 @@ export function buildTree(
       var maxSample = 0;
       let minSample = Infinity;
       const interactionDurations = {
-        toggle: 280,
-        fit: 420,
-        rootFit: 460,
+        toggle: 560,
+        fit: 260,
+        rootFit: 520,
         modal: 220,
       };
 
@@ -448,6 +448,12 @@ export function buildTree(
             }
             stLog("debug", " Collapse click event");
             setControlsLocked(true);
+            const previousBounds = d.parent
+              ? getVisibleTreeBounds({
+                fallbackToFullForSingleRoot: true,
+                useRenderedBounds: false,
+              })
+              : null;
 
             if (d.children) {
               d._children = d.children;
@@ -461,7 +467,7 @@ export function buildTree(
 
             update(d, false, transitionDuration);
             stLog("debug", d, "Node w click")
-            applyViewportPolicy(viewportAction);
+            applyViewportPolicy(viewportAction, { previousBounds });
           }
 
           let nodeTreeMargin = { top: 20, right: 90, bottom: 160, left: 90 },
@@ -556,6 +562,7 @@ export function buildTree(
           });
           const setControlsLocked = viewportController.setControlsLocked;
           const applyViewportPolicy = viewportController.applyViewportPolicy;
+          const getVisibleTreeBounds = viewportController.getVisibleTreeBounds;
 
           function getNodeDisplayLabel(node) {
             if (!node) {
@@ -981,6 +988,7 @@ export function buildTree(
             treeNodeUpdate
               .transition()
               .duration(transitionDuration)
+              .ease(d3.easeCubicInOut)
               .tween("logging", function(d) {
                 let interpolateX = d3.interpolate(
                   source.x0 * xMultiplayer,
@@ -1021,6 +1029,7 @@ export function buildTree(
               })
               .transition()
               .duration(transitionDuration)
+              .ease(d3.easeCubicInOut)
               .attr("transform", function(d) {
                 return (
                   "translate(" +
@@ -1305,6 +1314,7 @@ export function buildTree(
             linkUpdate
               .transition()
               .duration(transitionDuration)
+              .ease(d3.easeCubicInOut)
               .attr("d", function(d) {
                 return diagonal(getSourceAnchor(d.parent, d), getTargetAnchor(d));
               });
@@ -1316,6 +1326,7 @@ export function buildTree(
               })
               .transition()
               .duration(transitionDuration)
+              .ease(d3.easeCubicInOut)
               .attr("d", function(d) {
                 var o = getSourceAnchor(source, d, { useExitPosition: true });
                 return diagonal(o, o);
