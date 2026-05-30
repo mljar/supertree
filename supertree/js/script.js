@@ -91,10 +91,19 @@
       };
     }
     function applyStableLayout(hierarchyRoot, stableLayout) {
+      const visibleLayoutWidth = computeVisibleLayoutWidth(hierarchyRoot, stableLayout);
+      const visibleLaidOutHierarchy = d3.tree().size([visibleLayoutWidth, stableLayout.layoutHeight]).separation(function(a, b) {
+        return a.parent === b.parent ? 1 : 1.2;
+      })(hierarchyRoot.copy());
+      const visibleNodePositions = /* @__PURE__ */ new Map();
+      visibleLaidOutHierarchy.descendants().forEach(function(node) {
+        visibleNodePositions.set(node.data.id, node.x);
+      });
       hierarchyRoot.each(function(node) {
         node.id = node.data.id;
         const stablePosition = stableLayout.stableNodePositions.get(node.data.id);
-        node.x = stablePosition.x;
+        const visibleX = visibleNodePositions.get(node.data.id);
+        node.x = visibleX !== void 0 ? visibleX : stablePosition.x;
         node.y = stablePosition.y;
         if (!node.hasOwnProperty("cx")) {
           node.cx = node.x * xMultiplayer;
@@ -109,6 +118,17 @@
           node.y0 = node.y;
         }
       });
+    }
+    function computeVisibleLayoutWidth(hierarchyRoot, stableLayout) {
+      let visibleLeafs = 0;
+      hierarchyRoot.each(function(node) {
+        if (!node.children || node.children.length === 0) {
+          visibleLeafs++;
+        }
+      });
+      const normalizedLeafCount = Math.max(visibleLeafs, 1);
+      const visibleWidth = Math.max(normalizedLeafCount - 1, 1) * stableLayout.effectiveLeafSpacing + stableLayout.effectiveLeafSpacing;
+      return Math.min(Math.max(visibleWidth, stableLayout.effectiveLeafSpacing * 2), stableLayout.layoutWidth);
     }
     function showDepth(node, currentDepth, depth) {
       currentDepth++;
@@ -277,8 +297,7 @@
         }
       }
       const xScale = d3.scaleLinear().domain(xExtent2).range([0, histogramWidth]);
-      const nodeBorderWidth = !d.parent ? 1 : isSampleExistInThisNode ? 4 : 1;
-      d3.select(this).append("rect").attr("class", "histogram-background").attr("x", -(histogramWidth / 2) - 25).attr("y", -10).attr("width", rectWidth).attr("height", rectHeight).attr("stroke-width", nodeBorderWidth).attr("stroke", "#545454").attr("rx", 10).attr("ry", 10).style("fill", "#ffffff").on("click", click);
+      d3.select(this).append("rect").attr("class", "histogram-background").attr("x", -(histogramWidth / 2) - 25).attr("y", -10).attr("width", rectWidth).attr("height", rectHeight).attr("stroke-width", 1).attr("stroke", "#545454").attr("rx", 10).attr("ry", 10).style("fill", "#ffffff").on("click", click);
       const mousemoveAllData = function(event2, d2) {
         stLog("debug", d2, "mousemoveAllData");
         tooltipBody.html(
@@ -643,8 +662,7 @@
           combinedData.splice(index, 1);
         }
       });
-      const nodeBorderWidth = !d.parent ? 1 : isSampleExistInThisNode ? 4 : 1;
-      d3.select(this).append("rect").attr("class", "histogram-background").attr("x", -(scatterplotWidth / 2) - 25).attr("y", -10).attr("width", rectWidth).attr("height", rectHeight).attr("stroke-width", nodeBorderWidth).attr("stroke", "#545454").attr("rx", 10).attr("ry", 10).style("fill", "#ffffff");
+      d3.select(this).append("rect").attr("class", "histogram-background").attr("x", -(scatterplotWidth / 2) - 25).attr("y", -10).attr("width", rectWidth).attr("height", rectHeight).attr("stroke-width", 1).attr("stroke", "#545454").attr("rx", 10).attr("ry", 10).style("fill", "#ffffff");
       let combinedDataValues = combinedData.map((item) => item[0]);
       const average = calculateAverages(
         combinedData,
@@ -1032,6 +1050,11 @@
       }
       setTimeout(callback, 0);
     }
+    function runAfterRenderSettled(callback) {
+      runAfterRender(function() {
+        setTimeout(callback, 30);
+      });
+    }
     function isModalVisible() {
       return modal.style.display === "block";
     }
@@ -1077,7 +1100,7 @@
         return getFullTreeBounds();
       }
       const renderedBounds = getRenderedTreeBounds();
-      if (renderedBounds !== null) {
+      if (options.useRenderedBounds !== false && renderedBounds !== null) {
         return renderedBounds;
       }
       const horizontalPadding = rectWidth / 2 + 40;
@@ -1125,16 +1148,18 @@
       };
     }
     function getFitTransform(mode = "visible", options = {}) {
+      var _a;
       const { divWidth, divHeight } = getViewportContext();
       const fitBounds = mode === "full" ? getFullTreeBounds() : getVisibleTreeBounds(options);
       const topViewportPadding = 20;
+      const maxScale = (_a = options.maxScale) != null ? _a : 2;
       const availableWidth = Math.max(divWidth - nodeTreeMargin.left - nodeTreeMargin.right, 1);
       const availableHeight = Math.max(divHeight - nodeTreeMargin.top - nodeTreeMargin.bottom, 1);
       let currentScale = Math.min(
         availableWidth / fitBounds.width,
         availableHeight / fitBounds.height
       );
-      currentScale = Math.min(Math.max(0.05, currentScale), 2);
+      currentScale = Math.min(Math.max(0.05, currentScale), maxScale);
       const centeredX = (fitBounds.minX + fitBounds.maxX) / 2;
       return d3.zoomIdentity.translate(
         -centeredX * currentScale + divWidth / 2,
@@ -1176,8 +1201,12 @@
       switch (actionType) {
         case "initial":
           lastViewportTransform = null;
-          runAfterRender(function() {
-            resetZoom("visible", durations.fit, { fallbackToFullForSingleRoot: false });
+          runAfterRenderSettled(function() {
+            resetZoom("visible", 0, {
+              fallbackToFullForSingleRoot: false,
+              maxScale: 3.5,
+              useRenderedBounds: true
+            });
             rememberViewport();
           });
           return;
@@ -1190,7 +1219,6 @@
           return;
         case "depth-change":
         case "sample-path":
-        case "fit-visible":
           runAfterRender(function() {
             resetZoom("visible", durations.fit, { fallbackToFullForSingleRoot: true });
             rememberViewport();
@@ -1198,6 +1226,15 @@
           if (actionType === "depth-change" || actionType === "sample-path") {
             finishActionAfter(durations.fit);
           }
+          return;
+        case "fit-visible":
+          runAfterRenderSettled(function() {
+            resetZoom("visible", Math.min(durations.fit, 220), {
+              fallbackToFullForSingleRoot: true,
+              useRenderedBounds: true
+            });
+            rememberViewport();
+          });
           return;
         case "fit-full":
           runAfterRender(function() {
@@ -1305,7 +1342,6 @@
       let modal = document.getElementById("myModal-treeID");
       let btn = document.getElementById("openModalBtn-treeID");
       let span = document.getElementById("closeBtn-treeID");
-      var lastDropdowDepthValue = "$depth";
       const regr = "regression";
       const classification = "classification";
       const nodata = "nodata";
@@ -1327,6 +1363,7 @@
       const rectHeight = 110;
       const rectWidth = 195;
       var maxSample = 0;
+      let minSample = Infinity;
       const interactionDurations = {
         toggle: 280,
         fit: 420,
@@ -1601,17 +1638,17 @@
           }, getNodeById = function(nodeId) {
             return treeRoot.descendants().find((node) => node.id === nodeId) || null;
           }, getAncestorIds = function(node) {
-            const ids2 = /* @__PURE__ */ new Set();
+            const ids = /* @__PURE__ */ new Set();
             let current = node;
             while (current) {
-              ids2.add(current.id);
+              ids.add(current.id);
               current = current.parent;
             }
-            return ids2;
+            return ids;
           }, getDescendantIds = function(node) {
-            const ids2 = /* @__PURE__ */ new Set();
+            const ids = /* @__PURE__ */ new Set();
             (function walk(current) {
-              ids2.add(current.id);
+              ids.add(current.id);
               if (current.children) {
                 current.children.forEach(walk);
               }
@@ -1619,7 +1656,7 @@
                 current._children.forEach(walk);
               }
             })(node);
-            return ids2;
+            return ids;
           }, renderFocusState = function() {
             const focusedNode = currentFocusNodeId === null ? null : getNodeById(currentFocusNodeId);
             const activeIds = focusedNode ? getAncestorIds(focusedNode) : /* @__PURE__ */ new Set();
@@ -1654,12 +1691,11 @@
               collapse(treeRoot, 0, maxDepthReset + 1);
               applyStableLayout(treeRoot, stableLayout);
               stLog("debug", treeSVG, "treeSVG");
-              i = 0;
             }
             d3.selectAll("#st-link-treeID").style("stroke", "black");
             minSample = Infinity;
             applyStableLayout(treeRoot, stableLayout);
-            let nodes = treeRoot.descendants(), links = treeRoot.descendants().slice(1);
+            let links = treeRoot.descendants().slice(1);
             var treeNode = treeSVG.selectAll(".treeNode").data(treeRoot.descendants(), function(d) {
               return d.id;
             });
@@ -1678,13 +1714,6 @@
               }
               return myDescendants;
             }
-            function getAscentors(sourceRoot, myAscentors = []) {
-              if (sourceRoot.parent) {
-                myAscentors.push(sourceRoot.parent);
-                getDescendants(sourceRoot.parent, myAscentors);
-              }
-              return myAscentors;
-            }
             let enterDescendants = getDescendants(source2);
             let idsArrayDescendants = enterDescendants.map(function(d) {
               return d.id;
@@ -1702,24 +1731,24 @@
               0,
               -Infinity
             ]);
-            for (let i2 = 0; i2 < featureNumber; i2++) {
+            for (let i = 0; i < featureNumber; i++) {
               let tempArr = [];
               for (let j = 0; j < treeData.data_feature.length; j++) {
-                tempArr.push(treeData.data_feature[j][i2]);
+                tempArr.push(treeData.data_feature[j][i]);
               }
               let tempGlobalXExtent = d3.extent(tempArr);
-              globalXExtent[i2][0] = Math.min(
-                globalXExtent[i2][0],
+              globalXExtent[i][0] = Math.min(
+                globalXExtent[i][0],
                 tempGlobalXExtent[0]
               );
-              globalXExtent[i2][1] = Math.max(
-                globalXExtent[i2][1],
+              globalXExtent[i][1] = Math.max(
+                globalXExtent[i][1],
                 tempGlobalXExtent[1]
               );
             }
-            for (let i2 = 0; i2 < featureNumber; i2++) {
-              globalXExtent[i2][0] -= 0.2;
-              globalXExtent[i2][1] += 0.2;
+            for (let i = 0; i < featureNumber; i++) {
+              globalXExtent[i][0] -= 0.2;
+              globalXExtent[i][1] += 0.2;
             }
             if (treeData.tree_type == regr) {
               treeNodeEnter.each(function(d) {
@@ -1776,8 +1805,8 @@
               treeNodeEnter.each(function(d) {
                 if (d.data.is_leaf) {
                   var sum = 0;
-                  for (let i2 = 0; i2 < d.data.class_distribution[0].length; i2++) {
-                    sum = sum + parseFloat(d.data.class_distribution[0][i2]);
+                  for (let i = 0; i < d.data.class_distribution[0].length; i++) {
+                    sum = sum + parseFloat(d.data.class_distribution[0][i]);
                   }
                   maxSample = Math.max(maxSample, sum);
                   minSample = Math.min(minSample, sum);
@@ -1873,19 +1902,19 @@
             gridAnimation.selectAll("line").attr("x2", 0).attr("y2", 0);
             treeNodeExit.selectAll(".yAxis-text").attr("transform", "translate(0,-40)").style("fill-opacity", 1e-6).style("font-size", "0px").attr("x", 0);
             treeNodeExit.selectAll(".xAxis-text").attr("transform", "translate(0,-40)").style("fill-opacity", 1e-6).style("font-size", "0px");
-            treeNodeExit.selectAll(".st-pie-target").attr("y", function(d, i2) {
+            treeNodeExit.selectAll(".st-pie-target").attr("y", function(d, i) {
               const radius = Math.max(
                 20,
                 Math.min(pieWidth, pieHeight) / 2 * Math.sqrt(d.data.classDistributionValue / globalMaxSample)
               );
-              return -10 - radius * 2 - i2 * 40;
+              return -10 - radius * 2 - i * 40;
             }).attr("transform", "translate(" + -rectWidth / 2 + ",0)").style("fill-opacity", 1e-6).style("font-size", "0px");
-            treeNodeExit.selectAll(".st-pie-target2").attr("y", function(d, i2) {
+            treeNodeExit.selectAll(".st-pie-target2").attr("y", function(d, i) {
               const radius = Math.max(
                 20,
                 Math.min(pieWidth, pieHeight) / 2 * Math.sqrt(d.data.classDistributionValue / globalMaxSample)
               );
-              return -10 - radius * 2 - i2 * 40;
+              return -10 - radius * 2 - i * 40;
             }).attr("transform", "translate(" + -rectWidth / 2 + ",0)").style("fill-opacity", 1e-6).style("font-size", "0px");
             let link = treeSVG.selectAll("#st-link-treeID").data(links, function(d) {
               return d.id;
@@ -1914,8 +1943,8 @@
             const mousemove = function(event2, d) {
               if (treeData.tree_type == classification) {
                 var currentDistribution = 0;
-                for (let i2 = 0; i2 < d.data.class_distribution[0].length; i2++) {
-                  currentDistribution = currentDistribution + parseInt(d.data.class_distribution[0][i2]);
+                for (let i = 0; i < d.data.class_distribution[0].length; i++) {
+                  currentDistribution = currentDistribution + parseInt(d.data.class_distribution[0][i]);
                 }
                 tooltipModal.html(
                   `<b>Class distribution in link:</b>: ${currentDistribution}`
@@ -1939,15 +1968,15 @@
             if (treeData.tree_type == regr) {
               allSamplesRegr = nodeData.samples;
             }
-            for (let i2 = 0; i2 < nodeData.class_distribution[0].length; i2++) {
-              allSamples = allSamples + parseInt(nodeData.class_distribution[0][i2]);
+            for (let i = 0; i < nodeData.class_distribution[0].length; i++) {
+              allSamples = allSamples + parseInt(nodeData.class_distribution[0][i]);
             }
             if (boldLinks == true) {
               if (treeData.tree_type == classification) {
                 linkEnter.each(function(d) {
                   var currentDistribution = 0;
-                  for (let i2 = 0; i2 < d.data.class_distribution[0].length; i2++) {
-                    currentDistribution = currentDistribution + parseInt(d.data.class_distribution[0][i2]);
+                  for (let i = 0; i < d.data.class_distribution[0].length; i++) {
+                    currentDistribution = currentDistribution + parseInt(d.data.class_distribution[0][i]);
                   }
                   d3.select(this).style(
                     "stroke-width",
@@ -1958,7 +1987,7 @@
               if (treeData.tree_type == regr) {
                 linkEnter.each(function(d) {
                   var currentDistribution = 0;
-                  currentSamples = d.data.samples;
+                  const currentSamples = d.data.samples;
                   d3.select(this).style(
                     "stroke-width",
                     Math.max(20 * (currentSamples / allSamplesRegr), 1)
@@ -1984,8 +2013,8 @@
                 };
               }
               return {
-                x: node.cx !== void 0 ? node.cx : node.x * xMultiplayer,
-                y: node.cy !== void 0 ? node.cy : node.y * yMultiplayer
+                x: node.x * xMultiplayer,
+                y: node.y * yMultiplayer
               };
             }
             function getSourceAnchor(node, childNode = null, options = {}) {
@@ -2028,7 +2057,7 @@
               const verticalDistance = Math.max(d.y - s.y, 0);
               const splitOffset = Math.min(Math.max(verticalDistance * 0.28, 34), 64);
               const joinOffset = Math.min(Math.max(verticalDistance * 0.38, 40), 82);
-              path = `M ${s.x} ${s.y}
+              const path = `M ${s.x} ${s.y}
             C ${s.x} ${s.y + splitOffset},
               ${d.x} ${d.y - joinOffset},
               ${d.x} ${d.y}`;
@@ -2048,8 +2077,8 @@
                 });
               } else {
                 var isSampleExistInThisNode = true;
-                node.data.start_end_x_axis.forEach((currentElement, i2) => {
-                  const sampleValue = treeData.show_sample[i2];
+                node.data.start_end_x_axis.forEach((currentElement, i) => {
+                  const sampleValue = treeData.show_sample[i];
                   if (currentElement[0] != "notexist" && sampleValue > currentElement[0]) {
                     isSampleExistInThisNode = false;
                   }
@@ -2075,9 +2104,9 @@
             applyViewportPolicy("sample-path");
           }, showpath = function(d) {
             d3.selectAll("#st-link-treeID").style("stroke", "black");
-            pathData = getLinksIds(d);
-            ids = pathData.ids;
-            nodedata = pathData.nodedata;
+            const pathData = getLinksIds(d);
+            const ids = pathData.ids;
+            const nodedata = pathData.nodedata;
             var newHeight = nodedata.length * 250;
             newHeight = Math.max(newHeight, 1e3);
             sideSVG.attr("height", newHeight);
@@ -2096,10 +2125,10 @@
               sidePanel.classed("hide", false).classed("show", true);
               renderNodeData(nodedata);
             }
-          }, renderNodeData = function(nodedata2) {
-            nodedata2.slice().reverse().forEach(function(node, i2) {
+          }, renderNodeData = function(nodedata) {
+            nodedata.slice().reverse().forEach(function(node, i) {
               let translateX = 150;
-              let translateY = 200 * i2 + 100;
+              let translateY = 200 * i + 100;
               if (treeData.tree_type == regr && node.data.is_leaf) {
                 translateX -= 10;
               }
@@ -2180,22 +2209,22 @@
               });
             });
           }, getLinksIds = function(node) {
-            var ids2 = [];
-            var nodedata2 = [];
+            var ids = [];
+            var nodedata = [];
             function linkDFS(node2) {
               stLog("debug", node2, "Node w dfsie");
-              ids2.push(node2.id);
-              nodedata2.push(node2);
+              ids.push(node2.id);
+              nodedata.push(node2);
               if (node2.parent) {
                 linkDFS(node2.parent);
               }
             }
             linkDFS(node);
-            let pathData2 = {
-              ids: ids2,
-              nodedata: nodedata2
+            let pathData = {
+              ids,
+              nodedata
             };
-            return pathData2;
+            return pathData;
           }, boldClick = function() {
             boldLinks = !boldLinks;
             update(treeRoot, true);
@@ -2235,8 +2264,6 @@
               dropdownDepth.property("value", optionsDepth[depth - 1]);
               applyViewportPolicy("depth-change");
             }
-          }, redirectToPage = function() {
-            window.location.href = "https://mljar.com/";
           }, extractNumber = function(str) {
             const match = str.match(/\d+/);
             if (match) {
@@ -2275,7 +2302,6 @@
             -Infinity
           ]);
           let nodeTreeMargin = { top: 20, right: 90, bottom: 160, left: 90 }, treeWidth = stableLayout.layoutWidth, treeHeight = stableLayout.layoutHeight;
-          var i = 0;
           const duration = interactionDurations.toggle;
           let currentFocusNodeId = null;
           let currentFocusAction = "Ready";
@@ -2286,13 +2312,13 @@
             let getRandomColor = function() {
               let letters = "0123456789ABCDEF";
               let color = "#";
-              for (let i2 = 0; i2 < 6; i2++) {
+              for (let i = 0; i < 6; i++) {
                 color += letters[Math.floor(Math.random() * 16)];
               }
               return color;
             };
             let missingColors = treeData.feature_names.length - colors.length;
-            for (let i2 = 0; i2 < missingColors; i2++) {
+            for (let i = 0; i < missingColors; i++) {
               colors.push(getRandomColor());
             }
           }
@@ -2369,7 +2395,7 @@
             });
           }
           if (!treeData.tree_type.startsWith(nodata))
-            var Linkbutton = d3.selectAll("#toolbar-treeID").append("button").html(svgLine).attr("id", "boldLink").attr("class", "st-option-button").on("click", boldClick).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
+            d3.selectAll("#toolbar-treeID").append("button").html(svgLine).attr("id", "boldLink").attr("class", "st-option-button").on("click", boldClick).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
               mousemoveButton(
                 event,
                 "Change line tickness scalling in reference to samples in child node"
@@ -2381,17 +2407,17 @@
               sideSVG.selectAll("g").remove();
             }, 300);
           });
-          var fitVisibleButton = d3.selectAll("#toolbar-treeID").append("button").html(svgZoom).attr("id", "fitVisible").attr("class", "st-option-button").on("click", () => applyViewportPolicy("fit-visible")).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
+          d3.selectAll("#toolbar-treeID").append("button").html(svgZoom).attr("id", "fitVisible").attr("class", "st-option-button").on("click", () => applyViewportPolicy("fit-visible")).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
             mousemoveButton(event, "Fit visible tree");
           });
-          var fitFullButton = d3.selectAll("#toolbar-treeID").append("button").html(svgFitFull).attr("id", "fitFull").attr("class", "st-option-button").on("click", () => applyViewportPolicy("fit-full")).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
+          d3.selectAll("#toolbar-treeID").append("button").html(svgFitFull).attr("id", "fitFull").attr("class", "st-option-button").on("click", () => applyViewportPolicy("fit-full")).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
             mousemoveButton(event, "Fit full tree");
           });
           if (treeData.tree_type == classification) {
-            var xButton = d3.selectAll("#toolbar-treeID").append("button").html(svgXAxis).attr("id", "changeXAxis").attr("class", "st-option-button").on("click", xClick).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
+            d3.selectAll("#toolbar-treeID").append("button").html(svgXAxis).attr("id", "changeXAxis").attr("class", "st-option-button").on("click", xClick).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
               mousemoveButton(event, "Change Scale on X Axis");
             });
-            var yButton = d3.selectAll("#toolbar-treeID").append("button").html(svgYAxis).attr("id", "changeYAxis").attr("class", "st-option-button").on("click", yClick).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
+            d3.selectAll("#toolbar-treeID").append("button").html(svgYAxis).attr("id", "changeYAxis").attr("class", "st-option-button").on("click", yClick).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
               mousemoveButton(event, "Change Scale on Y Axis");
             });
           }
@@ -2408,13 +2434,13 @@
                 let getRandomColor = function() {
                   let letters = "0123456789ABCDEF";
                   let color = "#";
-                  for (let i2 = 0; i2 < 6; i2++) {
+                  for (let i = 0; i < 6; i++) {
                     color += letters[Math.floor(Math.random() * 16)];
                   }
                   return color;
                 };
                 let missingColors = treeData.feature_names.length - colors.length;
-                for (let i2 = 0; i2 < missingColors; i2++) {
+                for (let i = 0; i < missingColors; i++) {
                   colors.push(getRandomColor());
                 }
               }
@@ -2422,19 +2448,19 @@
             });
             let optionsColors = [];
             d3.selectAll(".st-option-button").style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
-            for (let i2 = 1; i2 <= allColors.length / 20; i2++) {
-              optionsColors.push(`Palette = ${i2}`);
+            for (let i = 1; i <= allColors.length / 20; i++) {
+              optionsColors.push(`Palette = ${i}`);
             }
             dropdownColors.selectAll("option").data(optionsColors).enter().append("option").attr("value", (d) => d).text((d) => d);
           }
           setTimeout(function() {
-            logoURL = "https://mljar.com/images/logo/logo_blue_white.svg";
-            let logo = d3.select("#toolbar-treeID").append("button").attr("class", "st-option-button").style("background", "transparent").style("border", "none").style("cursor", "pointer").style("padding", "0").style("position", "relative").append("img").attr("src", logoURL).style("height", "50px");
+            const logoURL = "https://mljar.com/images/logo/logo_blue_white.svg";
+            d3.select("#toolbar-treeID").append("button").attr("class", "st-option-button").style("background", "transparent").style("border", "none").style("cursor", "pointer").style("padding", "0").style("position", "relative").append("img").attr("src", logoURL).style("height", "50px");
           }, 100);
           const maxDepth = getTreeDepth(treeRoot, 0);
           var optionsDepth = [];
-          for (let i2 = 1; i2 <= maxDepth; i2++) {
-            optionsDepth.push(`Depth = ${i2 - 1}`);
+          for (let i = 1; i <= maxDepth; i++) {
+            optionsDepth.push(`Depth = ${i - 1}`);
           }
           dropdownDepth.selectAll("option").data(optionsDepth).enter().append("option").attr("value", (d) => d).text((d) => d);
           dropdownDepth.property("value", optionsDepth[Math.min(startDepth - 1, optionsDepth.length - 1)]);

@@ -39,6 +39,12 @@ export function createViewportController(config) {
     setTimeout(callback, 0);
   }
 
+  function runAfterRenderSettled(callback) {
+    runAfterRender(function() {
+      setTimeout(callback, 30);
+    });
+  }
+
   function isModalVisible() {
     return modal.style.display === "block";
   }
@@ -100,7 +106,7 @@ export function createViewportController(config) {
 
     const renderedBounds = getRenderedTreeBounds();
 
-    if (renderedBounds !== null) {
+    if (options.useRenderedBounds !== false && renderedBounds !== null) {
       return renderedBounds;
     }
 
@@ -160,13 +166,14 @@ export function createViewportController(config) {
     const { divWidth, divHeight } = getViewportContext();
     const fitBounds = mode === "full" ? getFullTreeBounds() : getVisibleTreeBounds(options);
     const topViewportPadding = 20;
+    const maxScale = options.maxScale ?? 2;
     const availableWidth = Math.max(divWidth - nodeTreeMargin.left - nodeTreeMargin.right, 1);
     const availableHeight = Math.max(divHeight - nodeTreeMargin.top - nodeTreeMargin.bottom, 1);
     let currentScale = Math.min(
       availableWidth / fitBounds.width,
       availableHeight / fitBounds.height,
     );
-    currentScale = Math.min(Math.max(0.05, currentScale), 2);
+    currentScale = Math.min(Math.max(0.05, currentScale), maxScale);
 
     const centeredX = (fitBounds.minX + fitBounds.maxX) / 2;
     return d3.zoomIdentity
@@ -227,8 +234,12 @@ export function createViewportController(config) {
     switch (actionType) {
       case "initial":
         lastViewportTransform = null;
-        runAfterRender(function() {
-          resetZoom("visible", durations.fit, { fallbackToFullForSingleRoot: false });
+        runAfterRenderSettled(function() {
+          resetZoom("visible", 0, {
+            fallbackToFullForSingleRoot: false,
+            maxScale: 3.5,
+            useRenderedBounds: true,
+          });
           rememberViewport();
         });
         return;
@@ -241,7 +252,6 @@ export function createViewportController(config) {
         return;
       case "depth-change":
       case "sample-path":
-      case "fit-visible":
         runAfterRender(function() {
           resetZoom("visible", durations.fit, { fallbackToFullForSingleRoot: true });
           rememberViewport();
@@ -249,6 +259,15 @@ export function createViewportController(config) {
         if (actionType === "depth-change" || actionType === "sample-path") {
           finishActionAfter(durations.fit);
         }
+        return;
+      case "fit-visible":
+        runAfterRenderSettled(function() {
+          resetZoom("visible", Math.min(durations.fit, 220), {
+            fallbackToFullForSingleRoot: true,
+            useRenderedBounds: true,
+          });
+          rememberViewport();
+        });
         return;
       case "fit-full":
         runAfterRender(function() {

@@ -123,8 +123,6 @@ export function processClassificationNode(treeData, tooltipBody, tooltipModal, g
       .scaleLinear()
       .domain(xExtent)
       .range([0, histogramWidth]);
-    const nodeBorderWidth = !d.parent ? 1 : (isSampleExistInThisNode ? 4 : 1);
-
     d3.select(this)
       .append("rect")
       .attr("class", "histogram-background")
@@ -132,7 +130,7 @@ export function processClassificationNode(treeData, tooltipBody, tooltipModal, g
       .attr("y", -10)
       .attr("width", rectWidth)
       .attr("height", rectHeight)
-      .attr("stroke-width", nodeBorderWidth)
+      .attr("stroke-width", 1)
       .attr("stroke", "#545454")
       .attr("rx", 10)
       .attr("ry", 10)
@@ -882,8 +880,6 @@ export function processRegressionNode(
       }
     });
 
-    const nodeBorderWidth = !d.parent ? 1 : (isSampleExistInThisNode ? 4 : 1);
-
     d3.select(this)
       .append("rect")
       .attr("class", "histogram-background")
@@ -891,7 +887,7 @@ export function processRegressionNode(
       .attr("y", -10)
       .attr("width", rectWidth)
       .attr("height", rectHeight)
-      .attr("stroke-width", nodeBorderWidth)
+      .attr("stroke-width", 1)
       .attr("stroke", "#545454")
       .attr("rx", 10)
       .attr("ry", 10)

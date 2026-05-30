@@ -94,11 +94,25 @@ export function createTreeLayoutHelpers(config) {
   }
 
   function applyStableLayout(hierarchyRoot, stableLayout) {
+    const visibleLayoutWidth = computeVisibleLayoutWidth(hierarchyRoot, stableLayout);
+    const visibleLaidOutHierarchy = d3
+      .tree()
+      .size([visibleLayoutWidth, stableLayout.layoutHeight])
+      .separation(function(a, b) {
+        return a.parent === b.parent ? 1 : 1.2;
+      })(hierarchyRoot.copy());
+    const visibleNodePositions = new Map();
+
+    visibleLaidOutHierarchy.descendants().forEach(function(node) {
+      visibleNodePositions.set(node.data.id, node.x);
+    });
+
     hierarchyRoot.each(function(node) {
       node.id = node.data.id;
       const stablePosition = stableLayout.stableNodePositions.get(node.data.id);
+      const visibleX = visibleNodePositions.get(node.data.id);
 
-      node.x = stablePosition.x;
+      node.x = visibleX !== undefined ? visibleX : stablePosition.x;
       node.y = stablePosition.y;
 
       if (!node.hasOwnProperty("cx")) {
@@ -114,6 +128,21 @@ export function createTreeLayoutHelpers(config) {
         node.y0 = node.y;
       }
     });
+  }
+
+  function computeVisibleLayoutWidth(hierarchyRoot, stableLayout) {
+    let visibleLeafs = 0;
+
+    hierarchyRoot.each(function(node) {
+      if (!node.children || node.children.length === 0) {
+        visibleLeafs++;
+      }
+    });
+
+    const normalizedLeafCount = Math.max(visibleLeafs, 1);
+    const visibleWidth = Math.max(normalizedLeafCount - 1, 1) * stableLayout.effectiveLeafSpacing + stableLayout.effectiveLeafSpacing;
+
+    return Math.min(Math.max(visibleWidth, stableLayout.effectiveLeafSpacing * 2), stableLayout.layoutWidth);
   }
 
   function showDepth(node, currentDepth, depth) {

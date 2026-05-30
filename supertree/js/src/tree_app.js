@@ -97,7 +97,6 @@ export function buildTree(
       let btn = document.getElementById("openModalBtn-treeID");
       let span = document.getElementById("closeBtn-treeID");
 
-      var lastDropdowDepthValue = "$depth"
       const regr = "regression";
       const classification = "classification";
       const nodata = "nodata";
@@ -118,7 +117,8 @@ export function buildTree(
       const scatterplotLeafHeight = histogramHeight;
       const rectHeight = 110;
       const rectWidth = 195;
-      var maxSample =0;
+      var maxSample = 0;
+      let minSample = Infinity;
       const interactionDurations = {
         toggle: 280,
         fit: 420,
@@ -468,7 +468,6 @@ export function buildTree(
             treeWidth = stableLayout.layoutWidth,
             treeHeight = stableLayout.layoutHeight;
 
-          var i = 0;
           const duration = interactionDurations.toggle;
           let currentFocusNodeId = null;
           let currentFocusAction = "Ready";
@@ -674,13 +673,11 @@ export function buildTree(
               collapse(treeRoot, 0, maxDepthReset + 1);
               applyStableLayout(treeRoot, stableLayout);
               stLog("debug", treeSVG, "treeSVG")
-              i = 0;
             }
             d3.selectAll("#st-link-treeID").style("stroke", "black");
             minSample = Infinity;
             applyStableLayout(treeRoot, stableLayout);
-            let nodes = treeRoot.descendants(),
-              links = treeRoot.descendants().slice(1);
+            let links = treeRoot.descendants().slice(1);
 
             var treeNode = treeSVG
               .selectAll(".treeNode")
@@ -704,15 +701,6 @@ export function buildTree(
               }
 
               return myDescendants;
-            }
-
-            function getAscentors(sourceRoot, myAscentors = []) {
-              if (sourceRoot.parent) {
-                myAscentors.push(sourceRoot.parent);
-                getDescendants(sourceRoot.parent, myAscentors);
-              }
-
-              return myAscentors;
             }
 
             let enterDescendants = getDescendants(source);
@@ -1303,7 +1291,7 @@ export function buildTree(
               if (treeData.tree_type == regr) {
                 linkEnter.each(function(d) {
                   var currentDistribution = 0;
-                  currentSamples = d.data.samples;
+                  const currentSamples = d.data.samples;
                   d3.select(this).style(
                     "stroke-width",
                     Math.max(20 * (currentSamples / allSamplesRegr), 1),
@@ -1344,8 +1332,8 @@ export function buildTree(
               }
 
               return {
-                x: node.cx !== undefined ? node.cx : node.x * xMultiplayer,
-                y: node.cy !== undefined ? node.cy : node.y * yMultiplayer,
+                x: node.x * xMultiplayer,
+                y: node.y * yMultiplayer,
               };
             }
 
@@ -1397,7 +1385,7 @@ export function buildTree(
               const splitOffset = Math.min(Math.max(verticalDistance * 0.28, 34), 64);
               const joinOffset = Math.min(Math.max(verticalDistance * 0.38, 40), 82);
 
-              path = `M ${s.x} ${s.y}
+              const path = `M ${s.x} ${s.y}
             C ${s.x} ${s.y + splitOffset},
               ${d.x} ${d.y - joinOffset},
               ${d.x} ${d.y}`;
@@ -1526,9 +1514,9 @@ export function buildTree(
 
           function showpath(d) {
             d3.selectAll("#st-link-treeID").style("stroke", "black");
-            pathData = getLinksIds(d);
-            ids = pathData.ids;
-            nodedata = pathData.nodedata;
+            const pathData = getLinksIds(d);
+            const ids = pathData.ids;
+            const nodedata = pathData.nodedata;
 
 
 
@@ -1680,7 +1668,7 @@ export function buildTree(
 
 
           if (!treeData.tree_type.startsWith(nodata))
-            var Linkbutton = d3
+            d3
               .selectAll("#toolbar-treeID")
               .append("button")
               .html(svgLine)
@@ -1704,7 +1692,7 @@ export function buildTree(
             }, 300);
           });
 
-          var fitVisibleButton = d3
+          d3
             .selectAll("#toolbar-treeID")
             .append("button")
             .html(svgZoom)
@@ -1717,7 +1705,7 @@ export function buildTree(
               mousemoveButton(event, "Fit visible tree");
             });
 
-          var fitFullButton = d3
+          d3
             .selectAll("#toolbar-treeID")
             .append("button")
             .html(svgFitFull)
@@ -1731,7 +1719,7 @@ export function buildTree(
             });
 
           if (treeData.tree_type == classification) {
-            var xButton = d3
+            d3
               .selectAll("#toolbar-treeID")
               .append("button")
               .html(svgXAxis)
@@ -1744,7 +1732,7 @@ export function buildTree(
                 mousemoveButton(event, "Change Scale on X Axis");
               });
 
-            var yButton = d3
+            d3
               .selectAll("#toolbar-treeID")
               .append("button")
               .html(svgYAxis)
@@ -1877,14 +1865,9 @@ export function buildTree(
               .text((d) => d);
           }
 
-          function redirectToPage() {
-            window.location.href = "https://mljar.com/";
-          }
-
           setTimeout(function() {
-
-            logoURL = "https://mljar.com/images/logo/logo_blue_white.svg";
-            let logo = d3
+            const logoURL = "https://mljar.com/images/logo/logo_blue_white.svg";
+            d3
               .select("#toolbar-treeID")
               .append("button")
               .attr("class", "st-option-button")
