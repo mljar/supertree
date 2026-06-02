@@ -1732,6 +1732,28 @@
             return treeSVG.selectAll("#st-link-treeID").filter((node) => ids.has(node.id));
           }, getNodeTransform = function(node, scale = 1) {
             return "translate(" + node.x * xMultiplayer + "," + node.y * yMultiplayer + ") scale(" + scale + ")";
+          }, applyVisibleLinkWidths = function(linkSelection = treeSVG.selectAll("#st-link-treeID")) {
+            const allSamples = treeData.tree_type == classification ? nodeData.class_distribution[0].reduce(
+              (sum, value) => sum + parseInt(value),
+              0
+            ) : 0;
+            const allSamplesRegr = treeData.tree_type == regr ? nodeData.samples : 0;
+            linkSelection.style("stroke-width", function(d) {
+              if (!boldLinks) {
+                return 2;
+              }
+              if (treeData.tree_type == classification) {
+                const currentDistribution = d.data.class_distribution[0].reduce(
+                  (sum, value) => sum + parseInt(value),
+                  0
+                );
+                return Math.max(20 * (currentDistribution / Math.max(allSamples, 1)), 1);
+              }
+              if (treeData.tree_type == regr) {
+                return Math.max(20 * (d.data.samples / Math.max(allSamplesRegr, 1)), 1);
+              }
+              return 2;
+            });
           }, runTransition = function(selection, configureTransition) {
             if (selection.size() === 0) {
               return Promise.resolve();
@@ -2073,38 +2095,7 @@
             }).style("fill", "none").style("stroke", defaultLinkStroke).style("stroke-width", "2px").style("stroke-opacity", function(d) {
               return hiddenLinkIds.has(d.id) ? 0 : 0;
             }).on("mouseover", mouseover2).on("mouseleave", mouseleave2).on("mousemove", mousemove);
-            var allSamples = 0;
-            var allSamplesRegr = 0;
-            if (treeData.tree_type == regr) {
-              allSamplesRegr = nodeData.samples;
-            }
-            for (let i = 0; i < nodeData.class_distribution[0].length; i++) {
-              allSamples = allSamples + parseInt(nodeData.class_distribution[0][i]);
-            }
-            if (boldLinks == true) {
-              if (treeData.tree_type == classification) {
-                linkEnter.each(function(d) {
-                  var currentDistribution = 0;
-                  for (let i = 0; i < d.data.class_distribution[0].length; i++) {
-                    currentDistribution = currentDistribution + parseInt(d.data.class_distribution[0][i]);
-                  }
-                  d3.select(this).style(
-                    "stroke-width",
-                    Math.max(20 * (currentDistribution / allSamples), 1)
-                  );
-                });
-              }
-              if (treeData.tree_type == regr) {
-                linkEnter.each(function(d) {
-                  var currentDistribution = 0;
-                  const currentSamples = d.data.samples;
-                  d3.select(this).style(
-                    "stroke-width",
-                    Math.max(20 * (currentSamples / allSamplesRegr), 1)
-                  );
-                });
-              }
-            }
+            applyVisibleLinkWidths(linkEnter);
             var linkUpdate = linkEnter.merge(link);
             const linkEnterDelay = enteredNodeRevealDuration;
             linkUpdate.transition().delay(function(d) {
@@ -2438,7 +2429,7 @@
             }, 300);
           }, boldClick = function() {
             boldLinks = !boldLinks;
-            update(treeRoot, true);
+            applyVisibleLinkWidths();
           }, saveSvg = function() {
             var svgElement = document.getElementById("mySVG-treeID");
             var serializer = new XMLSerializer();
