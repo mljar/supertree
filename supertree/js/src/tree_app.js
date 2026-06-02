@@ -1,12 +1,7 @@
 import {
   svgDownload,
-  svgFitFull,
+  svgFitVisible,
   svgLine,
-  svgSample,
-  svgWindow,
-  svgXAxis,
-  svgYAxis,
-  svgZoom,
 } from "./icons.js";
 import { createTreeLayoutHelpers } from "./layout.js";
 import {
@@ -51,10 +46,13 @@ export function buildTree(
   }
   checkD3Element("#graph-div-treeID")
     .then(() => {
-      d3.select("#openModalBtn").attr("class", "st-option-button");
-      d3.select("#graph-div-treeID").attr("class", "st-body-tree-div-treeID");
+      d3.select("#graph-div-treeID").attr(
+        "class",
+        "st-body-tree-div st-body-tree-div-treeID",
+      );
 
       let myid = Math.random();
+      const logoURL = "https://mljar.com/images/logo/logo_blue_white.svg";
 
       function addModalToFirstBody() {
         let firstBody = document.getElementsByTagName("body")[0];
@@ -76,6 +74,13 @@ export function buildTree(
 
       addModalToFirstBody();
 
+      d3.selectAll("#graph-div-treeID")
+        .append("div")
+        .attr("class", "st-tree-watermark")
+        .append("img")
+        .attr("src", logoURL)
+        .attr("alt", "MLJAR");
+
       var stjupyter = false;
 
       if (document.body.getAttribute('data-jp-theme-name') !== null) {
@@ -96,18 +101,8 @@ export function buildTree(
         .append("div")
         .attr("class", "st-toolbar-group");
 
-      let Modalbutton = primaryToolbarGroup
-        .append("button")
-        .html(svgWindow)
-        .attr("class", "st-option-button")
-        .attr("id", "openModalBtn-treeID");
-
-      if (!stjupyter) {
-        Modalbutton.style("display", "none");
-      }
-
       let modal = document.getElementById("myModal-treeID");
-      let btn = document.getElementById("openModalBtn-treeID");
+      let btn = null;
       let span = document.getElementById("closeBtn-treeID");
 
       const regr = "regression";
@@ -119,6 +114,7 @@ export function buildTree(
       const yMultiplayer = 1;
       const xMultiplayer = 1;
       let isLocked = false;
+      let depthUnlockTimer = null;
       let globalMaxSample = 0;
       const pieHeight = 100;
       const pieWidth = 100;
@@ -571,6 +567,10 @@ export function buildTree(
             getTreeSVG: () => treeSVG,
             onControlsLockedChange: (locked) => {
               isLocked = locked;
+              if (!locked && depthUnlockTimer !== null) {
+                clearTimeout(depthUnlockTimer);
+                depthUnlockTimer = null;
+              }
               if (typeof syncDepthControls === "function") {
                 syncDepthControls();
               }
@@ -583,6 +583,16 @@ export function buildTree(
           };
           const applyViewportPolicy = viewportController.applyViewportPolicy;
           const getVisibleTreeBounds = viewportController.getVisibleTreeBounds;
+
+          function scheduleDepthUnlock(delay = interactionDurations.fit + 40) {
+            if (depthUnlockTimer !== null) {
+              clearTimeout(depthUnlockTimer);
+            }
+            depthUnlockTimer = setTimeout(function() {
+              depthUnlockTimer = null;
+              setControlsLocked(false);
+            }, delay);
+          }
 
           function getNodeDisplayLabel(node) {
             if (!node) {
@@ -1746,13 +1756,6 @@ export function buildTree(
               .style("left", event.pageX + 10 + "px");
           };
 
-          d3.select("#openModalBtn-treeID")
-            .on("mouseover", mouseover)
-            .on("mouseleave", mouseleave)
-            .on("mousemove", function(d) {
-              mousemoveButton(event, "Open modal window");
-            });
-
           var toolbar = primaryToolbarGroup;
 
           var saveSvgbutton = toolbar
@@ -1767,19 +1770,10 @@ export function buildTree(
               mousemoveButton(event, "Save SVG");
             });
 
-          if (treeData.show_sample !== undefined && treeData.show_sample != "nodata" && !treeData.tree_type.startsWith("nodata")) {
-            var showSampleButton = primaryToolbarGroup
-              .append("button")
-              .html(svgSample)
-              .attr("id", "showSampleButton")
-              .attr("class", "st-option-button")
-              .on("click", showSample)
-              .on("mouseover", mouseover)
-              .on("mouseleave", mouseleave)
-              .on("mousemove", function(d) {
-                mousemoveButton(event, "Show sample path");
-              });
-          }
+          saveSvgbutton
+            .append("span")
+            .attr("class", "st-button-label")
+            .text("Save SVG");
 
           function showSample() {
             var sampleNode = null;
@@ -1984,7 +1978,7 @@ export function buildTree(
 
 
           if (!treeData.tree_type.startsWith(nodata))
-            secondaryToolbarGroup
+            primaryToolbarGroup
               .append("button")
               .html(svgLine)
               .attr("id", "boldLink")
@@ -1999,6 +1993,13 @@ export function buildTree(
                 );
               });
 
+          if (!treeData.tree_type.startsWith(nodata)) {
+            d3.select("#boldLink")
+              .append("span")
+              .attr("class", "st-button-label")
+              .text("Line Width");
+          }
+
 
           d3.selectAll("#st-close-button-treeID").on("click", function() {
             d3.selectAll("#st-side-panel-treeID").classed("show", false).classed("hide", true);
@@ -2007,9 +2008,9 @@ export function buildTree(
             }, 300);
           });
 
-          secondaryToolbarGroup
+          primaryToolbarGroup
             .append("button")
-            .html(svgZoom)
+            .html(svgFitVisible)
             .attr("id", "fitVisible")
             .attr("class", "st-option-button")
             .on("click", () => applyViewportPolicy("fit-visible"))
@@ -2019,43 +2020,10 @@ export function buildTree(
               mousemoveButton(event, "Fit visible tree");
             });
 
-          secondaryToolbarGroup
-            .append("button")
-            .html(svgFitFull)
-            .attr("id", "fitFull")
-            .attr("class", "st-option-button")
-            .on("click", () => applyViewportPolicy("fit-full"))
-            .on("mouseover", mouseover)
-            .on("mouseleave", mouseleave)
-            .on("mousemove", function(d) {
-              mousemoveButton(event, "Fit full tree");
-            });
-
-          if (treeData.tree_type == classification) {
-            tertiaryToolbarGroup
-              .append("button")
-              .html(svgXAxis)
-              .attr("id", "changeXAxis")
-              .attr("class", "st-option-button")
-              .on("click", xClick)
-              .on("mouseover", mouseover)
-              .on("mouseleave", mouseleave)
-              .on("mousemove", function(d) {
-                mousemoveButton(event, "Change Scale on X Axis");
-              });
-
-            tertiaryToolbarGroup
-              .append("button")
-              .html(svgYAxis)
-              .attr("id", "changeYAxis")
-              .attr("class", "st-option-button")
-              .on("click", yClick)
-              .on("mouseover", mouseover)
-              .on("mouseleave", mouseleave)
-              .on("mousemove", function(d) {
-                mousemoveButton(event, "Change Scale on Y Axis");
-              });
-          }
+          d3.select("#fitVisible")
+            .append("span")
+            .attr("class", "st-button-label")
+            .text("Fit Tree");
 
 
 
@@ -2082,16 +2050,6 @@ export function buildTree(
             downloadLink.click();
 
             document.body.removeChild(downloadLink);
-          }
-
-          function xClick() {
-            globalX = !globalX;
-            update(treeRoot, true);
-          }
-
-          function yClick() {
-            globalY = !globalY;
-            update(treeRoot, true);
           }
 
           const myToolbar = toolbarRoot;
@@ -2147,21 +2105,6 @@ export function buildTree(
               .text((d) => d);
           }
 
-          setTimeout(function() {
-            const logoURL = "https://mljar.com/images/logo/logo_blue_white.svg";
-            tertiaryToolbarGroup
-              .append("button")
-              .attr("class", "st-option-button")
-              .style("background", "transparent")
-              .style("border", "none")
-              .style("cursor", "pointer")
-              .style("padding", "0")
-              .style("position", "relative")
-              .append("img")
-              .attr("src", logoURL)
-              .style("height", "50px")
-          }, 100);
-
           const maxDepth = getTreeDepth(treeRoot, 0);
           let currentDepthValue = Math.max(1, Math.min(startDepth, maxDepth));
 
@@ -2216,6 +2159,7 @@ export function buildTree(
             showDepth(treeRoot, 0, nextDepth, true);
             update(treeRoot, false, 0);
             applyViewportPolicy("depth-change");
+            scheduleDepthUnlock();
           }
 
           function handleDepthChange(event, optDepth = "optional") {

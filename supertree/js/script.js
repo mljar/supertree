@@ -1,13 +1,8 @@
 (() => {
   // supertree/js/src/icons.js
   var svgLine = `<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-vector-spline"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M17 3m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" /><path d="M3 17m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" /><path d="M17 5c-6.627 0 -12 5.373 -12 12" /></svg>`;
-  var svgXAxis = `<svg style="display: inline" xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 13v.01" /><path d="M4 9v.01" /><path d="M4 5v.01" /><path d="M17 20l3 -3l-3 -3" /><path d="M4 17h16" /></svg>`;
-  var svgYAxis = `<svg style="display: inline" xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11 20h-.01" /><path d="M15 20h-.01" /><path d="M19 20h-.01" /><path d="M4 7l3 -3l3 3" /><path d="M7 20v-16" /></svg>`;
-  var svgZoom = `<svg style="display: inline" xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg>`;
-  var svgWindow = `<svg style="display: inline" xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 8v-2a2 2 0 0 1 2 -2h2" /><path d="M4 16v2a2 2 0 0 0 2 2h2" /><path d="M16 4h2a2 2 0 0 1 2 2v2" /><path d="M16 20h2a2 2 0 0 0 2 -2v-2" /></svg>`;
+  var svgFitVisible = `<svg style="display: inline" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 4h-5v5" /><path d="M4 4l6 6" /><path d="M15 4h5v5" /><path d="M20 4l-6 6" /><path d="M4 15v5h5" /><path d="M4 20l6 -6" /><path d="M20 15v5h-5" /><path d="M20 20l-6 -6" /></svg>`;
   var svgDownload = `<svg style="display: inline"  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg>`;
-  var svgSample = `<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-test-pipe-2"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 3v15a3 3 0 0 1 -6 0v-15" /><path d="M9 12h6" /><path d="M8 3h8" /></svg>`;
-  var svgFitFull = `<svg style="display: inline" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 9v-5h5" /><path d="M20 9v-5h-5" /><path d="M4 15v5h5" /><path d="M20 15v5h-5" /></svg>`;
 
   // supertree/js/src/layout.js
   function createTreeLayoutHelpers(config) {
@@ -418,7 +413,7 @@
       var mouseovertriangle = function(d2) {
         tooltipBody.style("opacity", 1);
         tooltipModal.style("opacity", 1);
-        d3.select(this).style("fill", "red").style("stroke", "red");
+        d3.select(this).style("fill", "#0099cc").style("stroke", "#0099cc");
       };
       var mouseleavetriangle = function(d2) {
         tooltipBody.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
@@ -546,7 +541,7 @@
       const mouseover = function(d2) {
         tooltipBody.style("opacity", 1);
         tooltipModal.style("opacity", 1);
-        d32.select(this).style("stroke", "#EF4A60");
+        d32.select(this).style("stroke", "#0099cc");
       };
       const mouseleave = function(d2) {
         tooltipBody.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
@@ -718,9 +713,9 @@
       };
       const mouseleave = function(d2) {
         tooltipBody.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
-        d3.select(this).style("fill", "blue");
+        d3.select(this).style("fill", "#0099cc");
         tooltipModal.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
-        d3.select(this).style("fill", "blue");
+        d3.select(this).style("fill", "#0099cc");
       };
       const mouseoverline = function(d2) {
         tooltipBody.style("opacity", 1);
@@ -741,7 +736,7 @@
       d3.select(this).append("g").selectAll("g").data(combinedData).join("circle").attr("cx", (d2, i) => xScale(combinedData[i][0])).attr("cy", (d2, i) => yScale(combinedData[i][1])).attr("r", 2).attr(
         "transform",
         `translate(${-scatterplotWidth / 2}, ${0})`
-      ).style("fill", "blue").style("fill-opacity", 0.5).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", mousemovecircle);
+      ).style("fill", "#0099cc").style("fill-opacity", 0.5).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", mousemovecircle);
       const mousemoveavaragebelow = function(event2, d2) {
         tooltipBody.html(`<b>Average:</b> ${parseFloat(average.averageBelowThreshold).toFixed(3)} `).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px");
         tooltipModal.html(`<b>Average:</b> ${parseFloat(average.averageBelowThreshold).toFixed(3)} `).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px");
@@ -785,7 +780,7 @@
       var mouseovertriangle = function(d2) {
         tooltipBody.style("opacity", 1);
         tooltipModal.style("opacity", 1);
-        d3.select(this).style("fill", "red").style("stroke", "red");
+        d3.select(this).style("fill", "#0099cc").style("stroke", "#0099cc");
       };
       var mouseleavetriangle = function(d2) {
         tooltipBody.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
@@ -933,9 +928,9 @@
       };
       const mouseleave = function(d2) {
         tooltipBody.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
-        d3.select(this).style("fill", "blue");
+        d3.select(this).style("fill", "#0099cc");
         tooltipModal.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
-        d3.select(this).style("fill", "blue");
+        d3.select(this).style("fill", "#0099cc");
       };
       const mouseoverline = function(d2) {
         tooltipBody.style("opacity", 1);
@@ -960,7 +955,7 @@
       d3.select(this).append("g").selectAll("g").data(combinedData).join("circle").attr("cx", (d2, i) => xScale(combinedData[i][0])).attr("cy", (d2, i) => yScale(combinedData[i][1])).attr("r", 2).attr(
         "transform",
         `translate(${-scatterplotLeafWidth / 2 + 15}, ${0})`
-      ).style("fill", "blue").style("fill-opacity", 0.5).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", mousemovecircle);
+      ).style("fill", "#0099cc").style("fill-opacity", 0.5).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", mousemovecircle);
       if (!isNaN(average)) {
         d3.select(this).append("line").attr("class", "average-line").attr("x1", 0).attr("x2", scatterplotLeafWidth).attr("y1", yScale(average)).attr("y2", yScale(average)).attr("stroke", "black").attr(
           "transform",
@@ -978,7 +973,7 @@
       var mouseovertriangle = function(d2) {
         tooltipBody.style("opacity", 1);
         tooltipModal.style("opacity", 1);
-        d3.select(this).style("fill", "red").style("stroke", "red");
+        d3.select(this).style("fill", "#0099cc").style("stroke", "#0099cc");
       };
       var mouseleavetriangle = function(d2) {
         tooltipBody.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
@@ -1125,28 +1120,6 @@
         height: Math.max(maxY - minY, 1)
       };
     }
-    function shouldAutoFitAfterInternalToggle(previousBounds) {
-      var _a, _b;
-      if (!previousBounds) {
-        return false;
-      }
-      const nextBounds = getVisibleTreeBounds({
-        fallbackToFullForSingleRoot: true,
-        useRenderedBounds: true
-      });
-      const widthRatio = nextBounds.width / Math.max(previousBounds.width, 1);
-      const heightRatio = nextBounds.height / Math.max(previousBounds.height, 1);
-      const currentTransform = d3.zoomTransform(getTreeSVG().node());
-      const fitTransform = getFitTransform("visible", {
-        fallbackToFullForSingleRoot: true,
-        useRenderedBounds: true
-      });
-      const currentScale = (_a = currentTransform == null ? void 0 : currentTransform.k) != null ? _a : 1;
-      const fitScale = (_b = fitTransform == null ? void 0 : fitTransform.k) != null ? _b : 1;
-      const isMaterialShrink = widthRatio < 0.72 || heightRatio < 0.72;
-      const isTooZoomedInForExpandedTree = currentScale > fitScale * 1.18;
-      return isMaterialShrink || isTooZoomedInForExpandedTree;
-    }
     function getFullTreeBounds() {
       const horizontalPadding = rectWidth / 2 + 40;
       const verticalPadding = rectHeight / 2 + 40;
@@ -1265,9 +1238,12 @@
           }, 60);
           return;
         case "root-toggle":
-          runAfterRender(function() {
-            rememberViewport(resetZoom("full", durations.rootFit));
-          });
+          runAfterRenderSettled(function() {
+            rememberViewport(resetZoom("visible", durations.rootFit, {
+              fallbackToFullForSingleRoot: false,
+              useRenderedBounds: true
+            }));
+          }, 20);
           finishActionAfter(durations.rootFit);
           return;
         case "depth-change":
@@ -1307,16 +1283,11 @@
           return;
         case "inner-toggle":
           runAfterRenderSettled(function() {
-            if (shouldAutoFitAfterInternalToggle(options.previousBounds)) {
-              rememberViewport(resetZoom("visible", Math.min(durations.fit, 220), {
-                fallbackToFullForSingleRoot: true,
-                useRenderedBounds: true
-              }));
-              finishActionAfter(Math.min(durations.fit, 220));
-              return;
-            }
-            rememberViewport();
-            finishActionAfter(0);
+            rememberViewport(resetZoom("visible", Math.min(durations.fit, 220), {
+              fallbackToFullForSingleRoot: true,
+              useRenderedBounds: true
+            }));
+            finishActionAfter(Math.min(durations.fit, 220));
           }, durations.toggle);
           return;
         default:
@@ -1333,10 +1304,12 @@
         applyViewportPolicy("modal-close");
       }
     };
-    btn.onclick = function() {
-      applyViewportPolicy("modal-open");
-      modal.style.display = "block";
-    };
+    if (btn) {
+      btn.onclick = function() {
+        applyViewportPolicy("modal-open");
+        modal.style.display = "block";
+      };
+    }
     if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
       window.addEventListener("resize", handleViewportResize);
     }
@@ -1374,9 +1347,12 @@
       return false;
     }
     checkD3Element("#graph-div-treeID").then(() => {
-      d3.select("#openModalBtn").attr("class", "st-option-button");
-      d3.select("#graph-div-treeID").attr("class", "st-body-tree-div-treeID");
+      d3.select("#graph-div-treeID").attr(
+        "class",
+        "st-body-tree-div st-body-tree-div-treeID"
+      );
       let myid = Math.random();
+      const logoURL = "https://mljar.com/images/logo/logo_blue_white.svg";
       function addModalToFirstBody() {
         let firstBody = document.getElementsByTagName("body")[0];
         let modalHtml = `
@@ -1395,6 +1371,7 @@
         firstBody.insertAdjacentHTML("beforeend", modalHtml);
       }
       addModalToFirstBody();
+      d3.selectAll("#graph-div-treeID").append("div").attr("class", "st-tree-watermark").append("img").attr("src", logoURL).attr("alt", "MLJAR");
       var stjupyter = false;
       if (document.body.getAttribute("data-jp-theme-name") !== null) {
         stjupyter = true;
@@ -1404,12 +1381,8 @@
       const secondaryToolbarGroup = toolbarRoot.append("div").attr("class", "st-toolbar-group");
       const depthToolbarGroup = toolbarRoot.append("div").attr("class", "st-toolbar-group");
       const tertiaryToolbarGroup = toolbarRoot.append("div").attr("class", "st-toolbar-group");
-      let Modalbutton = primaryToolbarGroup.append("button").html(svgWindow).attr("class", "st-option-button").attr("id", "openModalBtn-treeID");
-      if (!stjupyter) {
-        Modalbutton.style("display", "none");
-      }
       let modal = document.getElementById("myModal-treeID");
-      let btn = document.getElementById("openModalBtn-treeID");
+      let btn = null;
       let span = document.getElementById("closeBtn-treeID");
       const regr = "regression";
       const classification = "classification";
@@ -1420,6 +1393,7 @@
       const yMultiplayer = 1;
       const xMultiplayer = 1;
       let isLocked = false;
+      let depthUnlockTimer = null;
       let globalMaxSample = 0;
       const pieHeight = 100;
       const pieWidth = 100;
@@ -1672,6 +1646,14 @@
         if (data) {
           let zoomed = function(event2) {
             treeSVG.attr("transform", event2.transform);
+          }, scheduleDepthUnlock = function(delay = interactionDurations.fit + 40) {
+            if (depthUnlockTimer !== null) {
+              clearTimeout(depthUnlockTimer);
+            }
+            depthUnlockTimer = setTimeout(function() {
+              depthUnlockTimer = null;
+              setControlsLocked(false);
+            }, delay);
           }, getNodeDisplayLabel = function(node) {
             if (!node) {
               return "Root";
@@ -2397,12 +2379,6 @@
             document.body.appendChild(downloadLink);
             downloadLink.click();
             document.body.removeChild(downloadLink);
-          }, xClick = function() {
-            globalX = !globalX;
-            update(treeRoot, true);
-          }, yClick = function() {
-            globalY = !globalY;
-            update(treeRoot, true);
           }, syncDepthControls = function() {
             depthLabel.text(`Depth=${Math.max(currentDepthValue - 1, 0)}`);
             depthDecreaseButton.attr(
@@ -2428,6 +2404,7 @@
             showDepth(treeRoot, 0, nextDepth, true);
             update(treeRoot, false, 0);
             applyViewportPolicy("depth-change");
+            scheduleDepthUnlock();
           }, handleDepthChange = function(event2, optDepth = "optional") {
             if (optDepth !== "optional") {
               applyDepthChange(optDepth);
@@ -2552,6 +2529,10 @@
             getTreeSVG: () => treeSVG,
             onControlsLockedChange: (locked) => {
               isLocked = locked;
+              if (!locked && depthUnlockTimer !== null) {
+                clearTimeout(depthUnlockTimer);
+                depthUnlockTimer = null;
+              }
               if (typeof syncDepthControls === "function") {
                 syncDepthControls();
               }
@@ -2692,45 +2673,31 @@
             tooltipBody.html(`<b>${d}</b>`).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px");
             tooltipModal.html(`<b>${d}</b>`).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px");
           };
-          d3.select("#openModalBtn-treeID").on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
-            mousemoveButton(event, "Open modal window");
-          });
           var toolbar = primaryToolbarGroup;
           var saveSvgbutton = toolbar.append("button").html(svgDownload).attr("id", "svgButton").attr("class", "st-option-button").on("click", saveSvg).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
             mousemoveButton(event, "Save SVG");
           });
-          if (treeData.show_sample !== void 0 && treeData.show_sample != "nodata" && !treeData.tree_type.startsWith("nodata")) {
-            var showSampleButton = primaryToolbarGroup.append("button").html(svgSample).attr("id", "showSampleButton").attr("class", "st-option-button").on("click", showSample).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
-              mousemoveButton(event, "Show sample path");
-            });
-          }
+          saveSvgbutton.append("span").attr("class", "st-button-label").text("Save SVG");
           if (!treeData.tree_type.startsWith(nodata))
-            secondaryToolbarGroup.append("button").html(svgLine).attr("id", "boldLink").attr("class", "st-option-button").on("click", boldClick).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
+            primaryToolbarGroup.append("button").html(svgLine).attr("id", "boldLink").attr("class", "st-option-button").on("click", boldClick).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
               mousemoveButton(
                 event,
                 "Change line tickness scalling in reference to samples in child node"
               );
             });
+          if (!treeData.tree_type.startsWith(nodata)) {
+            d3.select("#boldLink").append("span").attr("class", "st-button-label").text("Line Width");
+          }
           d3.selectAll("#st-close-button-treeID").on("click", function() {
             d3.selectAll("#st-side-panel-treeID").classed("show", false).classed("hide", true);
             setTimeout(function() {
               sideSVG.selectAll("g").remove();
             }, 300);
           });
-          secondaryToolbarGroup.append("button").html(svgZoom).attr("id", "fitVisible").attr("class", "st-option-button").on("click", () => applyViewportPolicy("fit-visible")).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
+          primaryToolbarGroup.append("button").html(svgFitVisible).attr("id", "fitVisible").attr("class", "st-option-button").on("click", () => applyViewportPolicy("fit-visible")).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
             mousemoveButton(event, "Fit visible tree");
           });
-          secondaryToolbarGroup.append("button").html(svgFitFull).attr("id", "fitFull").attr("class", "st-option-button").on("click", () => applyViewportPolicy("fit-full")).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
-            mousemoveButton(event, "Fit full tree");
-          });
-          if (treeData.tree_type == classification) {
-            tertiaryToolbarGroup.append("button").html(svgXAxis).attr("id", "changeXAxis").attr("class", "st-option-button").on("click", xClick).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
-              mousemoveButton(event, "Change Scale on X Axis");
-            });
-            tertiaryToolbarGroup.append("button").html(svgYAxis).attr("id", "changeYAxis").attr("class", "st-option-button").on("click", yClick).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
-              mousemoveButton(event, "Change Scale on Y Axis");
-            });
-          }
+          d3.select("#fitVisible").append("span").attr("class", "st-button-label").text("Fit Tree");
           const myToolbar = toolbarRoot;
           if (treeData.tree_type == classification && treeData.show_palette_control) {
             let dropdownColors = tertiaryToolbarGroup.append("select").attr("id", "st-color-dropdown").attr("class", "st-dropdown").on("change", function() {
@@ -2759,10 +2726,6 @@
             }
             dropdownColors.selectAll("option").data(optionsColors).enter().append("option").attr("value", (d) => d).text((d) => d);
           }
-          setTimeout(function() {
-            const logoURL = "https://mljar.com/images/logo/logo_blue_white.svg";
-            tertiaryToolbarGroup.append("button").attr("class", "st-option-button").style("background", "transparent").style("border", "none").style("cursor", "pointer").style("padding", "0").style("position", "relative").append("img").attr("src", logoURL).style("height", "50px");
-          }, 100);
           const maxDepth = getTreeDepth(treeRoot, 0);
           let currentDepthValue = Math.max(1, Math.min(startDepth, maxDepth));
           const depthControl = depthToolbarGroup.append("div").attr("class", "st-depth-control");

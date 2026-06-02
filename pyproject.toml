@@ -8,7 +8,7 @@ version = "1.0.0"
 description = "Visualize decision tree in Python"
 readme = "README.md"
 requires-python = ">=3.7.1"
-license = "Apache-2.0"
+license = { text = "Apache-2.0" }
 authors = [
   { name = "MLJAR Sp. z o.o.", email = "contact@mljar.com" },
 ]

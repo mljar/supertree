@@ -26,7 +26,7 @@ def get_d3_html(tree_data, start_depth):
     <div id="my-window" class="st-container">
         <div id="st-info-div-$treeID" class="st-info-div"></div>
         <div id="toolbar-$treeID" class="st-body-toolbar-div"></div>
-        <div id="graph-div-$treeID" class="st-body-tree-div-$treeID"></div>
+        <div id="graph-div-$treeID" class="st-body-tree-div st-body-tree-div-$treeID"></div>
       <div id="st-side-panel-$treeID" class="st-side-panel">
             <span id="st-close-button-$treeID" class="st-close-button">&times;</span>
         <div>

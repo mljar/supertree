@@ -415,7 +415,7 @@ export function processClassificationNode(treeData, tooltipBody, tooltipModal, g
       tooltipBody.style("opacity", 1);
       tooltipModal.style("opacity", 1);
 
-      d3.select(this).style("fill", "red").style("stroke", "red");
+      d3.select(this).style("fill", "#0099cc").style("stroke", "#0099cc");
     };
 
     var mouseleavetriangle = function(d) {
@@ -637,7 +637,7 @@ export function processClassificationLeaf(
     const mouseover = function(d) {
       tooltipBody.style("opacity", 1);
       tooltipModal.style("opacity", 1);
-      d3.select(this).style("stroke", "#EF4A60");
+      d3.select(this).style("stroke", "#0099cc");
     };
 
     const mouseleave = function(d) {
@@ -1070,14 +1070,14 @@ export function processRegressionNode(
         .style("opacity", 0)
         .style("top", -2000 + "px")
         .style("left", -2000 + "px");
-      d3.select(this).style("fill", "blue");
+      d3.select(this).style("fill", "#0099cc");
 
       tooltipModal
         .style("opacity", 0)
         .style("top", -2000 + "px")
         .style("left", -2000 + "px");
 
-      d3.select(this).style("fill", "blue");
+      d3.select(this).style("fill", "#0099cc");
     };
 
     const mouseoverline = function(d) {
@@ -1126,7 +1126,7 @@ export function processRegressionNode(
         "transform",
         `translate(${-scatterplotWidth / 2}, ${0})`,
       )
-      .style("fill", "blue")
+      .style("fill", "#0099cc")
       .style("fill-opacity", 0.5)
       .on("mouseover", mouseover)
       .on("mouseleave", mouseleave)
@@ -1275,7 +1275,7 @@ export function processRegressionNode(
       tooltipBody.style("opacity", 1);
       tooltipModal.style("opacity", 1);
 
-      d3.select(this).style("fill", "red").style("stroke", "red");
+      d3.select(this).style("fill", "#0099cc").style("stroke", "#0099cc");
     };
 
     var mouseleavetriangle = function(d) {
@@ -1587,14 +1587,14 @@ export function processRegressionLeaf(
         .style("top", -2000 + "px")
         .style("left", -2000 + "px");
 
-      d3.select(this).style("fill", "blue");
+      d3.select(this).style("fill", "#0099cc");
 
       tooltipModal
         .style("opacity", 0)
         .style("top", -2000 + "px")
         .style("left", -2000 + "px");
 
-      d3.select(this).style("fill", "blue");
+      d3.select(this).style("fill", "#0099cc");
     };
 
     const mouseoverline = function(d) {
@@ -1657,7 +1657,7 @@ export function processRegressionLeaf(
         "transform",
         `translate(${-scatterplotLeafWidth / 2 + 15}, ${0})`,
       )
-      .style("fill", "blue")
+      .style("fill", "#0099cc")
       .style("fill-opacity", 0.5)
       .on("mouseover", mouseover)
       .on("mouseleave", mouseleave)
@@ -1761,7 +1761,7 @@ export function processRegressionLeaf(
       tooltipBody.style("opacity", 1);
       tooltipModal.style("opacity", 1);
 
-      d3.select(this).style("fill", "red").style("stroke", "red");
+      d3.select(this).style("fill", "#0099cc").style("stroke", "#0099cc");
     };
 
     var mouseleavetriangle = function(d) {

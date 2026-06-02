@@ -136,30 +136,6 @@ export function createViewportController(config) {
     };
   }
 
-  function shouldAutoFitAfterInternalToggle(previousBounds) {
-    if (!previousBounds) {
-      return false;
-    }
-
-    const nextBounds = getVisibleTreeBounds({
-      fallbackToFullForSingleRoot: true,
-      useRenderedBounds: true,
-    });
-    const widthRatio = nextBounds.width / Math.max(previousBounds.width, 1);
-    const heightRatio = nextBounds.height / Math.max(previousBounds.height, 1);
-    const currentTransform = d3.zoomTransform(getTreeSVG().node());
-    const fitTransform = getFitTransform("visible", {
-      fallbackToFullForSingleRoot: true,
-      useRenderedBounds: true,
-    });
-    const currentScale = currentTransform?.k ?? 1;
-    const fitScale = fitTransform?.k ?? 1;
-    const isMaterialShrink = widthRatio < 0.72 || heightRatio < 0.72;
-    const isTooZoomedInForExpandedTree = currentScale > fitScale * 1.18;
-
-    return isMaterialShrink || isTooZoomedInForExpandedTree;
-  }
-
   function getFullTreeBounds() {
     const horizontalPadding = rectWidth / 2 + 40;
     const verticalPadding = rectHeight / 2 + 40;
@@ -305,9 +281,12 @@ export function createViewportController(config) {
         }, 60);
         return;
       case "root-toggle":
-        runAfterRender(function() {
-          rememberViewport(resetZoom("full", durations.rootFit));
-        });
+        runAfterRenderSettled(function() {
+          rememberViewport(resetZoom("visible", durations.rootFit, {
+            fallbackToFullForSingleRoot: false,
+            useRenderedBounds: true,
+          }));
+        }, 20);
         finishActionAfter(durations.rootFit);
         return;
       case "depth-change":
@@ -347,16 +326,11 @@ export function createViewportController(config) {
         return;
       case "inner-toggle":
         runAfterRenderSettled(function() {
-          if (shouldAutoFitAfterInternalToggle(options.previousBounds)) {
-            rememberViewport(resetZoom("visible", Math.min(durations.fit, 220), {
-              fallbackToFullForSingleRoot: true,
-              useRenderedBounds: true,
-            }));
-            finishActionAfter(Math.min(durations.fit, 220));
-            return;
-          }
-          rememberViewport();
-          finishActionAfter(0);
+          rememberViewport(resetZoom("visible", Math.min(durations.fit, 220), {
+            fallbackToFullForSingleRoot: true,
+            useRenderedBounds: true,
+          }));
+          finishActionAfter(Math.min(durations.fit, 220));
         }, durations.toggle);
         return;
       default:
@@ -376,10 +350,12 @@ export function createViewportController(config) {
     }
   };
 
-  btn.onclick = function() {
-    applyViewportPolicy("modal-open");
-    modal.style.display = "block";
-  };
+  if (btn) {
+    btn.onclick = function() {
+      applyViewportPolicy("modal-open");
+      modal.style.display = "block";
+    };
+  }
 
   if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
     window.addEventListener("resize", handleViewportResize);
