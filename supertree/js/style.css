@@ -1,55 +1,68 @@
 .st-dropdown {
-  border-radius: 0px !important; 
-  background-color: #008CBA !important;
-  border: 2px solid #007B9A !important;
-  color: white !important;
-  height: 50px !important;
-  width: 125px !important;
+  appearance: none !important;
+  border-radius: 14px !important;
+  background-color: #fdfcf9 !important;
+  border: 1px solid #d7d1c7 !important;
+  color: #2c2a28 !important;
+  height: 40px !important;
+  min-width: 116px !important;
+  padding: 0 14px !important;
   text-align: center !important;
   line-height: 1.5 !important;
-  font-size: 16px !important;
-  cursor: pointer !important; 
-  transition: background-color 0.3s, box-shadow 0.3s !important; 
+  font-size: 14px !important;
+  cursor: pointer !important;
+  transition: border-color 0.2s ease, background-color 0.2s ease,
+    box-shadow 0.2s ease !important;
   box-sizing: border-box !important;
-  display: inline-block !important;
-
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 1px 2px rgba(44, 42, 40, 0.05) !important;
 }
 
 .st-option-button {
-  border: 1px solid #007B9A ;
-  border-radius: 0px; 
-  background-color: #008CBA;
-  border: 2px solid #007B9A;
-  color: white; 
-  line-height: 1.5 !important;
-  height: 50px !important;
-  width: 50px !important;
+  border-radius: 14px !important;
+  background-color: #fdfcf9 !important;
+  border: 1px solid #d7d1c7 !important;
+  color: #2c2a28 !important;
+  line-height: 1 !important;
+  height: 40px !important;
+  width: 40px !important;
   text-align: center !important;
   text-decoration: none !important;
-  display: inline-block;
-  font-size: 16px !important;
-  cursor: pointer !important; 
-  transition: background-color 0.3s, box-shadow 0.3s !important; 
+  display: inline-flex !important;
+  font-size: 14px !important;
+  cursor: pointer !important;
+  transition: border-color 0.2s ease, background-color 0.2s ease,
+    box-shadow 0.2s ease, transform 0.2s ease !important;
   align-items: center !important;
   justify-content: center !important;
-  margin: 0px !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(44, 42, 40, 0.05) !important;
+}
+
+.st-option-button svg {
+  margin: 0 !important;
+  padding: 0 !important;
+  vertical-align: middle !important;
+  width: 20px !important;
+  height: 20px !important;
   box-sizing: border-box !important;
 }
 
-
-.st-option-button svg {
-    margin: 0 !important;
-    padding: 0 !important;
-    vertical-align: middle !important;
-    width: 24px !important;
-    height: 24px !important;
-    box-sizing: border-box !important;
+.st-option-button:hover,
+.st-dropdown:hover {
+  background-color: #ffffff !important;
+  border-color: #c2bbaf !important;
+  box-shadow: 0 6px 14px rgba(44, 42, 40, 0.06) !important;
 }
 
-
-.st-option-button:hover {
-    background-color: #45a049 !important;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3) !important;
+.st-option-button:disabled,
+.st-dropdown:disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
 }
 
 .jp-RenderedHTMLCommon p {
@@ -63,28 +76,80 @@
 
 .st-body-toolbar-div {
 align-items: center !important;
-display: flex !important; 
-justify-content: center !important; 
+display: flex !important;
+justify-content: center !important;
   margin: 0 !important;
-  padding: 0 !important;
-  appearance: none !important; 
+  padding: 10px 14px !important;
+  appearance: none !important;
   line-height: normal !important;
-  margin: 0 !important;
-  padding: 0.5em 1em !important;
   vertical-align: middle !important;
+  gap: 10px !important;
+  border: 1px solid #ddd7ce !important;
+  border-bottom: 0 !important;
+  border-radius: 14px 14px 0 0 !important;
+  background: linear-gradient(180deg, #fefdfb 0%, #faf8f3 100%) !important;
 }
 
 .st-toolbar {
-align-items: center;
-display: flex; 
-justify-content: center; 
+  align-items: center;
+  display: flex;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 10px;
   margin: 0;
-  padding: 0;
-  appearance: none; 
-  line-height: normal; 
-  margin: 0;
-  padding: 0.5em 1em; 
+  padding: 10px 14px;
+  appearance: none;
+  line-height: normal;
   vertical-align: middle;
+  border: 1px solid #ddd7ce;
+  border-bottom: 0;
+  border-radius: 14px 14px 0 0;
+  background: linear-gradient(180deg, #fefdfb 0%, #faf8f3 100%);
+}
+
+.st-toolbar-group {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  position: relative !important;
+}
+
+.st-toolbar-group + .st-toolbar-group::before {
+  content: "" !important;
+  position: absolute !important;
+  left: -5px !important;
+  top: 5px !important;
+  bottom: 5px !important;
+  width: 1px !important;
+  background: #e2ddd5 !important;
+}
+
+.st-depth-control {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 2px 0 2px 4px !important;
+}
+
+.st-depth-label {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 96px !important;
+  height: 40px !important;
+  padding: 0 14px !important;
+  border-radius: 14px !important;
+  border: 1px solid #ddd7ce !important;
+  background: #f6f2eb !important;
+  color: #3e3a35 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  box-sizing: border-box !important;
+}
+
+.st-depth-button {
+  font-size: 22px !important;
+  font-weight: 400 !important;
 }
 
 
@@ -110,10 +175,12 @@ justify-content: center;
 
 .st-svg {
   width: 100% !important;
-  height: 580px !important;
+  height: 650px !important;
   border: 1px solid #e6edf2 !important;
-  border-radius: 7px !important;
-  background: #ffffff !important;
+  border-top: 1px solid #e4ddd3 !important;
+  border-color: #ddd7ce !important;
+  border-radius: 0 0 14px 14px !important;
+  background: #fffdfa !important;
   box-sizing: border-box !important;
 }
 
@@ -191,7 +258,7 @@ justify-content: center;
 
 
 .st-container {
-    background-color: #fefefe;
+    background-color: #fcfbf8;
     width: 100%; 
     height: 100vh;
     max-height: 825px;
@@ -202,11 +269,12 @@ justify-content: center;
     gap: 0;
     padding: 0;
     margin: 0;
+    border-radius: 14px;
 }
 
 
 .st-body-tree-div {
-  min-height: 580px;
+  min-height: 650px;
 }
 
 

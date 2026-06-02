@@ -1431,7 +1431,7 @@ export function processRegressionLeaf(
       .attr("y", -10)
       .attr("width", rectHeight + 20)
       .attr("height", rectHeight - 10)
-      .attr("stroke-width", isSampleExistInThisNode ? 4 : 1)
+      .attr("stroke-width", 1)
       .attr("stroke", "#545454")
       .attr("rx", 10)
       .attr("ry", 10)
