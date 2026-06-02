@@ -1761,7 +1761,7 @@ export function buildTree(
           var saveSvgbutton = toolbar
             .append("button")
             .html(svgDownload)
-            .attr("id", "svgButton")
+            .attr("id", "svgButton-treeID")
             .attr("class", "st-option-button")
             .on("click", saveSvg)
             .on("mouseover", mouseover)
@@ -1976,12 +1976,12 @@ export function buildTree(
           }
 
 
-
-          if (!treeData.tree_type.startsWith(nodata))
-            primaryToolbarGroup
+          let boldLinkButton = null;
+          if (!treeData.tree_type.startsWith(nodata)) {
+            boldLinkButton = primaryToolbarGroup
               .append("button")
               .html(svgLine)
-              .attr("id", "boldLink")
+              .attr("id", "boldLink-treeID")
               .attr("class", "st-option-button")
               .on("click", boldClick)
               .on("mouseover", mouseover)
@@ -1992,9 +1992,10 @@ export function buildTree(
                   "Change line tickness scalling in reference to samples in child node",
                 );
               });
+          }
 
-          if (!treeData.tree_type.startsWith(nodata)) {
-            d3.select("#boldLink")
+          if (boldLinkButton) {
+            boldLinkButton
               .append("span")
               .attr("class", "st-button-label")
               .text("Line Width");
@@ -2008,10 +2009,10 @@ export function buildTree(
             }, 300);
           });
 
-          primaryToolbarGroup
+          const fitVisibleButton = primaryToolbarGroup
             .append("button")
             .html(svgFitVisible)
-            .attr("id", "fitVisible")
+            .attr("id", "fitVisible-treeID")
             .attr("class", "st-option-button")
             .on("click", () => applyViewportPolicy("fit-visible"))
             .on("mouseover", mouseover)
@@ -2020,7 +2021,7 @@ export function buildTree(
               mousemoveButton(event, "Fit visible tree");
             });
 
-          d3.select("#fitVisible")
+          fitVisibleButton
             .append("span")
             .attr("class", "st-button-label")
             .text("Fit Tree");
@@ -2058,7 +2059,7 @@ export function buildTree(
           if (treeData.tree_type == classification && treeData.show_palette_control) {
             let dropdownColors = tertiaryToolbarGroup
               .append("select")
-              .attr("id", "st-color-dropdown")
+              .attr("id", "st-color-dropdown-treeID")
               .attr("class", "st-dropdown")
               .on("change", function() {
                 var number = extractNumber(this.value);

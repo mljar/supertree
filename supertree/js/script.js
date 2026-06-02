@@ -2674,19 +2674,21 @@
             tooltipModal.html(`<b>${d}</b>`).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px");
           };
           var toolbar = primaryToolbarGroup;
-          var saveSvgbutton = toolbar.append("button").html(svgDownload).attr("id", "svgButton").attr("class", "st-option-button").on("click", saveSvg).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
+          var saveSvgbutton = toolbar.append("button").html(svgDownload).attr("id", "svgButton-treeID").attr("class", "st-option-button").on("click", saveSvg).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
             mousemoveButton(event, "Save SVG");
           });
           saveSvgbutton.append("span").attr("class", "st-button-label").text("Save SVG");
-          if (!treeData.tree_type.startsWith(nodata))
-            primaryToolbarGroup.append("button").html(svgLine).attr("id", "boldLink").attr("class", "st-option-button").on("click", boldClick).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
+          let boldLinkButton = null;
+          if (!treeData.tree_type.startsWith(nodata)) {
+            boldLinkButton = primaryToolbarGroup.append("button").html(svgLine).attr("id", "boldLink-treeID").attr("class", "st-option-button").on("click", boldClick).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
               mousemoveButton(
                 event,
                 "Change line tickness scalling in reference to samples in child node"
               );
             });
-          if (!treeData.tree_type.startsWith(nodata)) {
-            d3.select("#boldLink").append("span").attr("class", "st-button-label").text("Line Width");
+          }
+          if (boldLinkButton) {
+            boldLinkButton.append("span").attr("class", "st-button-label").text("Line Width");
           }
           d3.selectAll("#st-close-button-treeID").on("click", function() {
             d3.selectAll("#st-side-panel-treeID").classed("show", false).classed("hide", true);
@@ -2694,13 +2696,13 @@
               sideSVG.selectAll("g").remove();
             }, 300);
           });
-          primaryToolbarGroup.append("button").html(svgFitVisible).attr("id", "fitVisible").attr("class", "st-option-button").on("click", () => applyViewportPolicy("fit-visible")).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
+          const fitVisibleButton = primaryToolbarGroup.append("button").html(svgFitVisible).attr("id", "fitVisible-treeID").attr("class", "st-option-button").on("click", () => applyViewportPolicy("fit-visible")).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
             mousemoveButton(event, "Fit visible tree");
           });
-          d3.select("#fitVisible").append("span").attr("class", "st-button-label").text("Fit Tree");
+          fitVisibleButton.append("span").attr("class", "st-button-label").text("Fit Tree");
           const myToolbar = toolbarRoot;
           if (treeData.tree_type == classification && treeData.show_palette_control) {
-            let dropdownColors = tertiaryToolbarGroup.append("select").attr("id", "st-color-dropdown").attr("class", "st-dropdown").on("change", function() {
+            let dropdownColors = tertiaryToolbarGroup.append("select").attr("id", "st-color-dropdown-treeID").attr("class", "st-dropdown").on("change", function() {
               var number = extractNumber(this.value);
               colors = allColors.slice((number - 1) * colorSize, number * colorSize);
               if (treeData.feature_names.length > colors.length) {
