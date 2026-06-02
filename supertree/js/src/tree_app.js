@@ -61,11 +61,11 @@ export function buildTree(
     <div id="myModal-treeID" class="st-modal">
         <div class="st-modal-content">
            <span id="closeBtn-treeID" class="st-closeBtn">&times;</span>
-            <div id="st-info-div-treeID" class="st-info-div"></div>
-            <div id = "toolbar-treeID" class="st-toolbar"></div>
-            <div id ="graph-div-treeID" class ="st-tree-div-${myid}"></div>     
-      <div id="st-side-panel-treeID" class="st-side-panel">
-            <span id="st-close-button-treeID" class="st-close-button">&times;</span>
+            <div id="st-modal-info-div-treeID" class="st-info-div"></div>
+            <div id="toolbar-modal-treeID" class="st-toolbar"></div>
+            <div id="graph-div-modal-treeID" class ="st-tree-div-${myid}"></div>     
+      <div id="st-side-panel-modal-treeID" class="st-side-panel">
+            <span id="st-close-button-modal-treeID" class="st-close-button">&times;</span>
         <div>
         </div>
     </div>
@@ -420,7 +420,7 @@ export function buildTree(
       loadJSONFiles().then((data) => {
         if (data) {
           const { nodeData, treeData } = data;
-          const treeLeafSpacing = 300;
+          const treeLeafSpacing = treeData.tree_type == "regression" ? 340 : 300;
           const treeLevelSpacing = 235;
           const treeDepthSpacing = 400;
           const {
@@ -489,6 +489,10 @@ export function buildTree(
           let currentFocusNodeId = null;
           let currentFocusAction = "Ready";
           let currentFocusLabel = "Root";
+          let ignoreOutsidePanelUntil = 0;
+          const hasShowSampleData = treeData.show_sample !== "nodata" &&
+            treeData.show_sample !== undefined &&
+            treeData.show_sample !== null;
 
 
           const paletteIndex = Math.max((treeData.palette || 1) - 1, 0);
@@ -545,6 +549,16 @@ export function buildTree(
               nodeTreeMargin.top +
               ")",
             );
+
+          d3.select("#mySVG-treeID").on("click", function(event) {
+            if (!event) {
+              return;
+            }
+            if (event.target.closest(".treeNode")) {
+              return;
+            }
+            clearActivePath();
+          });
 
           var sideSVG = d3.selectAll("#st-side-panel-treeID").append("svg")
             .attr("id", "st-side-svg-treeID")
@@ -1007,7 +1021,6 @@ export function buildTree(
 
           collapse(treeRoot, 0, startDepth);
           update(treeRoot, false, 0);
-          applyViewportPolicy("initial");
 
           function update(source, resetTree, transitionDuration = duration, options = {}) {
             const hiddenNodeIds = options.hiddenNodeIds || new Set();
@@ -1883,9 +1896,7 @@ export function buildTree(
           };
 
           var toolbar = primaryToolbarGroup;
-          const hasShowSample = treeData.show_sample !== "nodata" &&
-            treeData.show_sample !== undefined &&
-            treeData.show_sample !== null;
+          const hasShowSample = hasShowSampleData;
 
           var saveSvgbutton = toolbar
             .append("button")
@@ -1970,6 +1981,7 @@ export function buildTree(
                 return ids.includes(d.id);
               })
               .style("stroke", "#0099cc");
+            applySamplePathShading(nodedata);
             ignoreOutsidePanelUntil = Date.now() + 350;
 
             if (sidePanel.classed("show")) {
@@ -1987,6 +1999,83 @@ export function buildTree(
               sidePanel.classed("hide", false).classed("show", true);
               renderNodeData(nodedata);
             }
+          }
+
+          function clearActivePath(options = {}) {
+            const closePanel = options.closePanel !== false;
+
+            d3.selectAll("#st-link-treeID").style("stroke", defaultLinkStroke);
+            treeSVG.selectAll(".st-sample-side-highlight").remove();
+
+            if (closePanel) {
+              closeSidePanel();
+            }
+          }
+
+          function applySamplePathShading(pathNodes) {
+            treeSVG.selectAll(".st-sample-side-highlight").remove();
+
+            if (!hasShowSampleData) {
+              return;
+            }
+
+            const activeIds = new Set(pathNodes.map((node) => node.id));
+            const childByParentId = new Map();
+            for (let i = 1; i < pathNodes.length; i++) {
+              childByParentId.set(pathNodes[i].id, pathNodes[i - 1].id);
+            }
+            const overlayFill = "rgba(0, 153, 204, 0.08)";
+
+            treeSVG
+              .selectAll(".treeNode")
+              .filter(function(node) {
+                return activeIds.has(node.id) && node.data && !node.data.is_leaf;
+              })
+              .each(function(node) {
+                const childOnPathId = childByParentId.get(node.id);
+
+                if (!childOnPathId) {
+                  return;
+                }
+
+                const nodeSelection = d3.select(this);
+                const thresholdLine = nodeSelection.select(".threshold-line");
+                if (thresholdLine.empty()) {
+                  return;
+                }
+
+                const thresholdX = parseFloat(thresholdLine.attr("x1"));
+                const plotHeight = parseFloat(thresholdLine.attr("y2")) || histogramHeight;
+                const transform = thresholdLine.attr("transform") || "";
+                const translateMatch = transform.match(/translate\(([-\d.]+),\s*([-\d.]+)?\)/);
+                const plotStartX = translateMatch ? parseFloat(translateMatch[1]) : -histogramWidth / 2;
+                const plotStartY = translateMatch && translateMatch[2] ? parseFloat(translateMatch[2]) : 0;
+                const backgroundRect = nodeSelection.select("rect.histogram-background");
+                const plotEndX = backgroundRect.empty()
+                  ? plotStartX + histogramWidth
+                  : parseFloat(backgroundRect.attr("x")) + parseFloat(backgroundRect.attr("width"));
+                const goesLeft = node.children?.[0]?.id === childOnPathId ||
+                  node._children?.[0]?.id === childOnPathId ||
+                  node.data?.left_node?.id === childOnPathId;
+                const overlayX = goesLeft ? plotStartX : thresholdX + plotStartX;
+                const overlayWidth = goesLeft
+                  ? thresholdX
+                  : Math.max(plotEndX - (thresholdX + plotStartX), 0);
+
+                if (!Number.isFinite(overlayX) || !Number.isFinite(overlayWidth) || overlayWidth <= 0) {
+                  return;
+                }
+
+                nodeSelection
+                  .insert("rect", ".xAxis")
+                  .attr("class", "st-sample-side-highlight")
+                  .attr("x", overlayX)
+                  .attr("y", plotStartY)
+                  .attr("width", overlayWidth)
+                  .attr("height", plotHeight)
+                  .attr("fill", overlayFill)
+                  .attr("pointer-events", "none");
+              });
           }
 
           function renderNodeData(nodedata) {
@@ -2104,8 +2193,6 @@ export function buildTree(
             return pathData;
           }
 
-          let ignoreOutsidePanelUntil = 0;
-
           function closeSidePanel() {
             const sidePanel = d3.selectAll("#st-side-panel-treeID");
             sidePanel.classed("show", false).classed("hide", true);
@@ -2163,7 +2250,7 @@ export function buildTree(
             if (event) {
               event.stopPropagation();
             }
-            closeSidePanel();
+            clearActivePath();
           });
 
           document.addEventListener("click", function(event) {
@@ -2177,7 +2264,7 @@ export function buildTree(
             if (sidePanelNode.contains(event.target)) {
               return;
             }
-            closeSidePanel();
+            clearActivePath();
           });
 
           const fitVisibleButton = primaryToolbarGroup
@@ -2403,6 +2490,11 @@ export function buildTree(
           });
 
           syncDepthControls();
+          if (hasShowSampleData) {
+            showSample();
+          } else {
+            applyViewportPolicy("initial");
+          }
           function extractNumber(str) {
             const match = str.match(/\d+/);
 

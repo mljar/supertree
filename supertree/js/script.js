@@ -1297,9 +1297,15 @@
           runAfterRenderSettled(function() {
             rememberViewport(resetZoom("visible", Math.min(durations.fit, 220), {
               fallbackToFullForSingleRoot: true,
-              useRenderedBounds: true
+              useRenderedBounds: false
             }));
-            finishActionAfter(Math.min(durations.fit, 220));
+            runAfterRenderSettled(function() {
+              rememberViewport(resetZoom("visible", 0, {
+                fallbackToFullForSingleRoot: true,
+                useRenderedBounds: false
+              }));
+            }, 140);
+            finishActionAfter(Math.min(durations.fit, 220) + 140);
           }, durations.toggle);
           return;
         default:
@@ -1371,11 +1377,11 @@
     <div id="myModal-treeID" class="st-modal">
         <div class="st-modal-content">
            <span id="closeBtn-treeID" class="st-closeBtn">&times;</span>
-            <div id="st-info-div-treeID" class="st-info-div"></div>
-            <div id = "toolbar-treeID" class="st-toolbar"></div>
-            <div id ="graph-div-treeID" class ="st-tree-div-${myid}"></div>     
-      <div id="st-side-panel-treeID" class="st-side-panel">
-            <span id="st-close-button-treeID" class="st-close-button">&times;</span>
+            <div id="st-modal-info-div-treeID" class="st-info-div"></div>
+            <div id="toolbar-modal-treeID" class="st-toolbar"></div>
+            <div id="graph-div-modal-treeID" class ="st-tree-div-${myid}"></div>     
+      <div id="st-side-panel-modal-treeID" class="st-side-panel">
+            <span id="st-close-button-modal-treeID" class="st-close-button">&times;</span>
         <div>
         </div>
     </div>
@@ -2264,6 +2270,7 @@
             d3.selectAll("#st-link-treeID").filter(function(d2) {
               return ids.includes(d2.id);
             }).style("stroke", "#0099cc");
+            applySamplePathShading(nodedata);
             ignoreOutsidePanelUntil = Date.now() + 350;
             if (sidePanel.classed("show")) {
               sidePanel.classed("show", false).classed("hide", true);
@@ -2276,6 +2283,53 @@
               sidePanel.classed("hide", false).classed("show", true);
               renderNodeData(nodedata);
             }
+          }, clearActivePath = function(options = {}) {
+            const closePanel = options.closePanel !== false;
+            d3.selectAll("#st-link-treeID").style("stroke", defaultLinkStroke);
+            treeSVG.selectAll(".st-sample-side-highlight").remove();
+            if (closePanel) {
+              closeSidePanel();
+            }
+          }, applySamplePathShading = function(pathNodes) {
+            treeSVG.selectAll(".st-sample-side-highlight").remove();
+            if (!hasShowSampleData) {
+              return;
+            }
+            const activeIds = new Set(pathNodes.map((node) => node.id));
+            const childByParentId = /* @__PURE__ */ new Map();
+            for (let i = 1; i < pathNodes.length; i++) {
+              childByParentId.set(pathNodes[i].id, pathNodes[i - 1].id);
+            }
+            const overlayFill = "rgba(0, 153, 204, 0.08)";
+            treeSVG.selectAll(".treeNode").filter(function(node) {
+              return activeIds.has(node.id) && node.data && !node.data.is_leaf;
+            }).each(function(node) {
+              var _a, _b, _c, _d, _e, _f;
+              const childOnPathId = childByParentId.get(node.id);
+              if (!childOnPathId) {
+                return;
+              }
+              const nodeSelection = d3.select(this);
+              const thresholdLine = nodeSelection.select(".threshold-line");
+              if (thresholdLine.empty()) {
+                return;
+              }
+              const thresholdX = parseFloat(thresholdLine.attr("x1"));
+              const plotHeight = parseFloat(thresholdLine.attr("y2")) || histogramHeight;
+              const transform = thresholdLine.attr("transform") || "";
+              const translateMatch = transform.match(/translate\(([-\d.]+),\s*([-\d.]+)?\)/);
+              const plotStartX = translateMatch ? parseFloat(translateMatch[1]) : -histogramWidth / 2;
+              const plotStartY = translateMatch && translateMatch[2] ? parseFloat(translateMatch[2]) : 0;
+              const backgroundRect = nodeSelection.select("rect.histogram-background");
+              const plotEndX = backgroundRect.empty() ? plotStartX + histogramWidth : parseFloat(backgroundRect.attr("x")) + parseFloat(backgroundRect.attr("width"));
+              const goesLeft = ((_b = (_a = node.children) == null ? void 0 : _a[0]) == null ? void 0 : _b.id) === childOnPathId || ((_d = (_c = node._children) == null ? void 0 : _c[0]) == null ? void 0 : _d.id) === childOnPathId || ((_f = (_e = node.data) == null ? void 0 : _e.left_node) == null ? void 0 : _f.id) === childOnPathId;
+              const overlayX = goesLeft ? plotStartX : thresholdX + plotStartX;
+              const overlayWidth = goesLeft ? thresholdX : Math.max(plotEndX - (thresholdX + plotStartX), 0);
+              if (!Number.isFinite(overlayX) || !Number.isFinite(overlayWidth) || overlayWidth <= 0) {
+                return;
+              }
+              nodeSelection.insert("rect", ".xAxis").attr("class", "st-sample-side-highlight").attr("x", overlayX).attr("y", plotStartY).attr("width", overlayWidth).attr("height", plotHeight).attr("fill", overlayFill).attr("pointer-events", "none");
+            });
           }, renderNodeData = function(nodedata) {
             nodedata.slice().reverse().forEach(function(node, i) {
               let translateX = 150;
@@ -2447,7 +2501,7 @@
             return null;
           };
           const { nodeData, treeData } = data;
-          const treeLeafSpacing = 300;
+          const treeLeafSpacing = treeData.tree_type == "regression" ? 340 : 300;
           const treeLevelSpacing = 235;
           const treeDepthSpacing = 400;
           const {
@@ -2507,6 +2561,8 @@
           let currentFocusNodeId = null;
           let currentFocusAction = "Ready";
           let currentFocusLabel = "Root";
+          let ignoreOutsidePanelUntil = 0;
+          const hasShowSampleData = treeData.show_sample !== "nodata" && treeData.show_sample !== void 0 && treeData.show_sample !== null;
           const paletteIndex = Math.max((treeData.palette || 1) - 1, 0);
           let colors = allColors.slice(paletteIndex * colorSize, (paletteIndex + 1) * colorSize);
           if (treeData.feature_names.length > colors.length) {
@@ -2538,6 +2594,15 @@
             "transform",
             "translate(" + nodeTreeMargin.left + "," + nodeTreeMargin.top + ")"
           );
+          d3.select("#mySVG-treeID").on("click", function(event2) {
+            if (!event2) {
+              return;
+            }
+            if (event2.target.closest(".treeNode")) {
+              return;
+            }
+            clearActivePath();
+          });
           var sideSVG = d3.selectAll("#st-side-panel-treeID").append("svg").attr("id", "st-side-svg-treeID").attr("class", "st-svg-2").attr("width", "100%").attr("height", 1e3).style("background-color", "#f3f9fb");
           const viewportController = createViewportController({
             modal,
@@ -2770,7 +2835,6 @@
           stLog("debug", startDepth, "start depth value");
           collapse(treeRoot, 0, startDepth);
           update(treeRoot, false, 0);
-          applyViewportPolicy("initial");
           if (treeData.model_name != "DecisionTreeClassifier" && treeData.model_name != "DecisionTreeRegressor") {
             stLog("debug", "hello");
             d3.selectAll("#st-info-div-treeID").append("p").text(`${treeData.model_name} ${treeData.which_tree}`).style("font-size", "12px").style("color", "black");
@@ -2788,12 +2852,11 @@
             tooltipModal.html(`<b>${d}</b>`).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px");
           };
           var toolbar = primaryToolbarGroup;
-          const hasShowSample = treeData.show_sample !== "nodata" && treeData.show_sample !== void 0 && treeData.show_sample !== null;
+          const hasShowSample = hasShowSampleData;
           var saveSvgbutton = toolbar.append("button").html(svgDownload).attr("id", "svgButton-treeID").attr("class", "st-option-button").on("click", saveSvg).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
             mousemoveButton(event, "Save SVG");
           });
           saveSvgbutton.append("span").attr("class", "st-button-label").text("Save SVG");
-          let ignoreOutsidePanelUntil = 0;
           let boldLinkButton = null;
           if (!treeData.tree_type.startsWith(nodata)) {
             boldLinkButton = primaryToolbarGroup.append("button").html(svgLine).attr("id", "boldLink-treeID").attr("class", "st-option-button").on("click", boldClick).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
@@ -2816,7 +2879,7 @@
             if (event2) {
               event2.stopPropagation();
             }
-            closeSidePanel();
+            clearActivePath();
           });
           document.addEventListener("click", function(event2) {
             const sidePanelNode = d3.select("#st-side-panel-treeID").node();
@@ -2829,7 +2892,7 @@
             if (sidePanelNode.contains(event2.target)) {
               return;
             }
-            closeSidePanel();
+            clearActivePath();
           });
           const fitVisibleButton = primaryToolbarGroup.append("button").html(svgFitVisible).attr("id", "fitVisible-treeID").attr("class", "st-option-button").on("click", () => applyViewportPolicy("fit-visible")).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
             mousemoveButton(event, "Fit visible tree");
@@ -2902,6 +2965,11 @@
             applyDepthStep(1);
           });
           syncDepthControls();
+          if (hasShowSampleData) {
+            showSample();
+          } else {
+            applyViewportPolicy("initial");
+          }
         }
       });
     }).catch((error) => {

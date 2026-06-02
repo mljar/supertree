@@ -339,9 +339,15 @@ export function createViewportController(config) {
         runAfterRenderSettled(function() {
           rememberViewport(resetZoom("visible", Math.min(durations.fit, 220), {
             fallbackToFullForSingleRoot: true,
-            useRenderedBounds: true,
+            useRenderedBounds: false,
           }));
-          finishActionAfter(Math.min(durations.fit, 220));
+          runAfterRenderSettled(function() {
+            rememberViewport(resetZoom("visible", 0, {
+              fallbackToFullForSingleRoot: true,
+              useRenderedBounds: false,
+            }));
+          }, 140);
+          finishActionAfter(Math.min(durations.fit, 220) + 140);
         }, durations.toggle);
         return;
       default:
