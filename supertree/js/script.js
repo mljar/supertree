@@ -2012,7 +2012,7 @@
             let treeNodeExit = treeNode.exit().filter(function(d) {
               return descendantIds.has(d.id);
             }).transition().duration(transitionDuration).ease(d3.easeCubicInOut).attr("transform", function(d) {
-              return "translate(" + (source2.x + rectWidth / 2) + "," + (source2.y0 + rectHeight / 2) + ")";
+              return "translate(" + source2.x * xMultiplayer + "," + source2.y0 * yMultiplayer + ") scale(" + enteringNodeScale + ")";
             }).attr("font-size", "1em").remove();
             treeNodeExit.selectAll(".st-target").style("fill-opacity", 1e-6).style("font-size", "0px").attr("x", -rectWidth / 2).attr("y", 0);
             treeNodeExit.selectAll(".st-triangle").style("stroke-width", 0).style("fill-opacity", 0).attr("transform", function(d) {
@@ -2020,10 +2020,22 @@
             }).size(0);
             const smallScaleX = d3.scaleLinear().domain(0, 10).range([0, 1]);
             const smallScaleY = d3.scaleLinear().domain(10, 0).range([1, 0]);
-            treeNodeExit.selectAll(".xAxis").attr("transform", "translate(" + -rectWidth / 2 + ",0)").call(
+            treeNodeExit.selectAll(".xAxis").attr("transform", function(node) {
+              if (treeData.tree_type == regr) {
+                const offsetX = node.data.is_leaf ? -scatterplotLeafWidth / 2 + 15 : -scatterplotWidth / 2;
+                return "translate(" + offsetX + ",0)";
+              }
+              return "translate(" + -histogramWidth / 2 + ",0)";
+            }).call(
               d3.axisBottom(smallScaleX).tickSize(0).tickPadding(8).ticks(2).tickFormat(d3.format(",.1f"))
             );
-            treeNodeExit.selectAll(".yAxis").attr("transform", "translate(" + -rectWidth / 2 + ",0)").call(
+            treeNodeExit.selectAll(".yAxis").attr("transform", function(node) {
+              if (treeData.tree_type == regr) {
+                const offsetX = node.data.is_leaf ? -scatterplotLeafWidth / 2 + 15 - yAxisMargin : -scatterplotWidth / 2 - yAxisMargin;
+                return "translate(" + offsetX + ",0)";
+              }
+              return "translate(" + (-histogramWidth / 2 - yAxisMargin) + ",0)";
+            }).call(
               d3.axisRight(smallScaleY).tickSize(0).tickPadding(8).ticks(2).tickFormat(d3.format(",.1f"))
             );
             treeNodeExit.selectAll("rect.histogram-background").attr("width", 1e-6).attr("height", 1e-6).attr("x", -rectWidth / 2).attr("y", 0);
@@ -2449,30 +2461,8 @@
               maxVisibleDepth = Math.max(maxVisibleDepth, node.depth);
             });
             return maxVisibleDepth + 1;
-          }, expandVisibleDepthLevel = function() {
-            const targetDepth = getCurrentVisibleDepthValue() - 1;
-            const sourceNodes = [];
-            treeRoot.each(function(node) {
-              if (node.depth !== targetDepth || !node._children || node._children.length === 0) {
-                return;
-              }
-              sourceNodes.push(node);
-            });
-            return sourceNodes;
-          }, collapseVisibleDepthLevel = function() {
-            const currentVisibleDepthValue = getCurrentVisibleDepthValue();
-            const parentDepth = currentVisibleDepthValue - 2;
-            const sourceNodes = [];
-            if (parentDepth < 0) {
-              return sourceNodes;
-            }
-            treeRoot.each(function(node) {
-              if (node.depth !== parentDepth || !node.children || node.children.length === 0) {
-                return;
-              }
-              sourceNodes.push(node);
-            });
-            return sourceNodes;
+          }, normalizeVisibleDepth = function(targetDepth) {
+            showDepth(treeRoot, 0, targetDepth);
           }, syncDepthControls = function() {
             currentDepthValue = getCurrentVisibleDepthValue();
             depthLabel.text(`Depth=${Math.max(currentDepthValue - 1, 0)}`);
@@ -2927,22 +2917,25 @@
             if (isLocked) {
               return;
             }
-            const sourceNodes = direction > 0 ? expandVisibleDepthLevel() : collapseVisibleDepthLevel();
-            if (sourceNodes.length === 0) {
+            const targetDepth = Math.max(
+              1,
+              Math.min(getCurrentVisibleDepthValue() + direction, maxDepth)
+            );
+            if (targetDepth === getCurrentVisibleDepthValue()) {
               syncDepthControls();
               return;
             }
             setControlsLocked(true);
+            clearActivePath();
             const previousBounds = getVisibleTreeBounds({
               fallbackToFullForSingleRoot: true,
               useRenderedBounds: false
             });
             try {
-              if (direction > 0) {
-                await animateDepthExpandStep(sourceNodes, previousBounds);
-              } else {
-                await animateDepthCollapseStep(sourceNodes, previousBounds);
-              }
+              normalizeVisibleDepth(targetDepth);
+              update(treeRoot, false, 0);
+              syncDepthControls();
+              applyViewportPolicy("depth-change", { previousBounds });
             } catch (error) {
               stLog("error", error, "Depth step animation failed");
               setControlsLocked(false);
