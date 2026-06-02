@@ -2,6 +2,7 @@ import {
   svgDownload,
   svgFitVisible,
   svgLine,
+  svgSample,
 } from "./icons.js";
 import { createTreeLayoutHelpers } from "./layout.js";
 import {
@@ -836,6 +837,131 @@ export function buildTree(
             }
 
             stLog("debug", sourceNode, "Node w click");
+          }
+
+          async function animateDepthExpandStep(sourceNodes, previousBounds) {
+            if (sourceNodes.length === 0) {
+              applyViewportPolicy("depth-change");
+              return;
+            }
+
+            sourceNodes.forEach(function(sourceNode) {
+              sourceNode.children = sourceNode._children;
+              sourceNode._children = null;
+              sourceNode.children.forEach(function(child) {
+                collapse(child, 0, 1);
+              });
+            });
+
+            const firstSourceNode = sourceNodes[0];
+            const layers = getRelativeDepthLayers(
+              sourceNodes.flatMap((node) => node.children || []),
+            );
+            const stagedIds = new Set(layers.flat().map((node) => node.id));
+
+            update(firstSourceNode, false, 0, {
+              hiddenNodeIds: stagedIds,
+              hiddenLinkIds: stagedIds,
+            });
+
+            layers.forEach((layer) => {
+              const layerIds = new Set(layer.map((node) => node.id));
+              selectTreeLinksByIds(layerIds)
+                .style("stroke-opacity", 0)
+                .style("pointer-events", "none");
+              selectTreeNodesByIds(layerIds)
+                .style("opacity", 0)
+                .style("pointer-events", "none")
+                .attr("transform", (node) => getNodeTransform(node, 0.96));
+            });
+
+            for (const layer of layers) {
+              const layerIds = new Set(layer.map((node) => node.id));
+              const layerLinks = selectTreeLinksByIds(layerIds);
+              const layerNodes = selectTreeNodesByIds(layerIds);
+
+              await runTransition(layerLinks, (transition) =>
+                transition
+                  .duration(stagedToggleDurations.expandLink)
+                  .ease(d3.easeCubicOut)
+                  .style("stroke-opacity", 1),
+              );
+
+              await runTransition(layerNodes, (transition) =>
+                transition
+                  .duration(stagedToggleDurations.expandNode)
+                  .ease(d3.easeCubicOut)
+                  .style("opacity", 1)
+                  .attr("transform", (node) => getNodeTransform(node, 1)),
+              );
+
+              layerLinks.style("pointer-events", null);
+              layerNodes.style("pointer-events", null);
+
+              if (stagedToggleDurations.gap > 0) {
+                await wait(stagedToggleDurations.gap);
+              }
+            }
+
+            treeRoot.descendants().forEach(function(node) {
+              node.x0 = node.x;
+              node.y0 = node.y;
+              node.cx = node.x * xMultiplayer;
+              node.cy = node.y * yMultiplayer;
+            });
+
+            renderFocusState();
+            applyViewportPolicy("depth-change", { previousBounds });
+          }
+
+          async function animateDepthCollapseStep(sourceNodes, previousBounds) {
+            if (sourceNodes.length === 0) {
+              applyViewportPolicy("depth-change");
+              return;
+            }
+
+            const firstSourceNode = sourceNodes[0];
+            const layers = getRelativeDepthLayers(
+              sourceNodes.flatMap((node) => node.children || []),
+            );
+            const reversedLayers = layers.slice().reverse();
+
+            for (const layer of reversedLayers) {
+              const layerIds = new Set(layer.map((node) => node.id));
+              const layerNodes = selectTreeNodesByIds(layerIds);
+              const layerLinks = selectTreeLinksByIds(layerIds);
+
+              layerNodes.style("pointer-events", "none");
+              layerLinks.style("pointer-events", "none");
+
+              await runTransition(layerNodes, (transition) =>
+                transition
+                  .duration(stagedToggleDurations.collapseNode)
+                  .ease(d3.easeCubicIn)
+                  .style("opacity", 0)
+                  .attr("transform", (node) => getNodeTransform(node, 0.96)),
+              );
+
+              await runTransition(layerLinks, (transition) =>
+                transition
+                  .duration(stagedToggleDurations.collapseLink)
+                  .ease(d3.easeCubicIn)
+                  .style("stroke-opacity", 0),
+              );
+
+              if (stagedToggleDurations.gap > 0) {
+                await wait(stagedToggleDurations.gap);
+              }
+            }
+
+            sourceNodes.forEach(function(sourceNode) {
+              sourceNode._children = sourceNode.children;
+              sourceNode.children = null;
+            });
+
+            update(firstSourceNode, false, 0);
+            renderFocusState();
+            applyViewportPolicy("depth-change", { previousBounds });
           }
 
           function renderFocusState() {
@@ -1757,6 +1883,9 @@ export function buildTree(
           };
 
           var toolbar = primaryToolbarGroup;
+          const hasShowSample = treeData.show_sample !== "nodata" &&
+            treeData.show_sample !== undefined &&
+            treeData.show_sample !== null;
 
           var saveSvgbutton = toolbar
             .append("button")
@@ -1827,6 +1956,7 @@ export function buildTree(
             const pathData = getLinksIds(d);
             const ids = pathData.ids;
             const nodedata = pathData.nodedata;
+            const sidePanel = d3.selectAll("#st-side-panel-treeID");
 
 
 
@@ -1840,8 +1970,7 @@ export function buildTree(
                 return ids.includes(d.id);
               })
               .style("stroke", "#0099cc");
-
-            const sidePanel = d3.selectAll("#st-side-panel-treeID");
+            ignoreOutsidePanelUntil = Date.now() + 350;
 
             if (sidePanel.classed("show")) {
               sidePanel.classed("show", false).classed("hide", true);
@@ -1975,6 +2104,16 @@ export function buildTree(
             return pathData;
           }
 
+          let ignoreOutsidePanelUntil = 0;
+
+          function closeSidePanel() {
+            const sidePanel = d3.selectAll("#st-side-panel-treeID");
+            sidePanel.classed("show", false).classed("hide", true);
+            setTimeout(function() {
+              sideSVG.selectAll("g").remove();
+            }, 300);
+          }
+
 
           let boldLinkButton = null;
           if (!treeData.tree_type.startsWith(nodata)) {
@@ -2001,12 +2140,44 @@ export function buildTree(
               .text("Line Width");
           }
 
+          if (hasShowSample) {
+            const sampleButton = primaryToolbarGroup
+              .append("button")
+              .html(svgSample)
+              .attr("id", "showSample-treeID")
+              .attr("class", "st-option-button")
+              .on("click", showSample)
+              .on("mouseover", mouseover)
+              .on("mouseleave", mouseleave)
+              .on("mousemove", function(d) {
+                mousemoveButton(event, "Show sample path");
+              });
 
-          d3.selectAll("#st-close-button-treeID").on("click", function() {
-            d3.selectAll("#st-side-panel-treeID").classed("show", false).classed("hide", true);
-            setTimeout(function() {
-              sideSVG.selectAll("g").remove();
-            }, 300);
+            sampleButton
+              .append("span")
+              .attr("class", "st-button-label")
+              .text("Show Sample");
+          }
+
+          d3.selectAll("#st-close-button-treeID").on("click", function(event) {
+            if (event) {
+              event.stopPropagation();
+            }
+            closeSidePanel();
+          });
+
+          document.addEventListener("click", function(event) {
+            const sidePanelNode = d3.select("#st-side-panel-treeID").node();
+            if (!sidePanelNode || !sidePanelNode.classList.contains("show")) {
+              return;
+            }
+            if (Date.now() < ignoreOutsidePanelUntil) {
+              return;
+            }
+            if (sidePanelNode.contains(event.target)) {
+              return;
+            }
+            closeSidePanel();
           });
 
           const fitVisibleButton = primaryToolbarGroup
@@ -2132,7 +2303,53 @@ export function buildTree(
             .attr("type", "button")
             .text("+");
 
+          function getCurrentVisibleDepthValue() {
+            let maxVisibleDepth = 0;
+
+            treeRoot.each(function(node) {
+              maxVisibleDepth = Math.max(maxVisibleDepth, node.depth);
+            });
+
+            return maxVisibleDepth + 1;
+          }
+
+          function expandVisibleDepthLevel() {
+            const targetDepth = getCurrentVisibleDepthValue() - 1;
+            const sourceNodes = [];
+
+            treeRoot.each(function(node) {
+              if (node.depth !== targetDepth || !node._children || node._children.length === 0) {
+                return;
+              }
+
+              sourceNodes.push(node);
+            });
+
+            return sourceNodes;
+          }
+
+          function collapseVisibleDepthLevel() {
+            const currentVisibleDepthValue = getCurrentVisibleDepthValue();
+            const parentDepth = currentVisibleDepthValue - 2;
+            const sourceNodes = [];
+
+            if (parentDepth < 0) {
+              return sourceNodes;
+            }
+
+            treeRoot.each(function(node) {
+              if (node.depth !== parentDepth || !node.children || node.children.length === 0) {
+                return;
+              }
+
+              sourceNodes.push(node);
+            });
+
+            return sourceNodes;
+          }
+
           function syncDepthControls() {
+            currentDepthValue = getCurrentVisibleDepthValue();
             depthLabel.text(`Depth=${Math.max(currentDepthValue - 1, 0)}`);
             depthDecreaseButton.attr(
               "disabled",
@@ -2144,43 +2361,45 @@ export function buildTree(
             );
           }
 
-          function applyDepthChange(depth) {
-            if (depth == null || isLocked) {
+          async function applyDepthStep(direction) {
+            if (isLocked) {
               return;
             }
-            const nextDepth = Math.max(1, Math.min(depth, maxDepth));
-            if (nextDepth === currentDepthValue) {
+
+            const sourceNodes = direction > 0
+              ? expandVisibleDepthLevel()
+              : collapseVisibleDepthLevel();
+
+            if (sourceNodes.length === 0) {
               syncDepthControls();
               return;
             }
 
             setControlsLocked(true);
-            currentDepthValue = nextDepth;
-            syncDepthControls();
-            showDepth(treeRoot, 0, nextDepth, true);
-            update(treeRoot, false, 0);
-            applyViewportPolicy("depth-change");
-            scheduleDepthUnlock();
-          }
+            const previousBounds = getVisibleTreeBounds({
+              fallbackToFullForSingleRoot: true,
+              useRenderedBounds: false,
+            });
 
-          function handleDepthChange(event, optDepth = "optional") {
-            if (optDepth !== "optional") {
-              applyDepthChange(optDepth);
-              return;
-            }
-
-            const depth = extractNumber(this.value);
-            if (depth != null) {
-              applyDepthChange(depth + 1);
+            try {
+              if (direction > 0) {
+                await animateDepthExpandStep(sourceNodes, previousBounds);
+              } else {
+                await animateDepthCollapseStep(sourceNodes, previousBounds);
+              }
+            } catch (error) {
+              stLog("error", error, "Depth step animation failed");
+              setControlsLocked(false);
+              throw error;
             }
           }
 
           depthDecreaseButton.on("click", function() {
-            applyDepthChange(currentDepthValue - 1);
+            applyDepthStep(-1);
           });
 
           depthIncreaseButton.on("click", function() {
-            applyDepthChange(currentDepthValue + 1);
+            applyDepthStep(1);
           });
 
           syncDepthControls();

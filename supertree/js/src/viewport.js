@@ -291,13 +291,24 @@ export function createViewportController(config) {
         return;
       case "depth-change":
       case "sample-path":
-        runAfterRender(function() {
+        runAfterRenderSettled(function() {
           rememberViewport(
-            resetZoom("visible", durations.fit, { fallbackToFullForSingleRoot: true }),
+            resetZoom("visible", durations.fit, {
+              fallbackToFullForSingleRoot: actionType === "sample-path",
+              useRenderedBounds: actionType === "sample-path",
+            }),
           );
-        });
+          runAfterRenderSettled(function() {
+            rememberViewport(
+              resetZoom("visible", 0, {
+                fallbackToFullForSingleRoot: actionType === "sample-path",
+                useRenderedBounds: actionType === "sample-path",
+              }),
+            );
+          }, 140);
+        }, 40);
         if (actionType === "depth-change" || actionType === "sample-path") {
-          finishActionAfter(durations.fit);
+          finishActionAfter(durations.fit + 180);
         }
         return;
       case "fit-visible":

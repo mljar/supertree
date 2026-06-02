@@ -414,13 +414,14 @@
     width: 300px; 
     background-color: #f3f9fb;
     position: absolute;
-    top: 0;
+    top: 49px;
     right: -350px;
     bottom: 0;
     padding: 10px;
     box-shadow: -2px 0 5px rgba(0,0,0,0.1);
     transition: right 0.3s ease;
-    overflow-y: auto; 
+    overflow-y: auto;
+    z-index: 3;
 }
 
 .st-side-panel.show {
@@ -459,10 +460,16 @@
 .st-close-button {
     position: absolute;
     top: 10px;
-    right: 15px;
+    left: 15px;
     font-size: 24px;
     cursor: pointer;
     color: #000;
+    z-index: 4;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .st-tree-div {
