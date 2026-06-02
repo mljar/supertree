@@ -651,7 +651,7 @@ export function processClassificationLeaf(
         .style("top", -2000 + "px")
         .style("left", -2000 + "px");
 
-      d3.select(this).style("stroke", "black");
+      d3.select(this).style("stroke", "#545454");
     };
 
     const mousemove = function(event, d) {
@@ -680,14 +680,14 @@ export function processClassificationLeaf(
         .attr("d", arc)
         .attr("fill", (d, i) => colors[indicesArray[i]])
         .attr("transform", `translate(${10},${radius-2})`)
-        .attr("stroke", "black")
+        .attr("stroke", "#545454")
         .on("mouseover", mouseover)
         .on("mouseleave", mouseleave)
         .on("mousemove", mousemove)
         .on("click", function() {
           showpath(nodeToClick)
         })
-        .style("stroke-width", isSampleExistInThisNode ? "4px" : "2px")
+        .style("stroke-width", "0.75px")
         .each(function(d) {
           this._current = d;
         })

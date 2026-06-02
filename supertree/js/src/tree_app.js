@@ -571,6 +571,9 @@ export function buildTree(
             getTreeSVG: () => treeSVG,
             onControlsLockedChange: (locked) => {
               isLocked = locked;
+              if (typeof syncDepthControls === "function") {
+                syncDepthControls();
+              }
             },
           });
           const setControlsLocked = function(locked) {
@@ -1826,7 +1829,7 @@ export function buildTree(
           }
 
           function showpath(d) {
-            d3.selectAll("#st-link-treeID").style("stroke", "black");
+            d3.selectAll("#st-link-treeID").style("stroke", defaultLinkStroke);
             const pathData = getLinksIds(d);
             const ids = pathData.ids;
             const nodedata = pathData.nodedata;
@@ -1842,7 +1845,7 @@ export function buildTree(
               .filter(function(d) {
                 return ids.includes(d.id);
               })
-              .style("stroke", "blue");
+              .style("stroke", "#0099cc");
 
             const sidePanel = d3.selectAll("#st-side-panel-treeID");
 

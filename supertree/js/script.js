@@ -551,7 +551,7 @@
       const mouseleave = function(d2) {
         tooltipBody.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
         tooltipModal.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
-        d32.select(this).style("stroke", "black");
+        d32.select(this).style("stroke", "#545454");
       };
       const mousemove = function(event2, d2) {
         tooltipBody.html(
@@ -563,9 +563,9 @@
       };
       if (dataPrepared[0] && "data" in dataPrepared[0]) {
         let nodeToClick = d32.select(this).datum();
-        d32.select(this).selectAll("path").data(dataPrepared).join("path").attr("class", "piechart").attr("d", arc).attr("fill", (d2, i) => colors[indicesArray[i]]).attr("transform", `translate(${10},${radius - 2})`).attr("stroke", "black").on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", mousemove).on("click", function() {
+        d32.select(this).selectAll("path").data(dataPrepared).join("path").attr("class", "piechart").attr("d", arc).attr("fill", (d2, i) => colors[indicesArray[i]]).attr("transform", `translate(${10},${radius - 2})`).attr("stroke", "#545454").on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", mousemove).on("click", function() {
           showpath(nodeToClick);
-        }).style("stroke-width", isSampleExistInThisNode ? "4px" : "2px").each(function(d2) {
+        }).style("stroke-width", "0.75px").each(function(d2) {
           this._current = d2;
         });
         stLog("debug", isSampleExistInThisNode, "Exist Sample true false");
@@ -2259,7 +2259,7 @@
             showpath(sampleNode);
             applyViewportPolicy("sample-path");
           }, showpath = function(d) {
-            d3.selectAll("#st-link-treeID").style("stroke", "black");
+            d3.selectAll("#st-link-treeID").style("stroke", defaultLinkStroke);
             const pathData = getLinksIds(d);
             const ids = pathData.ids;
             const nodedata = pathData.nodedata;
@@ -2268,7 +2268,7 @@
             sideSVG.attr("height", newHeight);
             d3.selectAll("#st-link-treeID").filter(function(d2) {
               return ids.includes(d2.id);
-            }).style("stroke", "blue");
+            }).style("stroke", "#0099cc");
             const sidePanel = d3.selectAll("#st-side-panel-treeID");
             if (sidePanel.classed("show")) {
               sidePanel.classed("show", false).classed("hide", true);
@@ -2552,6 +2552,9 @@
             getTreeSVG: () => treeSVG,
             onControlsLockedChange: (locked) => {
               isLocked = locked;
+              if (typeof syncDepthControls === "function") {
+                syncDepthControls();
+              }
             }
           });
           const setControlsLocked = function(locked) {
