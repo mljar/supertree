@@ -1,6 +1,13 @@
+import { createTreeVisualMetrics } from "./geometry.js";
 import { stLog, yAxisMargin } from "./shared.js";
 
 export function processClassificationNode(treeData, tooltipBody, tooltipModal, globalX, globalXExtent, globalY, globalYExtent, click, histogramWidth, histogramHeight, rectWidth, rectHeight, colors, d) {
+  const {
+    layout: {
+      histogramTranslateX,
+      nodeLabelY,
+    },
+  } = createTreeVisualMetrics("classification");
   var isSampleExist = false;
   if (!d.data.is_leaf) {
     if (treeData.show_sample != "nodata" && treeData.show_sample != undefined) {
@@ -181,7 +188,7 @@ export function processClassificationNode(treeData, tooltipBody, tooltipModal, g
       .append("text")
       .attr("class", "st-target")
       .attr("x", 0)
-      .attr("y", rectHeight + 15)
+      .attr("y", nodeLabelY)
       .style("text-anchor", "middle")
       .style("font-size", "18px")
       .text(treeData.feature_names[featureIndex])
@@ -204,7 +211,7 @@ export function processClassificationNode(treeData, tooltipBody, tooltipModal, g
       .attr("class", "xAxis")
       .attr(
         "transform",
-        `translate(${-histogramWidth / 2}, ${histogramHeight})`,
+        `translate(${histogramTranslateX}, ${histogramHeight})`,
       )
 
       .call(
@@ -506,6 +513,12 @@ export function processClassificationLeaf(
   tooltipModal,
   d
 ) {
+  const {
+    layout: {
+      classificationLeafRectX,
+      pieCenterX,
+    },
+  } = createTreeVisualMetrics("classification");
   var formatNumber = d3.format(",.0f");
 
 
@@ -672,6 +685,16 @@ export function processClassificationLeaf(
 
     if (dataPrepared[0] && 'data' in dataPrepared[0]) {
       let nodeToClick = d3.select(this).datum()
+
+      function getBadgeTextColor(fillColor) {
+        const color = d3.color(fillColor);
+        if (!color) {
+          return "#ffffff";
+        }
+        const luminance = (0.299 * color.r + 0.587 * color.g + 0.114 * color.b) / 255;
+        return luminance > 0.62 ? "#1f1f1f" : "#ffffff";
+      }
+
       d3.select(this)
         .selectAll("path")
         .data(dataPrepared)
@@ -679,7 +702,7 @@ export function processClassificationLeaf(
         .attr("class", "piechart")
         .attr("d", arc)
         .attr("fill", (d, i) => colors[indicesArray[i]])
-        .attr("transform", `translate(${10},${radius-2})`)
+        .attr("transform", `translate(${pieCenterX},${radius-2})`)
         .attr("stroke", "#545454")
         .on("mouseover", mouseover)
         .on("mouseleave", mouseleave)
@@ -703,40 +726,42 @@ export function processClassificationLeaf(
         .join("g")
         .attr(
           "transform",
-          (d, i) => `translate(10,${radius * 2 + 20 + i * 40})`,
+          (d, i) => `translate(${pieCenterX},${radius * 2 + 22 + i * 34})`,
         )
         .each(function(d, i) {
           const group = d3.select(this);
+          const badgeFill = colors[indicesArray[i]];
+          const badgeText = `${d.data.target_name}: ${formatNumber(d.data.classDistributionValue)}`;
 
-          group
+          const text = group
             .append("text")
             .attr("class", "st-pie-target")
             .attr("x", 0)
-            .attr("y", 0)
-            .attr("fill", "black")
+            .attr("y", 5)
+            .attr("fill", getBadgeTextColor(badgeFill))
             .style("text-anchor", "middle")
-            .style("font-size", "18px")
-            .text(d.data.target_name)
+            .style("font-size", "13px")
+            .style("font-weight", "600")
+            .text(badgeText)
             .style("user-select", "none")
             .style("-webkit-user-select", "none")
             .style("-moz-user-select", "none")
             .style("-ms-user-select", "none");
 
+          const badgeWidth = text.node().getComputedTextLength() + 20;
+          const badgeHeight = 24;
 
           group
-            .append("text")
-            .attr("class", "st-pie-target2")
-            .attr("x", 0)
-            .attr("y", 20)
-            .attr("fill", "black")
-            .style("text-anchor", "middle")
-            .style("font-size", "18px")
-            .text(formatNumber(d.data.classDistributionValue))
-            .style("user-select", "none")
-            .style("-webkit-user-select", "none")
-            .style("-moz-user-select", "none")
-            .style("-ms-user-select", "none");
-
+            .insert("rect", "text")
+            .attr("x", -badgeWidth / 2)
+            .attr("y", -badgeHeight / 2)
+            .attr("width", badgeWidth)
+            .attr("height", badgeHeight)
+            .attr("rx", 12)
+            .attr("ry", 12)
+            .attr("fill", badgeFill)
+            .attr("stroke", badgeFill)
+            .attr("stroke-width", 1);
         });
     }
     else {
@@ -744,7 +769,7 @@ export function processClassificationLeaf(
       d3.select(this)
         .append("rect")
         .attr("class", "histogram-background")
-        .attr("x", -(scatterplotWidth / 2) - 5)
+        .attr("x", classificationLeafRectX)
         .attr("y", -10)
         .attr("width", rectWidth - 40)
         .attr("height", rectHeight)
@@ -807,6 +832,13 @@ export function processRegressionNode(
   tooltipModal,
   colors
 ) {
+  const {
+    layout: {
+      histogramTranslateX,
+      histogramRectX,
+      nodeLabelY,
+    },
+  } = createTreeVisualMetrics("regression");
 
   if (!d.data.is_leaf) {
 
@@ -883,7 +915,7 @@ export function processRegressionNode(
     d3.select(this)
       .append("rect")
       .attr("class", "histogram-background")
-      .attr("x", -(scatterplotWidth / 2) - 25)
+      .attr("x", histogramRectX)
       .attr("y", -10)
       .attr("width", rectWidth)
       .attr("height", rectHeight)
@@ -962,7 +994,7 @@ export function processRegressionNode(
       .append("g")
       .attr(
         "transform",
-        `translate(${-scatterplotWidth / 2}, ${scatterplotHeight})`,
+        `translate(${histogramTranslateX}, ${scatterplotHeight})`,
       )
       .attr("class", "xAxis")
       .call(
@@ -1011,7 +1043,7 @@ export function processRegressionNode(
             .tickFormat(d3.format(",.0f")),
       )
       .call((d) => d.select(".domain").remove())
-      .attr("transform", `translate(${-scatterplotWidth / 2 - yAxisMargin}, 0)`)
+      .attr("transform", `translate(${histogramTranslateX - yAxisMargin}, 0)`)
       .attr("class", "yAxis")
       .selectAll(".tick")
       .attr("class", "yAxis-text")
@@ -1122,10 +1154,10 @@ export function processRegressionNode(
       .attr("cx", (d, i) => xScale(combinedData[i][0]))
       .attr("cy", (d, i) => yScale(combinedData[i][1]))
       .attr("r", 2)
-      .attr(
-        "transform",
-        `translate(${-scatterplotWidth / 2}, ${0})`,
-      )
+        .attr(
+          "transform",
+        `translate(${histogramTranslateX}, ${0})`,
+        )
       .style("fill", "#0099cc")
       .style("fill-opacity", 0.5)
       .on("mouseover", mouseover)
@@ -1258,7 +1290,7 @@ export function processRegressionNode(
       .append("text")
       .attr("class", "st-target")
       .attr("x", 0)
-      .attr("y", rectHeight + 15)
+      .attr("y", nodeLabelY)
       .style("text-anchor", "middle")
       .style("font-size", "18px")
       .text(treeData.feature_names[d.data.feature])
@@ -1359,6 +1391,14 @@ export function processRegressionLeaf(
   click,
   showpath
 ) {
+  const {
+    layout: {
+      regressionLeafRectX,
+      regressionLeafPlotTranslateX,
+      leafLabelX,
+      regressionLeafLabelY,
+    },
+  } = createTreeVisualMetrics("regression");
   if (d.data.is_leaf) {
     const featureIndex = d.data.feature;
     var isSampleExist = false;
@@ -1427,7 +1467,7 @@ export function processRegressionLeaf(
     d3.select(this)
       .append("rect")
       .attr("class", "histogram-background")
-      .attr("x", -(scatterplotLeafWidth / 2) - 10)
+      .attr("x", regressionLeafRectX)
       .attr("y", -10)
       .attr("width", rectHeight + 20)
       .attr("height", rectHeight - 10)
@@ -1530,7 +1570,7 @@ export function processRegressionLeaf(
       .call((d) => d.select(".domain").remove())
       .attr(
         "transform",
-        `translate(${-scatterplotLeafWidth / 2 + 15 - yAxisMargin}, 0)`,
+        `translate(${regressionLeafPlotTranslateX - yAxisMargin}, 0)`,
       )
       .attr("class", "yAxis")
       .style("user-select", "none")
@@ -1655,7 +1695,7 @@ export function processRegressionLeaf(
       .attr("r", 2)
       .attr(
         "transform",
-        `translate(${-scatterplotLeafWidth / 2 + 15}, ${0})`,
+        `translate(${regressionLeafPlotTranslateX}, ${0})`,
       )
       .style("fill", "#0099cc")
       .style("fill-opacity", 0.5)
@@ -1676,7 +1716,7 @@ export function processRegressionLeaf(
         .attr("stroke", "black")
         .attr(
           "transform",
-          `translate(${-scatterplotLeafWidth / 2 + 15},0)`,
+          `translate(${regressionLeafPlotTranslateX},0)`,
         )
         .attr("stroke-width", 2)
         .attr("stroke-dasharray", "5,5")
@@ -1721,8 +1761,8 @@ export function processRegressionLeaf(
     var textElement = d3.select(this)
       .append("text")
       .attr("class", "st-target")
-      .attr("x", 15)
-      .attr("y", rectHeight + 5)
+      .attr("x", leafLabelX)
+      .attr("y", regressionLeafLabelY)
       .style("text-anchor", "middle")
       .style("font-size", "18px")
       .text(`${d.data.treeclass} = ${parseFloat(d.data.class_distribution[0][0].toFixed(3))}`)
@@ -1742,7 +1782,7 @@ export function processRegressionLeaf(
     d3.select(this)
       .append("text")
       .attr("class", "st-target")
-      .attr("x", 15)
+      .attr("x", leafLabelX)
       .attr("y", nTextY)
       .style("text-anchor", "middle")
       .style("font-size", "18px")
@@ -1825,7 +1865,7 @@ export function processRegressionLeaf(
         .style("stroke-opacity", 1)
         .style("fill", color)
         .attr("transform", function(d) {
-          return "translate(" + (-scatterplotLeafWidth / 2 + 15 + xScale(treeData.show_sample[d.parent.data.feature])) + "," + scatterplotLeafHeight + ")";
+          return "translate(" + (regressionLeafPlotTranslateX + xScale(treeData.show_sample[d.parent.data.feature])) + "," + scatterplotLeafHeight + ")";
         })
         .on("mouseover", mouseovertriangle)
         .on("mouseleave", mouseleavetriangle)

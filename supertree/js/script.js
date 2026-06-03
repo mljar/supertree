@@ -186,6 +186,121 @@
     };
   }
 
+  // supertree/js/src/geometry.js
+  function createTreeVisualMetrics(treeType) {
+    const dimensions = {
+      pieHeight: 100,
+      pieWidth: 100,
+      histogramWidth: 150,
+      histogramHeight: 80,
+      rectHeight: 110,
+      rectWidth: 195
+    };
+    dimensions.scatterplotWidth = dimensions.histogramWidth;
+    dimensions.scatterplotHeight = dimensions.histogramHeight;
+    dimensions.scatterplotLeafWidth = dimensions.histogramHeight + 10;
+    dimensions.scatterplotLeafHeight = dimensions.histogramHeight;
+    const spacing = {
+      treeLeafSpacing: treeType === "regression" ? 340 : 300,
+      treeLevelSpacing: 235,
+      treeDepthSpacing: 400
+    };
+    const layout = {
+      histogramTranslateX: -dimensions.histogramWidth / 2,
+      histogramRectX: -(dimensions.scatterplotWidth / 2) - 25,
+      classificationLeafRectX: -(dimensions.scatterplotWidth / 2) - 5,
+      regressionLeafRectX: -(dimensions.scatterplotLeafWidth / 2) - 10,
+      regressionLeafPlotTranslateX: -dimensions.scatterplotLeafWidth / 2 + 15,
+      pieCenterX: 10,
+      leafLabelX: 15,
+      nodeLabelY: dimensions.rectHeight + 15,
+      regressionLeafLabelY: dimensions.rectHeight + 5
+    };
+    function getViewportBounds(node) {
+      if (treeType === "regression") {
+        if (node.data && node.data.is_leaf) {
+          return {
+            minX: -70,
+            maxX: 80,
+            minY: -14,
+            maxY: 162
+          };
+        }
+        return {
+          minX: -100,
+          maxX: 98,
+          minY: -14,
+          maxY: 142
+        };
+      }
+      if (treeType === "classification") {
+        if (node.data && node.data.is_leaf) {
+          return {
+            minX: -100,
+            maxX: 112,
+            minY: -14,
+            maxY: 210
+          };
+        }
+        return {
+          minX: -100,
+          maxX: 98,
+          minY: -14,
+          maxY: 142
+        };
+      }
+      return {
+        minX: -100,
+        maxX: 98,
+        minY: -14,
+        maxY: 142
+      };
+    }
+    function getSourceAnchor(base, childBase = null) {
+      const cornerInset = 16;
+      let anchorX = base.x;
+      if (childBase) {
+        if (childBase.x < base.x) {
+          anchorX = base.x - dimensions.rectWidth / 2 + cornerInset;
+        } else if (childBase.x > base.x) {
+          anchorX = base.x + dimensions.rectWidth / 2 - cornerInset;
+        }
+      }
+      return {
+        x: anchorX,
+        y: base.y + dimensions.rectHeight - 10
+      };
+    }
+    function getTargetAnchor(node, base) {
+      if (node.data && node.data.is_leaf) {
+        if (treeType === "classification") {
+          return {
+            x: base.x + 10,
+            y: base.y - 3
+          };
+        }
+        if (treeType === "regression") {
+          return {
+            x: base.x + 15,
+            y: base.y + 4
+          };
+        }
+      }
+      return {
+        x: base.x,
+        y: base.y - 10
+      };
+    }
+    return {
+      dimensions,
+      layout,
+      spacing,
+      getViewportBounds,
+      getSourceAnchor,
+      getTargetAnchor
+    };
+  }
+
   // supertree/js/src/shared.js
   var DEBUG_LEVEL = "debug";
   var yAxisMargin = 25;
@@ -198,6 +313,12 @@
 
   // supertree/js/src/node_renderers.js
   function processClassificationNode(treeData, tooltipBody, tooltipModal, globalX, globalXExtent, globalY, globalYExtent, click, histogramWidth, histogramHeight, rectWidth, rectHeight, colors, d) {
+    const {
+      layout: {
+        histogramTranslateX,
+        nodeLabelY
+      }
+    } = createTreeVisualMetrics("classification");
     var isSampleExist = false;
     if (!d.data.is_leaf) {
       if (treeData.show_sample != "nodata" && treeData.show_sample != void 0) {
@@ -316,7 +437,7 @@
         tooltipModal.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
       };
       stLog("debug", this, "This");
-      d3.select(this).append("text").attr("class", "st-target").attr("x", 0).attr("y", rectHeight + 15).style("text-anchor", "middle").style("font-size", "18px").text(treeData.feature_names[featureIndex]).on("mousemove", mousemoveAllData).on("mouseleave", mouseleaveAllData).style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
+      d3.select(this).append("text").attr("class", "st-target").attr("x", 0).attr("y", nodeLabelY).style("text-anchor", "middle").style("font-size", "18px").text(treeData.feature_names[featureIndex]).on("mousemove", mousemoveAllData).on("mouseleave", mouseleaveAllData).style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
       const xDomain = xScale.domain();
       const xTickValues = [
         xDomain[0],
@@ -325,7 +446,7 @@
       ];
       d3.select(this).append("g").attr("class", "xAxis").attr(
         "transform",
-        `translate(${-histogramWidth / 2}, ${histogramHeight})`
+        `translate(${histogramTranslateX}, ${histogramHeight})`
       ).call(
         d3.axisBottom(xScale).tickSize(0).tickPadding(8).tickValues(xTickValues).tickFormat(d3.format(",.1f"))
       ).selectAll(".tick").attr("class", "xAxis-text").style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none").style("fill", "black");
@@ -450,6 +571,12 @@
     }
   }
   function processClassificationLeaf(treeData, pieWidth, pieHeight, rectWidth, rectHeight, scatterplotWidth, scatterplotHeight, colors, maxSample, showpath, d32, tooltipBody, tooltipModal, d) {
+    const {
+      layout: {
+        classificationLeafRectX,
+        pieCenterX
+      }
+    } = createTreeVisualMetrics("classification");
     var formatNumber = d32.format(",.0f");
     if (d.data.is_leaf) {
       const featureIndex = d.data.feature;
@@ -558,8 +685,16 @@
         ).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px");
       };
       if (dataPrepared[0] && "data" in dataPrepared[0]) {
+        let getBadgeTextColor = function(fillColor) {
+          const color = d32.color(fillColor);
+          if (!color) {
+            return "#ffffff";
+          }
+          const luminance = (0.299 * color.r + 0.587 * color.g + 0.114 * color.b) / 255;
+          return luminance > 0.62 ? "#1f1f1f" : "#ffffff";
+        };
         let nodeToClick = d32.select(this).datum();
-        d32.select(this).selectAll("path").data(dataPrepared).join("path").attr("class", "piechart").attr("d", arc).attr("fill", (d2, i) => colors[indicesArray[i]]).attr("transform", `translate(${10},${radius - 2})`).attr("stroke", "#545454").on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", mousemove).on("click", function() {
+        d32.select(this).selectAll("path").data(dataPrepared).join("path").attr("class", "piechart").attr("d", arc).attr("fill", (d2, i) => colors[indicesArray[i]]).attr("transform", `translate(${pieCenterX},${radius - 2})`).attr("stroke", "#545454").on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", mousemove).on("click", function() {
           showpath(nodeToClick);
         }).style("stroke-width", "0.75px").each(function(d2) {
           this._current = d2;
@@ -567,14 +702,18 @@
         stLog("debug", isSampleExistInThisNode, "Exist Sample true false");
         d32.select(this).append("g").attr("class", "st-text-pie").attr("text-anchor", "middle").selectAll(".st-text-pie").data(dataPrepared).join("g").attr(
           "transform",
-          (d2, i) => `translate(10,${radius * 2 + 20 + i * 40})`
+          (d2, i) => `translate(${pieCenterX},${radius * 2 + 22 + i * 34})`
         ).each(function(d2, i) {
           const group = d32.select(this);
-          group.append("text").attr("class", "st-pie-target").attr("x", 0).attr("y", 0).attr("fill", "black").style("text-anchor", "middle").style("font-size", "18px").text(d2.data.target_name).style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
-          group.append("text").attr("class", "st-pie-target2").attr("x", 0).attr("y", 20).attr("fill", "black").style("text-anchor", "middle").style("font-size", "18px").text(formatNumber(d2.data.classDistributionValue)).style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
+          const badgeFill = colors[indicesArray[i]];
+          const badgeText = `${d2.data.target_name}: ${formatNumber(d2.data.classDistributionValue)}`;
+          const text = group.append("text").attr("class", "st-pie-target").attr("x", 0).attr("y", 5).attr("fill", getBadgeTextColor(badgeFill)).style("text-anchor", "middle").style("font-size", "13px").style("font-weight", "600").text(badgeText).style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
+          const badgeWidth = text.node().getComputedTextLength() + 20;
+          const badgeHeight = 24;
+          group.insert("rect", "text").attr("x", -badgeWidth / 2).attr("y", -badgeHeight / 2).attr("width", badgeWidth).attr("height", badgeHeight).attr("rx", 12).attr("ry", 12).attr("fill", badgeFill).attr("stroke", badgeFill).attr("stroke-width", 1);
         });
       } else {
-        d32.select(this).append("rect").attr("class", "histogram-background").attr("x", -(scatterplotWidth / 2) - 5).attr("y", -10).attr("width", rectWidth - 40).attr("height", rectHeight).attr("stroke-width", 1).attr("stroke", "#545454").attr("rx", 10).attr("ry", 10).style("fill", "#ffffff");
+        d32.select(this).append("rect").attr("class", "histogram-background").attr("x", classificationLeafRectX).attr("y", -10).attr("width", rectWidth - 40).attr("height", rectHeight).attr("stroke-width", 1).attr("stroke", "#545454").attr("rx", 10).attr("ry", 10).style("fill", "#ffffff");
         d32.select(this).append("text").attr("dy", ".0em").attr("y", 10).attr("class", "st-target").style("text-anchor", "middle").text((d2) => "Samples " + d2.data.samples).style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
         d32.select(this).append("text").attr("dy", ".0em").attr("y", 40).attr("class", "st-target").style("text-anchor", "middle").text((d2) => "Value [" + d2.data.class_distribution + "]").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
         d32.select(this).append("text").attr("dy", ".0em").attr("y", 70).attr("class", "st-target").style("text-anchor", "middle").text((d2) => "Class " + d2.data.treeclass).style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
@@ -582,6 +721,13 @@
     }
   }
   function processRegressionNode(d, treeData, scatterplotWidth, scatterplotHeight, histogramWidth, histogramHeight, rectWidth, rectHeight, tooltipBody, tooltipModal, colors) {
+    const {
+      layout: {
+        histogramTranslateX,
+        histogramRectX,
+        nodeLabelY
+      }
+    } = createTreeVisualMetrics("regression");
     if (!d.data.is_leaf) {
       let calculateAverages = function(data, threshold2) {
         let sumBelowThreshold = 0;
@@ -658,7 +804,7 @@
           combinedData.splice(index, 1);
         }
       });
-      d3.select(this).append("rect").attr("class", "histogram-background").attr("x", -(scatterplotWidth / 2) - 25).attr("y", -10).attr("width", rectWidth).attr("height", rectHeight).attr("stroke-width", 1).attr("stroke", "#545454").attr("rx", 10).attr("ry", 10).style("fill", "#ffffff");
+      d3.select(this).append("rect").attr("class", "histogram-background").attr("x", histogramRectX).attr("y", -10).attr("width", rectWidth).attr("height", rectHeight).attr("stroke-width", 1).attr("stroke", "#545454").attr("rx", 10).attr("ry", 10).style("fill", "#ffffff");
       let combinedDataValues = combinedData.map((item) => item[0]);
       const average = calculateAverages(
         combinedData,
@@ -688,7 +834,7 @@
       ];
       d3.select(this).append("g").attr(
         "transform",
-        `translate(${-scatterplotWidth / 2}, ${scatterplotHeight})`
+        `translate(${histogramTranslateX}, ${scatterplotHeight})`
       ).attr("class", "xAxis").call(
         d3.axisBottom(xScale).tickSize(0).tickValues(xTickValues).tickPadding(8)
       ).selectAll(".tick").attr("class", "xAxis-text").style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none").style("fill", "black");
@@ -704,7 +850,7 @@
       stLog("debug", yTickValues, "yTickValues");
       d3.select(this).append("g").call(
         d3.axisRight(yScale).tickSize(0).tickPadding(4).tickValues(yTickValues).tickFormat(d3.format(",.0f"))
-      ).call((d2) => d2.select(".domain").remove()).attr("transform", `translate(${-scatterplotWidth / 2 - yAxisMargin}, 0)`).attr("class", "yAxis").selectAll(".tick").attr("class", "yAxis-text").style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none").style("fill", "black");
+      ).call((d2) => d2.select(".domain").remove()).attr("transform", `translate(${histogramTranslateX - yAxisMargin}, 0)`).attr("class", "yAxis").selectAll(".tick").attr("class", "yAxis-text").style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none").style("fill", "black");
       d3.select(this).selectAll(".domain").style("stroke", "black");
       const mouseover = function(d2) {
         tooltipBody.style("opacity", 1);
@@ -736,7 +882,7 @@
       };
       d3.select(this).append("g").selectAll("g").data(combinedData).join("circle").attr("cx", (d2, i) => xScale(combinedData[i][0])).attr("cy", (d2, i) => yScale(combinedData[i][1])).attr("r", 2).attr(
         "transform",
-        `translate(${-scatterplotWidth / 2}, ${0})`
+        `translate(${histogramTranslateX}, ${0})`
       ).style("fill", "#0099cc").style("fill-opacity", 0.5).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", mousemovecircle);
       const mousemoveavaragebelow = function(event2, d2) {
         tooltipBody.html(`<b>Average:</b> ${parseFloat(average.averageBelowThreshold).toFixed(3)} `).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px");
@@ -777,7 +923,7 @@
       if (!isNaN(average.averageAboveOrEqualThreshold)) {
         d3.select(this).append("line").attr("class", "average-line").attr("x1", xScale(threshold)).attr("x2", xScale(xDomain[1])).attr("y1", yScale(average.averageAboveOrEqualThreshold)).attr("y2", yScale(average.averageAboveOrEqualThreshold)).attr("stroke", "black").attr("transform", `translate(${-histogramWidth / 2},0)`).attr("stroke-width", 2).attr("stroke-dasharray", "5,5").on("mouseover", mouseoverline).on("mouseleave", mouseleaveline).on("mousemove", mousemoveavarageabove);
       }
-      d3.select(this).append("text").attr("class", "st-target").attr("x", 0).attr("y", rectHeight + 15).style("text-anchor", "middle").style("font-size", "18px").text(treeData.feature_names[d.data.feature]).on("mousemove", mousemoveAllData).on("mouseleave", mouseleaveAllData).style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
+      d3.select(this).append("text").attr("class", "st-target").attr("x", 0).attr("y", nodeLabelY).style("text-anchor", "middle").style("font-size", "18px").text(treeData.feature_names[d.data.feature]).on("mousemove", mousemoveAllData).on("mouseleave", mouseleaveAllData).style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
       var mouseovertriangle = function(d2) {
         tooltipBody.style("opacity", 1);
         tooltipModal.style("opacity", 1);
@@ -817,6 +963,14 @@
     }
   }
   function processRegressionLeaf(d, treeData, scatterplotLeafWidth, scatterplotLeafHeight, rectHeight, tooltipBody, tooltipModal, click, showpath) {
+    const {
+      layout: {
+        regressionLeafRectX,
+        regressionLeafPlotTranslateX,
+        leafLabelX,
+        regressionLeafLabelY
+      }
+    } = createTreeVisualMetrics("regression");
     if (d.data.is_leaf) {
       let calculateAverage = function(data) {
         const length = data.length;
@@ -888,7 +1042,7 @@
         });
       }
       var nodeToClick = d;
-      d3.select(this).append("rect").attr("class", "histogram-background").attr("x", -(scatterplotLeafWidth / 2) - 10).attr("y", -10).attr("width", rectHeight + 20).attr("height", rectHeight - 10).attr("stroke-width", 1).attr("stroke", "#545454").attr("rx", 10).attr("ry", 10).style("fill", "#ffffff").on("click", click).on("click", function() {
+      d3.select(this).append("rect").attr("class", "histogram-background").attr("x", regressionLeafRectX).attr("y", -10).attr("width", rectHeight + 20).attr("height", rectHeight - 10).attr("stroke-width", 1).attr("stroke", "#545454").attr("rx", 10).attr("ry", 10).style("fill", "#ffffff").on("click", click).on("click", function() {
         showpath(nodeToClick);
       });
       let combinedDataValues = combinedData.map((item) => item[0]);
@@ -918,7 +1072,7 @@
         d3.axisRight(yScale).tickSize(0).tickPadding(4).tickValues(yTickValues).tickFormat(d3.format(",.0f"))
       ).call((d2) => d2.select(".domain").remove()).attr(
         "transform",
-        `translate(${-scatterplotLeafWidth / 2 + 15 - yAxisMargin}, 0)`
+        `translate(${regressionLeafPlotTranslateX - yAxisMargin}, 0)`
       ).attr("class", "yAxis").style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none").style("fill", "black");
       d3.select(this).selectAll(".domain").style("stroke", "black");
       const mouseover = function(d2) {
@@ -955,22 +1109,22 @@
       };
       d3.select(this).append("g").selectAll("g").data(combinedData).join("circle").attr("cx", (d2, i) => xScale(combinedData[i][0])).attr("cy", (d2, i) => yScale(combinedData[i][1])).attr("r", 2).attr(
         "transform",
-        `translate(${-scatterplotLeafWidth / 2 + 15}, ${0})`
+        `translate(${regressionLeafPlotTranslateX}, ${0})`
       ).style("fill", "#0099cc").style("fill-opacity", 0.5).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", mousemovecircle);
       if (!isNaN(average)) {
         d3.select(this).append("line").attr("class", "average-line").attr("x1", 0).attr("x2", scatterplotLeafWidth).attr("y1", yScale(average)).attr("y2", yScale(average)).attr("stroke", "black").attr(
           "transform",
-          `translate(${-scatterplotLeafWidth / 2 + 15},0)`
+          `translate(${regressionLeafPlotTranslateX},0)`
         ).attr("stroke-width", 2).attr("stroke-dasharray", "5,5").on("mouseover", mouseoverline).on("mouseleave", mouseleaveline).on("mousemove", mousemoveavarage);
       }
       var maxWidth = 100;
-      var textElement = d3.select(this).append("text").attr("class", "st-target").attr("x", 15).attr("y", rectHeight + 5).style("text-anchor", "middle").style("font-size", "18px").text(`${d.data.treeclass} = ${parseFloat(d.data.class_distribution[0][0].toFixed(3))}`).style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none").call(wrapText, maxWidth);
+      var textElement = d3.select(this).append("text").attr("class", "st-target").attr("x", leafLabelX).attr("y", regressionLeafLabelY).style("text-anchor", "middle").style("font-size", "18px").text(`${d.data.treeclass} = ${parseFloat(d.data.class_distribution[0][0].toFixed(3))}`).style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none").call(wrapText, maxWidth);
       var lineCount = textElement.selectAll("tspan").size();
       var lineHeightEm = 1.1;
       var fontSizePx = 18;
       var textSpacing = 5;
       var nTextY = rectHeight + lineCount * lineHeightEm * fontSizePx + textSpacing;
-      d3.select(this).append("text").attr("class", "st-target").attr("x", 15).attr("y", nTextY).style("text-anchor", "middle").style("font-size", "18px").text(`n = ${d.data.samples}`).style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
+      d3.select(this).append("text").attr("class", "st-target").attr("x", leafLabelX).attr("y", nTextY).style("text-anchor", "middle").style("font-size", "18px").text(`n = ${d.data.samples}`).style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
       var mouseovertriangle = function(d2) {
         tooltipBody.style("opacity", 1);
         tooltipModal.style("opacity", 1);
@@ -1004,7 +1158,7 @@
       if (isSampleExistInThisNode) {
         stLog("debug", d, "Existtt");
         d3.select(this).append("path").attr("d", triangle).attr("class", "st-triangle").style("stroke", color).style("stroke-width", 1).style("stroke-opacity", 1).style("fill", color).attr("transform", function(d2) {
-          return "translate(" + (-scatterplotLeafWidth / 2 + 15 + xScale(treeData.show_sample[d2.parent.data.feature])) + "," + scatterplotLeafHeight + ")";
+          return "translate(" + (regressionLeafPlotTranslateX + xScale(treeData.show_sample[d2.parent.data.feature])) + "," + scatterplotLeafHeight + ")";
         }).on("mouseover", mouseovertriangle).on("mouseleave", mouseleavetriangle).on("mousemove", mousemovetriangle);
       }
     }
@@ -1013,6 +1167,8 @@
   // supertree/js/src/viewport.js
   function createViewportController(config) {
     const {
+      instanceKey = "default",
+      treeType = "",
       modal,
       btn,
       span,
@@ -1024,7 +1180,9 @@
       stableLayout,
       zoom,
       getTreeRoot,
+      getAllTreeNodes,
       getTreeSVG,
+      getNodeBounds,
       onControlsLockedChange
     } = config;
     const fallbackDuration = durations.fit;
@@ -1091,6 +1249,26 @@
         height: Math.max(treeBounds.height + verticalPadding * 2, 1)
       };
     }
+    function getNodeVisualBounds(node, fallbackPosition = null) {
+      const position = fallbackPosition || node;
+      const bounds = typeof getNodeBounds === "function" ? getNodeBounds(node) : null;
+      if (!bounds) {
+        const horizontalPadding = rectWidth / 2 + 40;
+        const verticalPadding = rectHeight / 2 + 40;
+        return {
+          minX: position.x - horizontalPadding,
+          maxX: position.x + horizontalPadding,
+          minY: position.y - verticalPadding,
+          maxY: position.y + verticalPadding
+        };
+      }
+      return {
+        minX: position.x + bounds.minX,
+        maxX: position.x + bounds.maxX,
+        minY: position.y + bounds.minY,
+        maxY: position.y + bounds.maxY
+      };
+    }
     function getVisibleTreeBounds(options = {}) {
       const visibleNodes = getTreeRoot().descendants();
       if (options.fallbackToFullForSingleRoot && visibleNodes.length === 1 && !visibleNodes[0].parent) {
@@ -1100,17 +1278,16 @@
       if (options.useRenderedBounds !== false && renderedBounds !== null) {
         return renderedBounds;
       }
-      const horizontalPadding = rectWidth / 2 + 40;
-      const verticalPadding = rectHeight / 2 + 40;
       let minX = Infinity;
       let maxX = -Infinity;
       let minY = Infinity;
       let maxY = -Infinity;
       visibleNodes.forEach(function(node) {
-        minX = Math.min(minX, node.x - horizontalPadding);
-        maxX = Math.max(maxX, node.x + horizontalPadding);
-        minY = Math.min(minY, node.y - verticalPadding);
-        maxY = Math.max(maxY, node.y + verticalPadding);
+        const nodeBounds = getNodeVisualBounds(node);
+        minX = Math.min(minX, nodeBounds.minX);
+        maxX = Math.max(maxX, nodeBounds.maxX);
+        minY = Math.min(minY, nodeBounds.minY);
+        maxY = Math.max(maxY, nodeBounds.maxY);
       });
       return {
         minX,
@@ -1122,18 +1299,18 @@
       };
     }
     function getFullTreeBounds() {
-      const horizontalPadding = rectWidth / 2 + 40;
-      const verticalPadding = rectHeight / 2 + 40;
-      const positions = Array.from(stableLayout.stableNodePositions.values());
+      const allNodes = typeof getAllTreeNodes === "function" ? getAllTreeNodes() : getTreeRoot().descendants();
       let minX = Infinity;
       let maxX = -Infinity;
       let minY = Infinity;
       let maxY = -Infinity;
-      positions.forEach(function(position) {
-        minX = Math.min(minX, position.x - horizontalPadding);
-        maxX = Math.max(maxX, position.x + horizontalPadding);
-        minY = Math.min(minY, position.y - verticalPadding);
-        maxY = Math.max(maxY, position.y + verticalPadding);
+      allNodes.forEach(function(node) {
+        const stablePosition = stableLayout.stableNodePositions.get(node.data.id);
+        const nodeBounds = getNodeVisualBounds(node, stablePosition);
+        minX = Math.min(minX, nodeBounds.minX);
+        maxX = Math.max(maxX, nodeBounds.maxX);
+        minY = Math.min(minY, nodeBounds.minY);
+        maxY = Math.max(maxY, nodeBounds.maxY);
       });
       return {
         minX,
@@ -1295,14 +1472,15 @@
           return;
         case "inner-toggle":
           runAfterRenderSettled(function() {
+            const useRenderedBounds = treeType === "regression";
             rememberViewport(resetZoom("visible", Math.min(durations.fit, 220), {
               fallbackToFullForSingleRoot: true,
-              useRenderedBounds: false
+              useRenderedBounds
             }));
             runAfterRenderSettled(function() {
               rememberViewport(resetZoom("visible", 0, {
                 fallbackToFullForSingleRoot: true,
-                useRenderedBounds: false
+                useRenderedBounds
               }));
             }, 140);
             finishActionAfter(Math.min(durations.fit, 220) + 140);
@@ -1329,6 +1507,14 @@
       };
     }
     if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+      if (!window.__supertreeViewportResizeHandlers) {
+        window.__supertreeViewportResizeHandlers = {};
+      }
+      const previousResizeHandler = window.__supertreeViewportResizeHandlers[instanceKey];
+      if (previousResizeHandler) {
+        window.removeEventListener("resize", previousResizeHandler);
+      }
+      window.__supertreeViewportResizeHandlers[instanceKey] = handleViewportResize;
       window.addEventListener("resize", handleViewportResize);
     }
     return {
@@ -1343,6 +1529,60 @@
 
   // supertree/js/src/tree_app.js
   function buildTree(pathJson = "data/bugdata.json", pytree = "$treetemplate") {
+    const instanceKey = "treeID";
+    const graphSelector = `#graph-div-${instanceKey}`;
+    const toolbarSelector = `#toolbar-${instanceKey}`;
+    const infoSelector = `#st-info-div-${instanceKey}`;
+    const sidePanelSelector = `#st-side-panel-${instanceKey}`;
+    const modalSelector = `#myModal-${instanceKey}`;
+    const bodyTooltipSelector = `#st-tooltip-body-${instanceKey}`;
+    function clearMountRoot(selector, replacementHtml = "") {
+      const element = document.querySelector(selector);
+      if (element) {
+        element.innerHTML = replacementHtml;
+      }
+    }
+    function removeElement(selector) {
+      const element = document.querySelector(selector);
+      if (element) {
+        element.remove();
+      }
+    }
+    function cleanupInstanceArtifacts() {
+      clearMountRoot(toolbarSelector);
+      clearMountRoot(infoSelector);
+      clearMountRoot(graphSelector);
+      clearMountRoot(
+        sidePanelSelector,
+        `<span id="st-close-button-${instanceKey}" class="st-close-button">&times;</span>`
+      );
+      removeElement(modalSelector);
+      removeElement(bodyTooltipSelector);
+      if (typeof document !== "undefined") {
+        if (!document.__supertreeOutsideClickHandlers) {
+          document.__supertreeOutsideClickHandlers = {};
+        }
+        const previousOutsideClickHandler = document.__supertreeOutsideClickHandlers[instanceKey];
+        if (previousOutsideClickHandler) {
+          document.removeEventListener("click", previousOutsideClickHandler);
+          delete document.__supertreeOutsideClickHandlers[instanceKey];
+        }
+      }
+      if (typeof window !== "undefined" && window.__supertreeViewportResizeHandlers) {
+        const previousResizeHandler = window.__supertreeViewportResizeHandlers[instanceKey];
+        if (previousResizeHandler) {
+          window.removeEventListener("resize", previousResizeHandler);
+          delete window.__supertreeViewportResizeHandlers[instanceKey];
+        }
+      }
+      if (typeof window !== "undefined" && window.__supertreeMountObservers) {
+        const previousObserver = window.__supertreeMountObservers[instanceKey];
+        if (previousObserver) {
+          previousObserver.disconnect();
+          delete window.__supertreeMountObservers[instanceKey];
+        }
+      }
+    }
     async function checkD3Element(selector, timeout = 5e3) {
       const interval = 100;
       const startTime = Date.now();
@@ -1364,8 +1604,9 @@
     </div>`;
       return false;
     }
-    checkD3Element("#graph-div-treeID").then(() => {
-      d3.select("#graph-div-treeID").attr(
+    checkD3Element(graphSelector).then(() => {
+      cleanupInstanceArtifacts();
+      d3.select(graphSelector).attr(
         "class",
         "st-body-tree-div st-body-tree-div-treeID"
       );
@@ -1373,6 +1614,7 @@
       const logoURL = "https://mljar.com/images/logo/logo_blue_white.svg";
       function addModalToFirstBody() {
         let firstBody = document.getElementsByTagName("body")[0];
+        removeElement(modalSelector);
         let modalHtml = `
     <div id="myModal-treeID" class="st-modal">
         <div class="st-modal-content">
@@ -1380,21 +1622,21 @@
             <div id="st-modal-info-div-treeID" class="st-info-div"></div>
             <div id="toolbar-modal-treeID" class="st-toolbar"></div>
             <div id="graph-div-modal-treeID" class ="st-tree-div-${myid}"></div>     
-      <div id="st-side-panel-modal-treeID" class="st-side-panel">
-            <span id="st-close-button-modal-treeID" class="st-close-button">&times;</span>
-        <div>
+            <div id="st-side-panel-modal-treeID" class="st-side-panel">
+                <span id="st-close-button-modal-treeID" class="st-close-button">&times;</span>
+            </div>
         </div>
     </div>
     `;
         firstBody.insertAdjacentHTML("beforeend", modalHtml);
       }
       addModalToFirstBody();
-      d3.selectAll("#graph-div-treeID").append("div").attr("class", "st-tree-watermark").append("img").attr("src", logoURL).attr("alt", "MLJAR");
+      d3.select(graphSelector).append("div").attr("class", "st-tree-watermark").append("img").attr("src", logoURL).attr("alt", "MLJAR");
       var stjupyter = false;
       if (document.body.getAttribute("data-jp-theme-name") !== null) {
         stjupyter = true;
       }
-      const toolbarRoot = d3.select("#toolbar-treeID");
+      const toolbarRoot = d3.select(toolbarSelector);
       const primaryToolbarGroup = toolbarRoot.append("div").attr("class", "st-toolbar-group");
       const secondaryToolbarGroup = toolbarRoot.append("div").attr("class", "st-toolbar-group");
       const depthToolbarGroup = toolbarRoot.append("div").attr("class", "st-toolbar-group");
@@ -1413,16 +1655,6 @@
       let isLocked = false;
       let depthUnlockTimer = null;
       let globalMaxSample = 0;
-      const pieHeight = 100;
-      const pieWidth = 100;
-      const histogramWidth = 150;
-      const histogramHeight = 80;
-      const scatterplotWidth = histogramWidth;
-      const scatterplotHeight = histogramHeight;
-      const scatterplotLeafWidth = histogramHeight + 10;
-      const scatterplotLeafHeight = histogramHeight;
-      const rectHeight = 110;
-      const rectWidth = 195;
       var maxSample = 0;
       let minSample = Infinity;
       const interactionDurations = {
@@ -1614,8 +1846,8 @@
         "#227944"
       ];
       const colorSize = 20;
-      var tooltipModal = d3.selectAll("#myModal-treeID").append("div").attr("class", "st-tooltip").style("position", "absolute").style("opacity", 0).style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none").style("font-size", "18px").style("background-color", "rgba(0, 0, 0, 0.7)").style("color", "white").style("padding", "8px").style("border-radius", "4px").style("box-shadow", "0px 4px 8px rgba(0, 0, 0, 0.3)").style("max-width", "200px").style("text-align", "center").style("z-index", "1000").style("transition", "opacity 0.3s ease");
-      var tooltipBody = d3.selectAll("body").append("div").attr("class", "st-tooltip").style("position", "absolute").style("opacity", 0).style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none").style("font-size", "18px").style("background-color", "rgba(0, 0, 0, 0.7)").style("color", "white").style("padding", "8px").style("border-radius", "4px").style("box-shadow", "0px 4px 8px rgba(0, 0, 0, 0.3)").style("max-width", "200px").style("text-align", "center").style("z-index", "1000").style("transition", "opacity 0.3s ease");
+      var tooltipModal = d3.select(modalSelector).append("div").attr("id", `st-tooltip-modal-${instanceKey}`).attr("class", "st-tooltip").style("position", "absolute").style("opacity", 0).style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none").style("font-size", "18px").style("background-color", "rgba(0, 0, 0, 0.7)").style("color", "white").style("padding", "8px").style("border-radius", "4px").style("box-shadow", "0px 4px 8px rgba(0, 0, 0, 0.3)").style("max-width", "200px").style("text-align", "center").style("z-index", "1000").style("transition", "opacity 0.3s ease");
+      var tooltipBody = d3.select("body").append("div").attr("id", `st-tooltip-body-${instanceKey}`).attr("class", "st-tooltip").style("position", "absolute").style("opacity", 0).style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none").style("font-size", "18px").style("background-color", "rgba(0, 0, 0, 0.7)").style("color", "white").style("padding", "8px").style("border-radius", "4px").style("box-shadow", "0px 4px 8px rgba(0, 0, 0, 0.3)").style("max-width", "200px").style("text-align", "center").style("z-index", "1000").style("transition", "opacity 0.3s ease");
       function startWatcher() {
         const treeID = "st-body-tree-div-treeID";
         const modalID = "myModal-treeID";
@@ -1632,6 +1864,12 @@
         const observer = new MutationObserver(callback);
         const config = { childList: true, subtree: true };
         observer.observe(document.body, config);
+        if (typeof window !== "undefined") {
+          if (!window.__supertreeMountObservers) {
+            window.__supertreeMountObservers = {};
+          }
+          window.__supertreeMountObservers[instanceKey] = observer;
+        }
       }
       startWatcher();
       async function loadJSONFiles() {
@@ -1662,8 +1900,30 @@
       }
       loadJSONFiles().then((data) => {
         if (data) {
-          let zoomed = function(event2) {
+          let triggerToolbarTreeNavigation = function(direction) {
+            const navId = treeData.nav_id;
+            if (!navId) {
+              return;
+            }
+            const selector = direction === "next" ? `.${navId}-next button, button.${navId}-next, .${navId}-next` : `.${navId}-prev button, button.${navId}-prev, .${navId}-prev`;
+            const control = document.querySelector(selector);
+            if (control) {
+              control.click();
+            }
+          }, zoomed = function(event2) {
             treeSVG.attr("transform", event2.transform);
+          }, getAllTreeNodes = function() {
+            const nodes = [];
+            (function walk(node) {
+              nodes.push(node);
+              if (node.children) {
+                node.children.forEach(walk);
+              }
+              if (node._children) {
+                node._children.forEach(walk);
+              }
+            })(treeRoot);
+            return nodes;
           }, scheduleDepthUnlock = function(delay = interactionDurations.fit + 40) {
             if (depthUnlockTimer !== null) {
               clearTimeout(depthUnlockTimer);
@@ -1959,7 +2219,7 @@
             if (treeData.tree_type.startsWith(nodata)) {
               treeNodeEnter.each(function(d) {
                 if (!d.data.is_leaf) {
-                  d3.select(this).append("rect").attr("class", "histogram-background").attr("x", -(scatterplotWidth / 2) - 25).attr("y", -10).attr("width", rectWidth).attr("height", rectHeight).attr("stroke-width", 1).attr("stroke", "#545454").attr("rx", 10).attr("ry", 10).style("fill", "#ffffff");
+                  d3.select(this).append("rect").attr("class", "histogram-background").attr("x", histogramRectX).attr("y", -10).attr("width", rectWidth).attr("height", rectHeight).attr("stroke-width", 1).attr("stroke", "#545454").attr("rx", 10).attr("ry", 10).style("fill", "#ffffff");
                   d3.select(this).append("text").attr("dy", ".0em").attr("y", 10).attr("class", "st-target").style("text-anchor", "middle").text((d2) => "Threshold " + parseFloat(d2.data.threshold).toFixed(3)).style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
                   d3.select(this).append("text").attr("dy", ".0em").attr("y", 30).attr("class", "st-target").style("text-anchor", "middle").text((d2) => "Impurity: " + d2.data.impurity).style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
                   d3.select(this).append("text").attr("dy", ".0em").attr("y", 50).attr("class", "st-target").style("text-anchor", "middle").text((d2) => "Samples " + d2.data.samples).style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
@@ -1967,7 +2227,7 @@
                   d3.select(this).append("text").attr("dy", ".0em").attr("y", 90).attr("class", "st-target").style("text-anchor", "middle").text((d2) => "Class " + d2.data.treeclass).style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
                 }
                 if (d.data.is_leaf) {
-                  d3.select(this).append("rect").attr("class", "histogram-background").attr("x", -(scatterplotWidth / 2) - 5).attr("y", -10).attr("width", rectWidth - 40).attr("height", rectHeight).attr("stroke-width", 1).attr("stroke", "#545454").attr("rx", 10).attr("ry", 10).style("fill", "#ffffff");
+                  d3.select(this).append("rect").attr("class", "histogram-background").attr("x", classificationLeafRectX).attr("y", -10).attr("width", rectWidth - 40).attr("height", rectHeight).attr("stroke-width", 1).attr("stroke", "#545454").attr("rx", 10).attr("ry", 10).style("fill", "#ffffff");
                   d3.select(this).append("text").attr("dy", ".0em").attr("y", 10).attr("class", "st-target").style("text-anchor", "middle").text((d2) => "Samples " + d2.data.samples).style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
                   d3.select(this).append("text").attr("dy", ".0em").attr("y", 40).attr("class", "st-target").style("text-anchor", "middle").text((d2) => "Value [" + d2.data.class_distribution + "]").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
                   d3.select(this).append("text").attr("dy", ".0em").attr("y", 70).attr("class", "st-target").style("text-anchor", "middle").text((d2) => "Class " + d2.data.treeclass).style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
@@ -2022,25 +2282,25 @@
             const smallScaleY = d3.scaleLinear().domain(10, 0).range([1, 0]);
             treeNodeExit.selectAll(".xAxis").attr("transform", function(node) {
               if (treeData.tree_type == regr) {
-                const offsetX = node.data.is_leaf ? -scatterplotLeafWidth / 2 + 15 : -scatterplotWidth / 2;
+                const offsetX = node.data.is_leaf ? regressionLeafPlotTranslateX : histogramTranslateX;
                 return "translate(" + offsetX + ",0)";
               }
-              return "translate(" + -histogramWidth / 2 + ",0)";
+              return "translate(" + histogramTranslateX + ",0)";
             }).call(
               d3.axisBottom(smallScaleX).tickSize(0).tickPadding(8).ticks(2).tickFormat(d3.format(",.1f"))
             );
             treeNodeExit.selectAll(".yAxis").attr("transform", function(node) {
               if (treeData.tree_type == regr) {
-                const offsetX = node.data.is_leaf ? -scatterplotLeafWidth / 2 + 15 - yAxisMargin : -scatterplotWidth / 2 - yAxisMargin;
+                const offsetX = node.data.is_leaf ? regressionLeafPlotTranslateX - yAxisMargin : histogramTranslateX - yAxisMargin;
                 return "translate(" + offsetX + ",0)";
               }
-              return "translate(" + (-histogramWidth / 2 - yAxisMargin) + ",0)";
+              return "translate(" + (histogramTranslateX - yAxisMargin) + ",0)";
             }).call(
               d3.axisRight(smallScaleY).tickSize(0).tickPadding(8).ticks(2).tickFormat(d3.format(",.1f"))
             );
             treeNodeExit.selectAll("rect.histogram-background").attr("width", 1e-6).attr("height", 1e-6).attr("x", -rectWidth / 2).attr("y", 0);
             treeNodeExit.selectAll("rect.bar").attr("width", 1e-6).attr("height", 1e-6).attr("x", -histogramWidth / 2 + 70).attr("y", 0);
-            treeNodeExit.selectAll("circle").attr("r", 1e-6).attr("cx", -scatterplotWidth / 2 + 20).attr("cy", 0);
+            treeNodeExit.selectAll("circle").attr("r", 1e-6).attr("cx", histogramTranslateX + 20).attr("cy", 0);
             treeNodeExit.selectAll("path.piechart").attr("transform", "translate(" + -rectWidth / 2 + ",0)").attr("d", d3.arc().innerRadius(0).outerRadius(1));
             let gridAnimation = treeNodeExit.select(".st-grid");
             treeNodeExit.selectAll("line.threshold-line").attr("transform", "translate(" + -rectWidth + ",-40)").attr("x1", rectWidth / 2).attr("x2", rectWidth / 2).attr("y1", rectHeight / 2 - 15).attr("y2", rectHeight / 2).attr("stroke-width", 0);
@@ -2177,39 +2437,12 @@
             }
             function getSourceAnchor(node, childNode = null, options2 = {}) {
               const base = getNodeBasePosition(node, options2);
-              const cornerInset = 16;
-              let anchorX = base.x;
-              if (childNode) {
-                const childBase = getNodeBasePosition(childNode, options2);
-                if (childBase.x < base.x) {
-                  anchorX = base.x - rectWidth / 2 + cornerInset;
-                } else if (childBase.x > base.x) {
-                  anchorX = base.x + rectWidth / 2 - cornerInset;
-                }
-              }
-              return {
-                x: anchorX,
-                y: base.y + rectHeight - 10
-              };
+              const childBase = childNode ? getNodeBasePosition(childNode, options2) : null;
+              return getNodeSourceAnchor(base, childBase);
             }
             function getTargetAnchor(node, options2 = {}) {
               const base = getNodeBasePosition(node, options2);
-              if (node.data && node.data.is_leaf) {
-                if (treeData.tree_type == classification) {
-                  return {
-                    x: base.x + 10,
-                    y: base.y - 3
-                  };
-                }
-                return {
-                  x: base.x + 15,
-                  y: base.y + 4
-                };
-              }
-              return {
-                x: base.x,
-                y: base.y - 10
-              };
+              return getNodeTargetAnchor(node, base);
             }
             function diagonal(s, d) {
               const verticalDistance = Math.max(d.y - s.y, 0);
@@ -2482,9 +2715,44 @@
             return null;
           };
           const { nodeData, treeData } = data;
-          const treeLeafSpacing = treeData.tree_type == "regression" ? 340 : 300;
-          const treeLevelSpacing = 235;
-          const treeDepthSpacing = 400;
+          if ((treeData.tree_count || 1) > 1) {
+            if (treeData.nav_id) {
+              tertiaryToolbarGroup.append("button").attr("class", "st-option-button").on("click", () => triggerToolbarTreeNavigation("prev")).text("Prev");
+            }
+            tertiaryToolbarGroup.append("div").attr("class", "st-toolbar-status").text(`${treeData.model_name} \u2022 Tree ${treeData.which_tree + 1} / ${treeData.tree_count}`);
+            if (treeData.nav_id) {
+              tertiaryToolbarGroup.append("button").attr("class", "st-option-button").on("click", () => triggerToolbarTreeNavigation("next")).text("Next");
+            }
+          }
+          const visualMetrics = createTreeVisualMetrics(treeData.tree_type);
+          const {
+            dimensions: {
+              pieHeight,
+              pieWidth,
+              histogramWidth,
+              histogramHeight,
+              scatterplotWidth,
+              scatterplotHeight,
+              scatterplotLeafWidth,
+              scatterplotLeafHeight,
+              rectHeight,
+              rectWidth
+            },
+            layout: {
+              histogramTranslateX,
+              histogramRectX,
+              classificationLeafRectX,
+              regressionLeafPlotTranslateX
+            },
+            spacing: {
+              treeLeafSpacing,
+              treeLevelSpacing,
+              treeDepthSpacing
+            },
+            getViewportBounds: getNodeViewportBounds,
+            getSourceAnchor: getNodeSourceAnchor,
+            getTargetAnchor: getNodeTargetAnchor
+          } = visualMetrics;
           const {
             treeDataConverted,
             createHierarchyFromData,
@@ -2586,6 +2854,8 @@
           });
           var sideSVG = d3.selectAll("#st-side-panel-treeID").append("svg").attr("id", "st-side-svg-treeID").attr("class", "st-svg-2").attr("width", "100%").attr("height", 1e3).style("background-color", "#f3f9fb");
           const viewportController = createViewportController({
+            instanceKey,
+            treeType: treeData.tree_type,
             modal,
             btn,
             span,
@@ -2597,7 +2867,9 @@
             stableLayout,
             zoom,
             getTreeRoot: () => treeRoot,
+            getAllTreeNodes,
             getTreeSVG: () => treeSVG,
+            getNodeBounds: getNodeViewportBounds,
             onControlsLockedChange: (locked) => {
               isLocked = locked;
               if (!locked && depthUnlockTimer !== null) {
@@ -2732,12 +3004,11 @@
                 collapse(child, 0, 1);
               });
             });
-            const firstSourceNode = sourceNodes[0];
             const layers = getRelativeDepthLayers(
               sourceNodes.flatMap((node) => node.children || [])
             );
             const stagedIds = new Set(layers.flat().map((node) => node.id));
-            update(firstSourceNode, false, 0, {
+            update(treeRoot, false, 0, {
               hiddenNodeIds: stagedIds,
               hiddenLinkIds: stagedIds
             });
@@ -2778,7 +3049,6 @@
               applyViewportPolicy("depth-change");
               return;
             }
-            const firstSourceNode = sourceNodes[0];
             const layers = getRelativeDepthLayers(
               sourceNodes.flatMap((node) => node.children || [])
             );
@@ -2805,7 +3075,7 @@
               sourceNode._children = sourceNode.children;
               sourceNode.children = null;
             });
-            update(firstSourceNode, false, 0);
+            update(treeRoot, false, 0);
             renderFocusState();
             applyViewportPolicy("depth-change", { previousBounds });
           }
@@ -2816,10 +3086,6 @@
           stLog("debug", startDepth, "start depth value");
           collapse(treeRoot, 0, startDepth);
           update(treeRoot, false, 0);
-          if (treeData.model_name != "DecisionTreeClassifier" && treeData.model_name != "DecisionTreeRegressor") {
-            stLog("debug", "hello");
-            d3.selectAll("#st-info-div-treeID").append("p").text(`${treeData.model_name} ${treeData.which_tree}`).style("font-size", "12px").style("color", "black");
-          }
           const mouseover = function(d) {
             tooltipBody.style("opacity", 1);
             tooltipModal.style("opacity", 1);
@@ -2862,7 +3128,7 @@
             }
             clearActivePath();
           });
-          document.addEventListener("click", function(event2) {
+          const outsideClickHandler = function(event2) {
             const sidePanelNode = d3.select("#st-side-panel-treeID").node();
             if (!sidePanelNode || !sidePanelNode.classList.contains("show")) {
               return;
@@ -2874,7 +3140,9 @@
               return;
             }
             clearActivePath();
-          });
+          };
+          document.__supertreeOutsideClickHandlers[instanceKey] = outsideClickHandler;
+          document.addEventListener("click", outsideClickHandler);
           const fitVisibleButton = primaryToolbarGroup.append("button").html(svgFitVisible).attr("id", "fitVisible-treeID").attr("class", "st-option-button").on("click", () => applyViewportPolicy("fit-visible")).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
             mousemoveButton(event, "Fit visible tree");
           });
@@ -2917,11 +3185,12 @@
             if (isLocked) {
               return;
             }
+            const currentVisibleDepth = getCurrentVisibleDepthValue();
             const targetDepth = Math.max(
               1,
-              Math.min(getCurrentVisibleDepthValue() + direction, maxDepth)
+              Math.min(currentVisibleDepth + direction, maxDepth)
             );
-            if (targetDepth === getCurrentVisibleDepthValue()) {
+            if (targetDepth === currentVisibleDepth) {
               syncDepthControls();
               return;
             }
@@ -2932,10 +3201,14 @@
               useRenderedBounds: false
             });
             try {
-              normalizeVisibleDepth(targetDepth);
-              update(treeRoot, false, 0);
+              if (direction > 0) {
+                const sourceNodes = treeRoot.descendants().filter((node) => node.depth === currentVisibleDepth - 1 && node._children);
+                await animateDepthExpandStep(sourceNodes, previousBounds);
+              } else {
+                const sourceNodes = treeRoot.descendants().filter((node) => node.depth === targetDepth - 1 && node.children);
+                await animateDepthCollapseStep(sourceNodes, previousBounds);
+              }
               syncDepthControls();
-              applyViewportPolicy("depth-change", { previousBounds });
             } catch (error) {
               stLog("error", error, "Depth step animation failed");
               setControlsLocked(false);

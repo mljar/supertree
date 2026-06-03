@@ -11,6 +11,7 @@ import {
   processRegressionLeaf,
   processRegressionNode,
 } from "./node_renderers.js";
+import { createTreeVisualMetrics } from "./geometry.js";
 import { stLog, yAxisMargin } from "./shared.js";
 import { createViewportController } from "./viewport.js";
 
@@ -18,6 +19,69 @@ export function buildTree(
   pathJson = "data/bugdata.json",
   pytree = "$treetemplate",
 ) {
+  const instanceKey = "treeID";
+  const graphSelector = `#graph-div-${instanceKey}`;
+  const toolbarSelector = `#toolbar-${instanceKey}`;
+  const infoSelector = `#st-info-div-${instanceKey}`;
+  const sidePanelSelector = `#st-side-panel-${instanceKey}`;
+  const modalSelector = `#myModal-${instanceKey}`;
+  const bodyTooltipSelector = `#st-tooltip-body-${instanceKey}`;
+
+  function clearMountRoot(selector, replacementHtml = "") {
+    const element = document.querySelector(selector);
+    if (element) {
+      element.innerHTML = replacementHtml;
+    }
+  }
+
+  function removeElement(selector) {
+    const element = document.querySelector(selector);
+    if (element) {
+      element.remove();
+    }
+  }
+
+  function cleanupInstanceArtifacts() {
+    clearMountRoot(toolbarSelector);
+    clearMountRoot(infoSelector);
+    clearMountRoot(graphSelector);
+    clearMountRoot(
+      sidePanelSelector,
+      `<span id="st-close-button-${instanceKey}" class="st-close-button">&times;</span>`,
+    );
+
+    removeElement(modalSelector);
+    removeElement(bodyTooltipSelector);
+
+    if (typeof document !== "undefined") {
+      if (!document.__supertreeOutsideClickHandlers) {
+        document.__supertreeOutsideClickHandlers = {};
+      }
+      const previousOutsideClickHandler =
+        document.__supertreeOutsideClickHandlers[instanceKey];
+      if (previousOutsideClickHandler) {
+        document.removeEventListener("click", previousOutsideClickHandler);
+        delete document.__supertreeOutsideClickHandlers[instanceKey];
+      }
+    }
+
+    if (typeof window !== "undefined" && window.__supertreeViewportResizeHandlers) {
+      const previousResizeHandler = window.__supertreeViewportResizeHandlers[instanceKey];
+      if (previousResizeHandler) {
+        window.removeEventListener("resize", previousResizeHandler);
+        delete window.__supertreeViewportResizeHandlers[instanceKey];
+      }
+    }
+
+    if (typeof window !== "undefined" && window.__supertreeMountObservers) {
+      const previousObserver = window.__supertreeMountObservers[instanceKey];
+      if (previousObserver) {
+        previousObserver.disconnect();
+        delete window.__supertreeMountObservers[instanceKey];
+      }
+    }
+  }
+
   async function checkD3Element(selector, timeout = 5000) {
     const interval = 100;
     const startTime = Date.now();
@@ -45,9 +109,11 @@ export function buildTree(
 
     return false;
   }
-  checkD3Element("#graph-div-treeID")
+  checkD3Element(graphSelector)
     .then(() => {
-      d3.select("#graph-div-treeID").attr(
+      cleanupInstanceArtifacts();
+
+      d3.select(graphSelector).attr(
         "class",
         "st-body-tree-div st-body-tree-div-treeID",
       );
@@ -57,6 +123,7 @@ export function buildTree(
 
       function addModalToFirstBody() {
         let firstBody = document.getElementsByTagName("body")[0];
+        removeElement(modalSelector);
         let modalHtml = `
     <div id="myModal-treeID" class="st-modal">
         <div class="st-modal-content">
@@ -64,9 +131,9 @@ export function buildTree(
             <div id="st-modal-info-div-treeID" class="st-info-div"></div>
             <div id="toolbar-modal-treeID" class="st-toolbar"></div>
             <div id="graph-div-modal-treeID" class ="st-tree-div-${myid}"></div>     
-      <div id="st-side-panel-modal-treeID" class="st-side-panel">
-            <span id="st-close-button-modal-treeID" class="st-close-button">&times;</span>
-        <div>
+            <div id="st-side-panel-modal-treeID" class="st-side-panel">
+                <span id="st-close-button-modal-treeID" class="st-close-button">&times;</span>
+            </div>
         </div>
     </div>
     `;
@@ -75,7 +142,7 @@ export function buildTree(
 
       addModalToFirstBody();
 
-      d3.selectAll("#graph-div-treeID")
+      d3.select(graphSelector)
         .append("div")
         .attr("class", "st-tree-watermark")
         .append("img")
@@ -88,7 +155,7 @@ export function buildTree(
         stjupyter = true;
       }
 
-      const toolbarRoot = d3.select("#toolbar-treeID");
+      const toolbarRoot = d3.select(toolbarSelector);
       const primaryToolbarGroup = toolbarRoot
         .append("div")
         .attr("class", "st-toolbar-group");
@@ -117,16 +184,6 @@ export function buildTree(
       let isLocked = false;
       let depthUnlockTimer = null;
       let globalMaxSample = 0;
-      const pieHeight = 100;
-      const pieWidth = 100;
-      const histogramWidth = 150;
-      const histogramHeight = 80;
-      const scatterplotWidth = histogramWidth;
-      const scatterplotHeight = histogramHeight;
-      const scatterplotLeafWidth = histogramHeight + 10;
-      const scatterplotLeafHeight = histogramHeight;
-      const rectHeight = 110;
-      const rectWidth = 195;
       var maxSample = 0;
       let minSample = Infinity;
       const interactionDurations = {
@@ -322,8 +379,9 @@ export function buildTree(
 
 
       var tooltipModal = d3
-        .selectAll("#myModal-treeID")
+        .select(modalSelector)
         .append("div")
+        .attr("id", `st-tooltip-modal-${instanceKey}`)
         .attr("class", "st-tooltip")
         .style("position", "absolute")
         .style("opacity", 0)
@@ -342,8 +400,9 @@ export function buildTree(
         .style("transition", "opacity 0.3s ease");
 
       var tooltipBody = d3
-        .selectAll("body")
+        .select("body")
         .append("div")
+        .attr("id", `st-tooltip-body-${instanceKey}`)
         .attr("class", "st-tooltip")
         .style("position", "absolute")
         .style("opacity", 0)
@@ -383,6 +442,12 @@ export function buildTree(
         const config = { childList: true, subtree: true };
 
         observer.observe(document.body, config);
+        if (typeof window !== "undefined") {
+          if (!window.__supertreeMountObservers) {
+            window.__supertreeMountObservers = {};
+          }
+          window.__supertreeMountObservers[instanceKey] = observer;
+        }
     }
       startWatcher();
 
@@ -420,9 +485,73 @@ export function buildTree(
       loadJSONFiles().then((data) => {
         if (data) {
           const { nodeData, treeData } = data;
-          const treeLeafSpacing = treeData.tree_type == "regression" ? 340 : 300;
-          const treeLevelSpacing = 235;
-          const treeDepthSpacing = 400;
+
+          function triggerToolbarTreeNavigation(direction) {
+            const navId = treeData.nav_id;
+            if (!navId) {
+              return;
+            }
+            const selector = direction === "next"
+              ? `.${navId}-next button, button.${navId}-next, .${navId}-next`
+              : `.${navId}-prev button, button.${navId}-prev, .${navId}-prev`;
+            const control = document.querySelector(selector);
+            if (control) {
+              control.click();
+            }
+          }
+
+          if ((treeData.tree_count || 1) > 1) {
+            if (treeData.nav_id) {
+              tertiaryToolbarGroup
+                .append("button")
+                .attr("class", "st-option-button")
+                .on("click", () => triggerToolbarTreeNavigation("prev"))
+                .text("Prev");
+            }
+
+            tertiaryToolbarGroup
+              .append("div")
+              .attr("class", "st-toolbar-status")
+              .text(`${treeData.model_name} • Tree ${treeData.which_tree + 1} / ${treeData.tree_count}`);
+
+            if (treeData.nav_id) {
+              tertiaryToolbarGroup
+                .append("button")
+                .attr("class", "st-option-button")
+                .on("click", () => triggerToolbarTreeNavigation("next"))
+                .text("Next");
+            }
+          }
+
+          const visualMetrics = createTreeVisualMetrics(treeData.tree_type);
+          const {
+            dimensions: {
+              pieHeight,
+              pieWidth,
+              histogramWidth,
+              histogramHeight,
+              scatterplotWidth,
+              scatterplotHeight,
+              scatterplotLeafWidth,
+              scatterplotLeafHeight,
+              rectHeight,
+              rectWidth,
+            },
+            layout: {
+              histogramTranslateX,
+              histogramRectX,
+              classificationLeafRectX,
+              regressionLeafPlotTranslateX,
+            },
+            spacing: {
+              treeLeafSpacing,
+              treeLevelSpacing,
+              treeDepthSpacing,
+            },
+            getViewportBounds: getNodeViewportBounds,
+            getSourceAnchor: getNodeSourceAnchor,
+            getTargetAnchor: getNodeTargetAnchor,
+          } = visualMetrics;
           const {
             treeDataConverted,
             createHierarchyFromData,
@@ -567,7 +696,25 @@ export function buildTree(
             .attr("height", 1000)
             .style("background-color", "#f3f9fb");
 
+          function getAllTreeNodes() {
+            const nodes = [];
+
+            (function walk(node) {
+              nodes.push(node);
+              if (node.children) {
+                node.children.forEach(walk);
+              }
+              if (node._children) {
+                node._children.forEach(walk);
+              }
+            })(treeRoot);
+
+            return nodes;
+          }
+
           const viewportController = createViewportController({
+            instanceKey,
+            treeType: treeData.tree_type,
             modal,
             btn,
             span,
@@ -579,7 +726,9 @@ export function buildTree(
             stableLayout,
             zoom,
             getTreeRoot: () => treeRoot,
+            getAllTreeNodes,
             getTreeSVG: () => treeSVG,
+            getNodeBounds: getNodeViewportBounds,
             onControlsLockedChange: (locked) => {
               isLocked = locked;
               if (!locked && depthUnlockTimer !== null) {
@@ -897,13 +1046,12 @@ export function buildTree(
               });
             });
 
-            const firstSourceNode = sourceNodes[0];
             const layers = getRelativeDepthLayers(
               sourceNodes.flatMap((node) => node.children || []),
             );
             const stagedIds = new Set(layers.flat().map((node) => node.id));
 
-            update(firstSourceNode, false, 0, {
+            update(treeRoot, false, 0, {
               hiddenNodeIds: stagedIds,
               hiddenLinkIds: stagedIds,
             });
@@ -964,7 +1112,6 @@ export function buildTree(
               return;
             }
 
-            const firstSourceNode = sourceNodes[0];
             const layers = getRelativeDepthLayers(
               sourceNodes.flatMap((node) => node.children || []),
             );
@@ -1003,7 +1150,7 @@ export function buildTree(
               sourceNode.children = null;
             });
 
-            update(firstSourceNode, false, 0);
+            update(treeRoot, false, 0);
             renderFocusState();
             applyViewportPolicy("depth-change", { previousBounds });
           }
@@ -1278,7 +1425,7 @@ export function buildTree(
                   d3.select(this)
                     .append("rect")
                     .attr("class", "histogram-background")
-                    .attr("x", -(scatterplotWidth / 2) - 25)
+                    .attr("x", histogramRectX)
                     .attr("y", -10)
                     .attr("width", rectWidth)
                     .attr("height", rectHeight)
@@ -1350,7 +1497,7 @@ export function buildTree(
                   d3.select(this)
                     .append("rect")
                     .attr("class", "histogram-background")
-                    .attr("x", -(scatterplotWidth / 2) - 5)
+                    .attr("x", classificationLeafRectX)
                     .attr("y", -10)
                     .attr("width", rectWidth - 40)
                     .attr("height", rectHeight)
@@ -1504,11 +1651,11 @@ export function buildTree(
               .attr("transform", function(node) {
                 if (treeData.tree_type == regr) {
                   const offsetX = node.data.is_leaf
-                    ? -scatterplotLeafWidth / 2 + 15
-                    : -scatterplotWidth / 2;
+                    ? regressionLeafPlotTranslateX
+                    : histogramTranslateX;
                   return "translate(" + offsetX + ",0)";
                 }
-                return "translate(" + -histogramWidth / 2 + ",0)";
+                return "translate(" + histogramTranslateX + ",0)";
               })
               .call(
                 d3
@@ -1524,11 +1671,11 @@ export function buildTree(
               .attr("transform", function(node) {
                 if (treeData.tree_type == regr) {
                   const offsetX = node.data.is_leaf
-                    ? -scatterplotLeafWidth / 2 + 15 - yAxisMargin
-                    : -scatterplotWidth / 2 - yAxisMargin;
+                    ? regressionLeafPlotTranslateX - yAxisMargin
+                    : histogramTranslateX - yAxisMargin;
                   return "translate(" + offsetX + ",0)";
                 }
-                return "translate(" + (-histogramWidth / 2 - yAxisMargin) + ",0)";
+                return "translate(" + (histogramTranslateX - yAxisMargin) + ",0)";
               })
               .call(
                 d3
@@ -1556,7 +1703,7 @@ export function buildTree(
             treeNodeExit
               .selectAll("circle")
               .attr("r", 1e-6)
-              .attr("cx", -scatterplotWidth / 2 + 20)
+              .attr("cx", histogramTranslateX + 20)
               .attr("cy", 0);
 
             treeNodeExit
@@ -1814,45 +1961,15 @@ export function buildTree(
 
             function getSourceAnchor(node, childNode = null, options = {}) {
               const base = getNodeBasePosition(node, options);
-              const cornerInset = 16;
-              let anchorX = base.x;
-
-              if (childNode) {
-                const childBase = getNodeBasePosition(childNode, options);
-                if (childBase.x < base.x) {
-                  anchorX = base.x - rectWidth / 2 + cornerInset;
-                } else if (childBase.x > base.x) {
-                  anchorX = base.x + rectWidth / 2 - cornerInset;
-                }
-              }
-
-              return {
-                x: anchorX,
-                y: base.y + rectHeight - 10,
-              };
+              const childBase = childNode
+                ? getNodeBasePosition(childNode, options)
+                : null;
+              return getNodeSourceAnchor(base, childBase);
             }
 
             function getTargetAnchor(node, options = {}) {
               const base = getNodeBasePosition(node, options);
-
-              if (node.data && node.data.is_leaf) {
-                if (treeData.tree_type == classification) {
-                  return {
-                    x: base.x + 10,
-                    y: base.y - 3,
-                  };
-                }
-
-                return {
-                  x: base.x + 15,
-                  y: base.y + 4,
-                };
-              }
-
-              return {
-                x: base.x,
-                y: base.y - 10,
-              };
+              return getNodeTargetAnchor(node, base);
             }
 
             function diagonal(s, d) {
@@ -1868,14 +1985,6 @@ export function buildTree(
               return path;
             }
 
-          }
-          if (treeData.model_name != "DecisionTreeClassifier" && treeData.model_name != "DecisionTreeRegressor") {
-            stLog("debug","hello");
-            d3.selectAll("#st-info-div-treeID")
-              .append("p")
-              .text(`${treeData.model_name} ${treeData.which_tree}`)
-              .style("font-size", "12px")
-              .style("color", "black");
           }
           const mouseover = function(d) {
             tooltipBody.style("opacity", 1);
@@ -2263,7 +2372,7 @@ export function buildTree(
             clearActivePath();
           });
 
-          document.addEventListener("click", function(event) {
+          const outsideClickHandler = function(event) {
             const sidePanelNode = d3.select("#st-side-panel-treeID").node();
             if (!sidePanelNode || !sidePanelNode.classList.contains("show")) {
               return;
@@ -2275,7 +2384,10 @@ export function buildTree(
               return;
             }
             clearActivePath();
-          });
+          };
+
+          document.__supertreeOutsideClickHandlers[instanceKey] = outsideClickHandler;
+          document.addEventListener("click", outsideClickHandler);
 
           const fitVisibleButton = primaryToolbarGroup
             .append("button")
@@ -2432,12 +2544,13 @@ export function buildTree(
               return;
             }
 
+            const currentVisibleDepth = getCurrentVisibleDepthValue();
             const targetDepth = Math.max(
               1,
-              Math.min(getCurrentVisibleDepthValue() + direction, maxDepth),
+              Math.min(currentVisibleDepth + direction, maxDepth),
             );
 
-            if (targetDepth === getCurrentVisibleDepthValue()) {
+            if (targetDepth === currentVisibleDepth) {
               syncDepthControls();
               return;
             }
@@ -2450,10 +2563,21 @@ export function buildTree(
             });
 
             try {
-              normalizeVisibleDepth(targetDepth);
-              update(treeRoot, false, 0);
+              if (direction > 0) {
+                const sourceNodes = treeRoot
+                  .descendants()
+                  .filter((node) => node.depth === currentVisibleDepth - 1 && node._children);
+
+                await animateDepthExpandStep(sourceNodes, previousBounds);
+              } else {
+                const sourceNodes = treeRoot
+                  .descendants()
+                  .filter((node) => node.depth === targetDepth - 1 && node.children);
+
+                await animateDepthCollapseStep(sourceNodes, previousBounds);
+              }
+
               syncDepthControls();
-              applyViewportPolicy("depth-change", { previousBounds });
             } catch (error) {
               stLog("error", error, "Depth step animation failed");
               setControlsLocked(false);

@@ -32,6 +32,8 @@ class TreeData:
         self.show_sample = "nodata"
         self.model_name = model_name
         self.which_tree = 0
+        self.tree_count = 1
+        self.nav_id = None
         self.palette = palette
         self.show_palette_control = show_palette_control
 
@@ -76,6 +78,8 @@ class TreeData:
             "show_sample": convert(self.show_sample),
             "model_name": convert(self.model_name),
             "which_tree": convert(self.which_tree),
+            "tree_count": convert(self.tree_count),
+            "nav_id": convert(self.nav_id),
             "palette": convert(self.palette),
             "show_palette_control": convert(self.show_palette_control),
         }
@@ -121,3 +125,9 @@ class TreeData:
 
     def set_which_tree(self,which):
         self.which_tree = which
+
+    def set_tree_count(self, tree_count):
+        self.tree_count = tree_count
+
+    def set_nav_id(self, nav_id):
+        self.nav_id = nav_id

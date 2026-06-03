@@ -183,6 +183,23 @@
   font-weight: 400 !important;
 }
 
+.st-toolbar-status {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 34px !important;
+  padding: 0 12px !important;
+  border-radius: 11px !important;
+  border: 1px solid #ddd7ce !important;
+  background: #fcfbf8 !important;
+  color: #4a453f !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  box-sizing: border-box !important;
+}
+
 
 
 
@@ -422,14 +439,20 @@
     transition: right 0.3s ease;
     overflow-y: auto;
     z-index: 3;
+    display: none;
+    visibility: hidden;
 }
 
 .st-side-panel.show {
     right: 0px;
+    display: block;
+    visibility: visible;
 }
 
 .st-side-panel.hide {
     right: -350px; 
+    display: none;
+    visibility: hidden;
 }
 
 .st-side-panel svg {

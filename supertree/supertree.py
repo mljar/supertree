@@ -1,6 +1,7 @@
 import json
 from copy import deepcopy
 from typing import List, Optional, Union
+from uuid import uuid4
 
 import numpy as np
 import pandas as pd
@@ -192,6 +193,22 @@ class SuperTree:
                 "Invalid target_names length"
             )
 
+    def _render_tree_html(self, start_depth, output=None):
+        self.tree_data.set_which_tree(self.which_tree)
+        self.tree_data.set_tree_count(self.get_max_tree_size())
+        combined_data_str = self._get_combined_data()
+        html = HTML(templatehtml.get_d3_html(combined_data_str, start_depth))
+
+        if output is None:
+            display(html)
+        else:
+            with output:
+                output.clear_output(wait=True)
+                display(html)
+
+        self.node_list = []
+        self.nodes = []
+
     def show_tree(self, which_tree=0, which_iteration=0, start_depth=5, max_samples=7500, show_sample=None, widgets=False):
         """
         Displaying model HTMl template and create json tree model.
@@ -220,6 +237,7 @@ class SuperTree:
         self.which_tree = which_tree
         self.which_iteration = which_iteration
         self.tree_data.set_which_tree(self.which_tree)
+        self.tree_data.set_tree_count(self.get_max_tree_size())
 
         if self.model_type == "uknown_model":
             return 0
@@ -227,13 +245,7 @@ class SuperTree:
         if(widgets==True):
             self.ipy_widget(start_depth)
         else:
-            combined_data_str = self._get_combined_data()
-
-            display(HTML(templatehtml.get_d3_html(
-                combined_data_str, start_depth)))
-
-            self.node_list = []
-            self.nodes = []
+            self._render_tree_html(start_depth)
 
     def save_html(self, filename="output", which_tree=0, which_iteration=0, start_depth=5, max_samples=7500, show_sample=None):
         """
@@ -272,6 +284,7 @@ class SuperTree:
         self.which_tree = which_tree
         self.which_iteration = which_iteration
         self.tree_data.set_which_tree(self.which_tree)
+        self.tree_data.set_tree_count(self.get_max_tree_size())
 
         combined_data_str = self._get_combined_data()
 
@@ -314,6 +327,8 @@ class SuperTree:
 
         self.which_tree = which_tree
         self.which_iteration = which_iteration
+        self.tree_data.set_which_tree(self.which_tree)
+        self.tree_data.set_tree_count(self.get_max_tree_size())
 
         combined_data_str = self._get_combined_data()
 
@@ -1024,7 +1039,11 @@ class SuperTree:
         Navigate to the next tree using ipy widgets
         """
 
-        output = widgets.Output()
+        output = widgets.Output(
+            layout=widgets.Layout(width='auto', overflow='hidden')
+        )
+        nav_id = f"st-nav-{uuid4().hex[:10]}"
+        self.tree_data.set_nav_id(nav_id)
 
         number_input = widgets.BoundedIntText(
             value=0,
@@ -1035,53 +1054,30 @@ class SuperTree:
             style={'description_width': 'initial'},
             layout=widgets.Layout(width='60px')
         )
+        number_input.add_class(f"{nav_id}-input")
 
         def next_button_click(b):
-            with output:
-                output.clear_output()
-                if(self.which_tree + 1 > (self.get_max_tree_size())-1):
-                    self.which_tree=0
-                else:
-                    self.which_tree = self.which_tree+1
-                
-                
-                self.tree_data.set_which_tree(self.which_tree)
-                combined_data_str = self._get_combined_data()
-                display(HTML(templatehtml.get_d3_html(
-                combined_data_str, start_depth)))
-                self.node_list = []
-                self.nodes = []
+            if(self.which_tree + 1 > (self.get_max_tree_size())-1):
+                self.which_tree=0
+            else:
+                self.which_tree = self.which_tree+1
+            self._render_tree_html(start_depth, output)
 
 
         def previous_button_click(b):
-            with output:
-                output.clear_output()
-
-                if(self.which_tree - 1 < 0):
-                    self.which_tree=self.get_max_tree_size()-1
-                else:
-                    self.which_tree = self.which_tree-1
-
-                self.tree_data.set_which_tree(self.which_tree)
-                combined_data_str = self._get_combined_data()
-                display(HTML(templatehtml.get_d3_html(
-                combined_data_str, start_depth)))
-                self.node_list = []
-                self.nodes = []
+            if(self.which_tree - 1 < 0):
+                self.which_tree=self.get_max_tree_size()-1
+            else:
+                self.which_tree = self.which_tree-1
+            self._render_tree_html(start_depth, output)
 
         def number_input_change(change):
-            with output:
-                output.clear_output()
-                self.which_tree = change['new']
-                self.tree_data.set_which_tree(self.which_tree)
-                combined_data_str = self._get_combined_data()
-                display(HTML(templatehtml.get_d3_html(
-                    combined_data_str, start_depth)))
-                self.node_list = []
-                self.nodes = []
+            self.which_tree = change['new']
+            self._render_tree_html(start_depth, output)
 
         next_button = widgets.Button(description="→", layout=widgets.Layout(width='60px'),
                                  button_style='info')
+        next_button.add_class(f"{nav_id}-next")
 
         next_button.on_click(next_button_click)
 
@@ -1091,21 +1087,33 @@ class SuperTree:
 
         previous_button = widgets.Button(description="←", layout=widgets.Layout(width='60px'),
                                      button_style='info')
+        previous_button.add_class(f"{nav_id}-prev")
 
         previous_button.on_click(previous_button_click)
 
-        widgets_box = widgets.HBox([previous_button,number_input, next_button], layout=widgets.Layout(align_items='center'))
+        widgets_box = widgets.HBox(
+            [previous_button, number_input, next_button],
+            layout=widgets.Layout(
+                align_items='center',
+                display='none',
+                width='auto',
+                overflow='hidden',
+                justify_content='center',
+            ),
+        )
 
-        display(widgets.VBox([widgets_box, output], layout=widgets.Layout(align_items='center')))
+        display(
+            widgets.VBox(
+                [widgets_box, output],
+                layout=widgets.Layout(
+                    width='auto',
+                    align_items='stretch',
+                    overflow='hidden',
+                ),
+            )
+        )
 
-        with output:
-            combined_data_str = self._get_combined_data()
-            display(HTML(templatehtml.get_d3_html(
-                    combined_data_str, start_depth)))
-
-
-        self.node_list = []
-        self.nodes = []
+        self._render_tree_html(start_depth, output)
 
 
     def get_max_tree_size(self):

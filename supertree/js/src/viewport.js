@@ -1,5 +1,7 @@
 export function createViewportController(config) {
   const {
+    instanceKey = "default",
+    treeType = "",
     modal,
     btn,
     span,
@@ -11,7 +13,9 @@ export function createViewportController(config) {
     stableLayout,
     zoom,
     getTreeRoot,
+    getAllTreeNodes,
     getTreeSVG,
+    getNodeBounds,
     onControlsLockedChange,
   } = config;
   const fallbackDuration = durations.fit;
@@ -94,6 +98,31 @@ export function createViewportController(config) {
     };
   }
 
+  function getNodeVisualBounds(node, fallbackPosition = null) {
+    const position = fallbackPosition || node;
+    const bounds = typeof getNodeBounds === "function"
+      ? getNodeBounds(node)
+      : null;
+
+    if (!bounds) {
+      const horizontalPadding = rectWidth / 2 + 40;
+      const verticalPadding = rectHeight / 2 + 40;
+      return {
+        minX: position.x - horizontalPadding,
+        maxX: position.x + horizontalPadding,
+        minY: position.y - verticalPadding,
+        maxY: position.y + verticalPadding,
+      };
+    }
+
+    return {
+      minX: position.x + bounds.minX,
+      maxX: position.x + bounds.maxX,
+      minY: position.y + bounds.minY,
+      maxY: position.y + bounds.maxY,
+    };
+  }
+
   function getVisibleTreeBounds(options = {}) {
     const visibleNodes = getTreeRoot().descendants();
 
@@ -111,19 +140,17 @@ export function createViewportController(config) {
       return renderedBounds;
     }
 
-    const horizontalPadding = rectWidth / 2 + 40;
-    const verticalPadding = rectHeight / 2 + 40;
-
     let minX = Infinity;
     let maxX = -Infinity;
     let minY = Infinity;
     let maxY = -Infinity;
 
     visibleNodes.forEach(function(node) {
-      minX = Math.min(minX, node.x - horizontalPadding);
-      maxX = Math.max(maxX, node.x + horizontalPadding);
-      minY = Math.min(minY, node.y - verticalPadding);
-      maxY = Math.max(maxY, node.y + verticalPadding);
+      const nodeBounds = getNodeVisualBounds(node);
+      minX = Math.min(minX, nodeBounds.minX);
+      maxX = Math.max(maxX, nodeBounds.maxX);
+      minY = Math.min(minY, nodeBounds.minY);
+      maxY = Math.max(maxY, nodeBounds.maxY);
     });
 
     return {
@@ -137,20 +164,22 @@ export function createViewportController(config) {
   }
 
   function getFullTreeBounds() {
-    const horizontalPadding = rectWidth / 2 + 40;
-    const verticalPadding = rectHeight / 2 + 40;
-    const positions = Array.from(stableLayout.stableNodePositions.values());
+    const allNodes = typeof getAllTreeNodes === "function"
+      ? getAllTreeNodes()
+      : getTreeRoot().descendants();
 
     let minX = Infinity;
     let maxX = -Infinity;
     let minY = Infinity;
     let maxY = -Infinity;
 
-    positions.forEach(function(position) {
-      minX = Math.min(minX, position.x - horizontalPadding);
-      maxX = Math.max(maxX, position.x + horizontalPadding);
-      minY = Math.min(minY, position.y - verticalPadding);
-      maxY = Math.max(maxY, position.y + verticalPadding);
+    allNodes.forEach(function(node) {
+      const stablePosition = stableLayout.stableNodePositions.get(node.data.id);
+      const nodeBounds = getNodeVisualBounds(node, stablePosition);
+      minX = Math.min(minX, nodeBounds.minX);
+      maxX = Math.max(maxX, nodeBounds.maxX);
+      minY = Math.min(minY, nodeBounds.minY);
+      maxY = Math.max(maxY, nodeBounds.maxY);
     });
 
     return {
@@ -337,14 +366,15 @@ export function createViewportController(config) {
         return;
       case "inner-toggle":
         runAfterRenderSettled(function() {
+          const useRenderedBounds = treeType === "regression";
           rememberViewport(resetZoom("visible", Math.min(durations.fit, 220), {
             fallbackToFullForSingleRoot: true,
-            useRenderedBounds: false,
+            useRenderedBounds,
           }));
           runAfterRenderSettled(function() {
             rememberViewport(resetZoom("visible", 0, {
               fallbackToFullForSingleRoot: true,
-              useRenderedBounds: false,
+              useRenderedBounds,
             }));
           }, 140);
           finishActionAfter(Math.min(durations.fit, 220) + 140);
@@ -375,6 +405,14 @@ export function createViewportController(config) {
   }
 
   if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+    if (!window.__supertreeViewportResizeHandlers) {
+      window.__supertreeViewportResizeHandlers = {};
+    }
+    const previousResizeHandler = window.__supertreeViewportResizeHandlers[instanceKey];
+    if (previousResizeHandler) {
+      window.removeEventListener("resize", previousResizeHandler);
+    }
+    window.__supertreeViewportResizeHandlers[instanceKey] = handleViewportResize;
     window.addEventListener("resize", handleViewportResize);
   }
 
