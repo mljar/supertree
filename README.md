@@ -6,7 +6,6 @@
 [![PyPI version](https://badge.fury.io/py/supertree.svg)](https://pypi.org/project/supertree/)
 [![Downloads](https://img.shields.io/pypi/dm/supertree)](https://pypi.org/project/supertree/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE.txt)
-[![GitHub Stars](https://img.shields.io/github/stars/mljar/supertree)](https://github.com/mljar/supertree/stargazers)
 
 
 Visualize decision trees interactively in Jupyter, JupyterLab, and Google Colab.
