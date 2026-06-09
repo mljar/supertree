@@ -63,7 +63,7 @@ super_tree = SuperTree(model,X, y)
 super_tree.show_tree(2)
 ```
 
-![](https://raw.githubusercontent.com/mljar/supertree/main/media/regressor.png)
+![](https://raw.githubusercontent.com/mljar/supertree/main/media/supertree-random-forest-visualization.png)
 
 There are more code snippets in the [examples](examples) directory.
 
