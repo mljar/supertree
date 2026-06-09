@@ -1,6 +1,13 @@
 ![](https://raw.githubusercontent.com/mljar/supertree/main/media/supertree2.gif)
 
+
 # `supertree` - Interactive Decision Tree Visualization
+
+[![PyPI version](https://badge.fury.io/py/supertree.svg)](https://pypi.org/project/supertree/)
+[![Downloads](https://img.shields.io/pypi/dm/supertree)](https://pypi.org/project/supertree/)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE.txt)
+[![GitHub Stars](https://img.shields.io/github/stars/mljar/supertree)](https://github.com/mljar/supertree/stargazers)
+
 
 `supertree` is a Python package designed to visualize decision trees in an **interactive** and user-friendly way within Jupyter Notebooks, Jupyter Lab, Google Colab, and any other notebooks that support HTML rendering. With this tool, you can not only display decision trees, but also interact with them directly within your notebook environment. Key features include:
 - ability to zoom and pan through large trees,
