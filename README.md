@@ -25,17 +25,17 @@ iris = load_iris()
 X, y = iris.data, iris.target
 
 # Train model
-model = DecisionTreeClassifier()
+model = DecisionTreeClassifier(max_depth=3)
 model.fit(X, y)
 
 # Initialize supertree
-super_tree = SuperTree(model, X, y, iris.feature_names, iris.target_names, color_palette=1)
+super_tree = SuperTree(model, X, y, iris.feature_names, iris.target_names)
 
 # show tree in your notebook
 super_tree.show_tree()
 ```
 
-![](https://raw.githubusercontent.com/mljar/supertree/main/media/classifier.png)
+![](https://raw.githubusercontent.com/mljar/supertree/main/media/supertree-decision-tree-visualization.png)
 
 ### Random Forest Regressor Example
 
