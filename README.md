@@ -9,14 +9,20 @@
 [![GitHub Stars](https://img.shields.io/github/stars/mljar/supertree)](https://github.com/mljar/supertree/stargazers)
 
 
-`supertree` is a Python package designed to visualize decision trees in an **interactive** and user-friendly way within Jupyter Notebooks, Jupyter Lab, Google Colab, and any other notebooks that support HTML rendering. With this tool, you can not only display decision trees, but also interact with them directly within your notebook environment. Key features include:
-- ability to zoom and pan through large trees,
-- collapse and expand selected nodes, 
-- explore the structure of the tree in an intuitive and visually appealing manner.
+Visualize decision trees interactively in Jupyter, JupyterLab, and Google Colab.
+Zoom, pan, collapse nodes, and trace sample paths - all inside your notebook.
 
-## Examples
+Works with scikit-learn, XGBoost, LightGBM, and ONNX.
 
-### Decision Tree classifier on iris data 
+## Installation
+
+```bash
+pip install supertree
+```
+
+## Quick Start
+
+### Visualize Decision Tree classifier on iris data 
 
 <a target="_blank" href="https://colab.research.google.com/drive/1f2Xu8CwbXaT33hvh-ze0JK3sBSpXBt5T?usp=sharing">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
@@ -25,18 +31,17 @@
 ```python
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.datasets import load_iris
-from supertree import SuperTree # <- import supertree :)
+from supertree import SuperTree
 
 # Load the iris dataset
 iris = load_iris()
-X, y = iris.data, iris.target
 
 # Train model
 model = DecisionTreeClassifier(max_depth=3)
-model.fit(X, y)
+model.fit(iris.data, iris.target)
 
 # Initialize supertree
-super_tree = SuperTree(model, X, y, iris.feature_names, iris.target_names)
+super_tree = SuperTree(model, iris.data, iris.target, iris.feature_names, iris.target_names)
 
 # show tree in your notebook
 super_tree.show_tree()
@@ -44,7 +49,7 @@ super_tree.show_tree()
 
 ![](https://raw.githubusercontent.com/mljar/supertree/main/media/supertree-decision-tree-visualization.png)
 
-### Random Forest Regressor Example
+### It works with trees ensembles too - Random Forest Regressor Example
 
 <a target="_blank" href="https://colab.research.google.com/drive/1nR7GlrIKcMQYdnMm_duY7a6vscyqTCMj?usp=sharing">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
@@ -74,34 +79,6 @@ super_tree.show_tree(2)
 
 There are more code snippets in the [examples](examples) directory.
 
-## Instalation
-You can install SuperTree package using pip:
-
-```
-pip install supertree
-```
-
-Conda support coming soon.
-
-## JavaScript Source
-
-The interactive frontend is authored in:
-
-- `supertree/js/src/`
-- `supertree/js/dependencies/d3vs.js`
-
-The packaged runtime still ships:
-
-- `supertree/js/script.js` as the generated readable bundle
-- `supertree/js/supertree.min.js` as the generated packaged runtime
-
-To rebuild both after editing the source files, run:
-
-```bash
-./scripts/build_js.sh
-```
-
-Maintainer notes and a frontend smoke checklist are in `docs/frontend_development.md`.
 
 ## Supported Libraries
 
@@ -141,45 +118,6 @@ The package is compatible with a wide range of classifiers and regressors from t
 - `Booster`
 
 If we do not support the model you want to use, please let us know.
-
-
-## Features
-
-<div style="overflow: hidden;">
-  <table style="table-layout: fixed; width: 100%; position: absolute;'">
-  <tr>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/2_regression_details-ezgif.com-video-to-gif-converter.gif" alt="Gif1" width="375"/><br/>See all the details</td>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/1_supertree_zoom_an_reset-ezgif.com-video-to-gif-converter.gif" alt="Gif2" width="375"/><br/>Zoom</td>
-  </tr>
-  </table>
-  <table style="table-layout: fixed; width: 100%; position: absolute;'">
-    <tr>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/4_fullscreen-ezgif.com-video-to-gif-converter.gif" alt="Gif3" width="375"/><br/>Fullscreen in Jupyter</td>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/6_change_depth_dynamicaly-ezgif.com-video-to-gif-converter.gif" alt="Gif4" width="375"/><br/>Depth change</td>
-  </tr>
-    </table>
-   <table style="table-layout: fixed; width: 100%; position: absolute;'">
-    <tr>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/change_palette.gif" alt="Gif5" width="375"/><br/>Color change</td>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/switch_tree_in_forest.gif" alt="Gif6" width="375"/><br/>Navigate in forest</td>
-  </tr>
-    </table>
-   <table style="table-layout: fixed; width: 100%; position: absolute;'">
-    <tr>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/sample_path.gif" alt="Gif7" width="375"/><br/>Show specific sample path</td>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/save_svg.gif" alt="Gif8" width="375"/><br/>Save tree to svg</td>
-  </tr>
-    </table>
-  <table style="table-layout: fixed; width: 100%; position: absolute;'">
-    <tr>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/3_amount_of_sample_visualized-ezgif.com-video-to-gif-converter.gif" alt="Gif11" width="375"/><br/>Links sample visualization</td>
-    <td><img src="https://github.com/mljar/supertree/blob/main/media/videos/7_path_to_leaf-ezgif.com-video-to-gif-converter.gif" alt="Gif12" width="375"/><br/>Showing the path to the leaf</td>
-  </tr>
-    </table>
-</div>
-
-Check this features in example directory :)
-
 
 
 ## Articles
