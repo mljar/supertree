@@ -3,10 +3,10 @@
 
 # `supertree` - Interactive Decision Tree Visualization
 
-[![PyPI version](https://badge.fury.io/py/supertree.svg)](https://pypi.org/project/supertree/)
-[![Downloads](https://img.shields.io/pypi/dm/supertree)](https://pypi.org/project/supertree/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE.txt)
-
+[![PyPI version](https://badge.fury.io/py/supertree.svg)](https://pypi.org/project/supertree/)
+[![Downloads](https://pepy.tech/badge/supertree)](https://pepy.tech/project/supertree)
+[![GitHub stars](https://img.shields.io/github/stars/mljar/supertree?style=social)](https://github.com/mljar/supertree)
 
 Visualize decision trees interactively in Jupyter, JupyterLab, and Google Colab.
 Zoom, pan, collapse nodes, and trace sample paths - all inside your notebook.
