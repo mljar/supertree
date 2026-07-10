@@ -1756,7 +1756,7 @@ export function processRegressionLeaf(
       });
     }
 
-    var maxWidth = 100;
+    var maxWidth = 220;
 
     var textElement = d3.select(this)
       .append("text")
@@ -1786,7 +1786,7 @@ export function processRegressionLeaf(
       .attr("y", nTextY)
       .style("text-anchor", "middle")
       .style("font-size", "18px")
-      .text(`n = ${d.data.samples}`)
+      .text(`# samples = ${d.data.samples}`)
       .style("user-select", "none")
       .style("-webkit-user-select", "none")
       .style("-moz-user-select", "none")
