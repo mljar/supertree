@@ -421,6 +421,26 @@
   fill: none;
 }
 
+.st-link-label {
+  pointer-events: none;
+}
+
+.st-link-label-background {
+  fill: #eef0f2;
+  stroke: #c8cdd2;
+  stroke-width: 1;
+  filter: drop-shadow(0 1px 1px rgba(40, 48, 56, 0.14));
+}
+
+.st-link-label-text {
+  fill: #3f464d;
+  font-size: 12px;
+  font-weight: 600;
+  text-anchor: middle;
+  dominant-baseline: central;
+  user-select: none;
+}
+
 #my-window {
     position: relative; 
 }

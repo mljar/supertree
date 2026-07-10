@@ -177,6 +177,7 @@ class SuperTree:
             self.feature_data,
             self.target_data,
             self.model_name,
+            split_rule=self._get_split_rule(),
             palette=self.color_palette,
             show_palette_control=self.show_palette_control,
         )
@@ -505,6 +506,17 @@ class SuperTree:
         else:
             print("Uknown Model")
             return "uknown_model"
+
+    def _get_split_rule(self):
+        """Return the comparison convention used by the serialized tree."""
+        if self.model_name in (
+            "LGBMClassifier",
+            "LGBMRegressor",
+            "LightGBMBooster",
+            "ModelProto",
+        ):
+            return "lte_gt"
+        return "lt_gte"
 
     def count_class_distribution(self, node):
         """

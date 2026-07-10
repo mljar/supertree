@@ -12,6 +12,7 @@ class TreeData:
         data_feature,
         data_target,
         model_name,
+        split_rule="lt_gte",
         palette=1,
         show_palette_control=False,
     ):
@@ -31,6 +32,7 @@ class TreeData:
         self.max_samples = None
         self.show_sample = "nodata"
         self.model_name = model_name
+        self.split_rule = split_rule
         self.which_tree = 0
         self.tree_count = 1
         self.nav_id = None
@@ -77,6 +79,7 @@ class TreeData:
             "data_target": convert(data_target),
             "show_sample": convert(self.show_sample),
             "model_name": convert(self.model_name),
+            "split_rule": convert(self.split_rule),
             "which_tree": convert(self.which_tree),
             "tree_count": convert(self.tree_count),
             "nav_id": convert(self.nav_id),

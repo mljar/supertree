@@ -1,5 +1,6 @@
 import {
   svgDownload,
+  svgDecisionValues,
   svgFitVisible,
   svgLine,
   svgSample,
@@ -177,6 +178,8 @@ export function buildTree(
       const classification = "classification";
       const nodata = "nodata";
       let boldLinks = true;
+      let showDecisionChips = true;
+      let decisionChipButton = null;
       let globalX = true;
       let globalY = true;
       const yMultiplayer = 1;
@@ -840,6 +843,27 @@ export function buildTree(
             return treeSVG.selectAll("#st-link-treeID").filter((node) => ids.has(node.id));
           }
 
+          function selectTreeLabelsByIds(ids) {
+            return treeSVG.selectAll(".st-link-label").filter((node) => ids.has(node.id));
+          }
+
+          function applyDecisionChipVisibility(transitionDuration = 180) {
+            const labels = treeSVG.selectAll(".st-link-label");
+            const target = transitionDuration > 0
+              ? labels.transition().duration(transitionDuration).ease(d3.easeCubicInOut)
+              : labels;
+
+            target.style("opacity", (d) => {
+              const edgeIsVisible = d.parent?.children?.some((child) => child.id === d.id);
+              return showDecisionChips && edgeIsVisible ? 1 : 0;
+            })
+              .attr("aria-hidden", showDecisionChips ? null : "true");
+
+            if (decisionChipButton) {
+              decisionChipButton.attr("aria-pressed", showDecisionChips ? "true" : "false");
+            }
+          }
+
           function getNodeTransform(node, scale = 1) {
             return (
               "translate(" +
@@ -920,6 +944,9 @@ export function buildTree(
               selectTreeLinksByIds(layerIds)
                 .style("stroke-opacity", 0)
                 .style("pointer-events", "none");
+              selectTreeLabelsByIds(layerIds)
+                .style("opacity", 0)
+                .style("pointer-events", "none");
               selectTreeNodesByIds(layerIds)
                 .style("opacity", 0)
                 .style("pointer-events", "none")
@@ -929,6 +956,7 @@ export function buildTree(
             for (const layer of layers) {
               const layerIds = new Set(layer.map((node) => node.id));
               const layerLinks = selectTreeLinksByIds(layerIds);
+              const layerLabels = selectTreeLabelsByIds(layerIds);
               const layerNodes = selectTreeNodesByIds(layerIds);
 
               await runTransition(layerLinks, (transition) =>
@@ -936,6 +964,13 @@ export function buildTree(
                   .duration(stagedToggleDurations.expandLink)
                   .ease(d3.easeCubicOut)
                   .style("stroke-opacity", 1),
+              );
+
+              await runTransition(layerLabels, (transition) =>
+                transition
+                  .duration(stagedToggleDurations.expandLink)
+                  .ease(d3.easeCubicOut)
+                  .style("opacity", showDecisionChips ? 1 : 0),
               );
 
               await runTransition(layerNodes, (transition) =>
@@ -988,9 +1023,11 @@ export function buildTree(
               const layerIds = new Set(layer.map((node) => node.id));
               const layerNodes = selectTreeNodesByIds(layerIds);
               const layerLinks = selectTreeLinksByIds(layerIds);
+              const layerLabels = selectTreeLabelsByIds(layerIds);
 
               layerNodes.style("pointer-events", "none");
               layerLinks.style("pointer-events", "none");
+              layerLabels.style("pointer-events", "none");
 
               await runTransition(layerNodes, (transition) =>
                 transition
@@ -1005,6 +1042,13 @@ export function buildTree(
                   .duration(stagedToggleDurations.collapseLink)
                   .ease(d3.easeCubicIn)
                   .style("stroke-opacity", 0),
+              );
+
+              await runTransition(layerLabels, (transition) =>
+                transition
+                  .duration(stagedToggleDurations.collapseLink)
+                  .ease(d3.easeCubicIn)
+                  .style("opacity", 0),
               );
 
               if (stagedToggleDurations.gap > 0) {
@@ -1061,6 +1105,9 @@ export function buildTree(
               selectTreeLinksByIds(layerIds)
                 .style("stroke-opacity", 0)
                 .style("pointer-events", "none");
+              selectTreeLabelsByIds(layerIds)
+                .style("opacity", 0)
+                .style("pointer-events", "none");
               selectTreeNodesByIds(layerIds)
                 .style("opacity", 0)
                 .style("pointer-events", "none")
@@ -1070,6 +1117,7 @@ export function buildTree(
             for (const layer of layers) {
               const layerIds = new Set(layer.map((node) => node.id));
               const layerLinks = selectTreeLinksByIds(layerIds);
+              const layerLabels = selectTreeLabelsByIds(layerIds);
               const layerNodes = selectTreeNodesByIds(layerIds);
 
               await runTransition(layerLinks, (transition) =>
@@ -1077,6 +1125,13 @@ export function buildTree(
                   .duration(stagedToggleDurations.expandLink)
                   .ease(d3.easeCubicOut)
                   .style("stroke-opacity", 1),
+              );
+
+              await runTransition(layerLabels, (transition) =>
+                transition
+                  .duration(stagedToggleDurations.expandLink)
+                  .ease(d3.easeCubicOut)
+                  .style("opacity", showDecisionChips ? 1 : 0),
               );
 
               await runTransition(layerNodes, (transition) =>
@@ -1121,9 +1176,11 @@ export function buildTree(
               const layerIds = new Set(layer.map((node) => node.id));
               const layerNodes = selectTreeNodesByIds(layerIds);
               const layerLinks = selectTreeLinksByIds(layerIds);
+              const layerLabels = selectTreeLabelsByIds(layerIds);
 
               layerNodes.style("pointer-events", "none");
               layerLinks.style("pointer-events", "none");
+              layerLabels.style("pointer-events", "none");
 
               await runTransition(layerNodes, (transition) =>
                 transition
@@ -1138,6 +1195,13 @@ export function buildTree(
                   .duration(stagedToggleDurations.collapseLink)
                   .ease(d3.easeCubicIn)
                   .style("stroke-opacity", 0),
+              );
+
+              await runTransition(layerLabels, (transition) =>
+                transition
+                  .duration(stagedToggleDurations.collapseLink)
+                  .ease(d3.easeCubicIn)
+                  .style("opacity", 0),
               );
 
               if (stagedToggleDurations.gap > 0) {
@@ -1937,6 +2001,92 @@ export function buildTree(
               })
               .remove();
 
+            function getLinkDecisionText(linkNode) {
+              const parent = linkNode.parent;
+              const feature = treeData.feature_names?.[parent?.data?.feature] ?? "feature";
+              const threshold = Number(parent?.data?.threshold);
+              if (!parent || parent.data.is_leaf || !Number.isFinite(threshold)) {
+                return "";
+              }
+
+              const formattedThreshold = d3.format("~g")(threshold);
+              const isLeft = parent.data.left_node?.id === linkNode.data.id;
+              const isLteRule = treeData.split_rule === "lte_gt";
+              const operator = isLeft
+                ? (isLteRule ? "<=" : "<")
+                : (isLteRule ? ">" : ">=");
+              return `${feature} ${operator} ${formattedThreshold}`;
+            }
+
+            function getLinkDecisionPosition(linkNode) {
+              const sourceAnchor = getSourceAnchor(linkNode.parent, linkNode);
+              const targetAnchor = getTargetAnchor(linkNode);
+              const midpoint = {
+                x: (sourceAnchor.x + targetAnchor.x) / 2,
+                y: (sourceAnchor.y + targetAnchor.y) / 2,
+              };
+              const goesLeft = linkNode.data.left_node?.id === linkNode.data.id;
+              const horizontalOffset = goesLeft ? -18 : 18;
+              return {
+                x: midpoint.x + horizontalOffset,
+                y: midpoint.y,
+              };
+            }
+
+            const decisionLabels = treeSVG
+              .selectAll(".st-link-label")
+              .data(links, (d) => d.id);
+
+            const decisionLabelEnter = decisionLabels
+              .enter()
+              .insert("g", ".treeNode")
+              .attr("class", "st-link-label")
+              .style("opacity", 0)
+              .attr("transform", (d) => {
+                const position = getLinkDecisionPosition(d);
+                return `translate(${position.x},${position.y})`;
+              });
+
+            decisionLabelEnter
+              .append("rect")
+              .attr("class", "st-link-label-background")
+              .attr("rx", 7)
+              .attr("ry", 7);
+            decisionLabelEnter.append("text").attr("class", "st-link-label-text");
+
+            const decisionLabelUpdate = decisionLabelEnter.merge(decisionLabels);
+            decisionLabelUpdate
+              .select("text")
+              .text(getLinkDecisionText)
+              .each(function(d) {
+                const text = d3.select(this).text();
+                const width = Math.max(44, text.length * 7.1 + 18);
+                d3.select(this.parentNode)
+                  .select("rect")
+                  .attr("x", -width / 2)
+                  .attr("y", -11)
+                  .attr("width", width)
+                  .attr("height", 22);
+              });
+
+            decisionLabelUpdate
+              .transition()
+              .duration((d) => hiddenLinkIds.has(d.id) ? 0 : transitionDuration)
+              .ease(d3.easeCubicInOut)
+              .style("opacity", (d) => hiddenLinkIds.has(d.id) || !showDecisionChips ? 0 : 1)
+              .attr("transform", (d) => {
+                const position = getLinkDecisionPosition(d);
+                return `translate(${position.x},${position.y})`;
+              });
+
+            decisionLabels
+              .exit()
+              .filter((d) => descendantIds.has(d.id))
+              .transition()
+              .duration(transitionDuration)
+              .style("opacity", 0)
+              .remove();
+
 
             function getNodeBasePosition(node, options = {}) {
               if (options.useCurrentPosition) {
@@ -2346,6 +2496,25 @@ export function buildTree(
               .text("Line Width");
           }
 
+          decisionChipButton = primaryToolbarGroup
+            .append("button")
+            .html(svgDecisionValues)
+            .attr("id", "decisionValues-treeID")
+            .attr("class", "st-option-button")
+            .attr("type", "button")
+            .attr("aria-pressed", "true")
+            .on("click", toggleDecisionChips)
+            .on("mouseover", mouseover)
+            .on("mouseleave", mouseleave)
+            .on("mousemove", function() {
+              mousemoveButton(event, "Show or hide decision values on edges");
+            });
+
+          decisionChipButton
+            .append("span")
+            .attr("class", "st-button-label")
+            .text("Decisions");
+
           if (hasShowSample) {
             const sampleButton = primaryToolbarGroup
               .append("button")
@@ -2411,6 +2580,11 @@ export function buildTree(
           function boldClick() {
             boldLinks = !boldLinks;
             applyVisibleLinkWidths();
+          }
+
+          function toggleDecisionChips() {
+            showDecisionChips = !showDecisionChips;
+            applyDecisionChipVisibility();
           }
 
           function saveSvg() {
