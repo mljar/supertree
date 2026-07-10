@@ -1403,8 +1403,6 @@ export function buildTree(
                   histogramHeight,
                   rectWidth,
                   rectHeight,
-                  tooltipBody,
-                  tooltipModal,
                   colors
                 );
               });
@@ -1416,8 +1414,6 @@ export function buildTree(
                   scatterplotLeafWidth,
                   scatterplotLeafHeight,
                   rectHeight,
-                  tooltipBody,
-                  tooltipModal,
                   click,
                   showpath
                 );
@@ -2416,8 +2412,6 @@ export function buildTree(
                       histogramHeight,
                       rectWidth,
                       rectHeight,
-                      tooltipBody,
-                      tooltipModal,
                       colors
                     );
                   }
@@ -2429,8 +2423,6 @@ export function buildTree(
                       scatterplotLeafWidth,
                       scatterplotLeafHeight,
                       rectHeight,
-                      tooltipBody,
-                      tooltipModal,
                       click,
                       showpath
                     );

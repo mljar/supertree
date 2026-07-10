@@ -828,8 +828,6 @@ export function processRegressionNode(
   histogramHeight,
   rectWidth,
   rectHeight,
-  tooltipBody,
-  tooltipModal,
   colors
 ) {
   const {
@@ -1160,9 +1158,7 @@ export function processRegressionNode(
         )
       .style("fill", "#0099cc")
       .style("fill-opacity", 0.5)
-      .on("mouseover", mouseover)
-      .on("mouseleave", mouseleave)
-      .on("mousemove", mousemovecircle);
+      ;
 
     const mousemoveavaragebelow = function(event, d) {
       tooltipBody
@@ -1259,9 +1255,6 @@ export function processRegressionNode(
         .attr("transform", `translate(${-histogramWidth / 2},0)`)
         .attr("stroke-width", 2)
         .attr("stroke-dasharray", "5,5")
-        .on("mouseover", mouseoverline)
-        .on("mouseleave", mouseleaveline)
-        .on("mousemove", mousemoveavaragebelow)
         .style("user-select", "none")
         .style("-webkit-user-select", "none")
         .style("-moz-user-select", "none")
@@ -1280,10 +1273,7 @@ export function processRegressionNode(
         .attr("stroke", "black")
         .attr("transform", `translate(${-histogramWidth / 2},0)`)
         .attr("stroke-width", 2)
-        .attr("stroke-dasharray", "5,5")
-        .on("mouseover", mouseoverline)
-        .on("mouseleave", mouseleaveline)
-        .on("mousemove", mousemoveavarageabove);
+        .attr("stroke-dasharray", "5,5");
     }
 
     d3.select(this)
@@ -1294,8 +1284,6 @@ export function processRegressionNode(
       .style("text-anchor", "middle")
       .style("font-size", "18px")
       .text(treeData.feature_names[d.data.feature])
-      .on("mousemove", mousemoveAllData)
-      .on("mouseleave", mouseleaveAllData)
       .style("user-select", "none")
       .style("-webkit-user-select", "none")
       .style("-moz-user-select", "none")
@@ -1371,10 +1359,7 @@ export function processRegressionNode(
         .style("fill", color)
         .attr("transform", function(d) {
           return "translate(" + (-histogramWidth / 2 + xScale(treeData.show_sample[featureIndex])) + "," + verticalTransform + ")";
-        })
-        .on("mouseover", mouseovertriangle)
-        .on("mouseleave", mouseleavetriangle)
-        .on("mousemove", mousemovetriangle);
+        });
     }
   }
 
@@ -1386,8 +1371,6 @@ export function processRegressionLeaf(
   scatterplotLeafWidth,
   scatterplotLeafHeight,
   rectHeight,
-  tooltipBody,
-  tooltipModal,
   click,
   showpath
 ) {
@@ -1699,9 +1682,7 @@ export function processRegressionLeaf(
       )
       .style("fill", "#0099cc")
       .style("fill-opacity", 0.5)
-      .on("mouseover", mouseover)
-      .on("mouseleave", mouseleave)
-      .on("mousemove", mousemovecircle);
+      ;
 
 
 
@@ -1719,10 +1700,7 @@ export function processRegressionLeaf(
           `translate(${regressionLeafPlotTranslateX},0)`,
         )
         .attr("stroke-width", 2)
-        .attr("stroke-dasharray", "5,5")
-        .on("mouseover", mouseoverline)
-        .on("mouseleave", mouseleaveline)
-        .on("mousemove", mousemoveavarage);
+        .attr("stroke-dasharray", "5,5");
     }
 
     function wrapText(text, width) {
@@ -1866,10 +1844,7 @@ export function processRegressionLeaf(
         .style("fill", color)
         .attr("transform", function(d) {
           return "translate(" + (regressionLeafPlotTranslateX + xScale(treeData.show_sample[d.parent.data.feature])) + "," + scatterplotLeafHeight + ")";
-        })
-        .on("mouseover", mouseovertriangle)
-        .on("mouseleave", mouseleavetriangle)
-        .on("mousemove", mousemovetriangle);
+        });
     }
   }
 }
