@@ -46,7 +46,7 @@ super_tree = SuperTree(model, iris.data, iris.target, iris.feature_names, iris.t
 super_tree.show_tree()
 ```
 
-![](https://raw.githubusercontent.com/mljar/supertree/main/media/supertree-decision-tree-visualization.png)
+![](https://raw.githubusercontent.com/mljar/supertree/main/media/supertree-decision-tree-visualization-v1.1.0.png)
 
 ### It works with trees ensembles too - Random Forest Regressor Example
 
@@ -74,7 +74,7 @@ super_tree = SuperTree(model,X, y)
 super_tree.show_tree(2)
 ```
 
-![](https://raw.githubusercontent.com/mljar/supertree/main/media/supertree-random-forest-visualization.png)
+![](https://raw.githubusercontent.com/mljar/supertree/main/media/supertree-random-forest-visualization-v1.1.0.png)
 
 There are more code snippets in the [examples](examples) directory.
 
