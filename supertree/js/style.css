@@ -298,6 +298,22 @@
   fill: #333333 ;
 }
 
+.threshold-value-label {
+  fill: #333333;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+  font-weight: 400;
+  dominant-baseline: middle;
+  pointer-events: none;
+}
+
+.threshold-value-chip-background {
+  fill: #ffffff;
+  fill-opacity: 0.82;
+  stroke: #c8cdd2;
+  stroke-width: 1;
+}
+
 
 .st-pie-target {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;

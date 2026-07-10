@@ -1,6 +1,31 @@
 import { createTreeVisualMetrics } from "./geometry.js";
 import { stLog, yAxisMargin } from "./shared.js";
 
+function appendThresholdValueChip(container, x, thresholdValue) {
+  const chip = container
+    .append("g")
+    .attr("class", "threshold-value-chip")
+    .attr("transform", `translate(${x}, 0)`)
+    .attr("pointer-events", "none");
+  const label = chip
+    .append("text")
+    .attr("class", "threshold-value-label")
+    .attr("x", 0)
+    .attr("y", 2)
+    .style("text-anchor", "middle")
+    .text(d3.format("~g")(thresholdValue));
+  const width = label.node().getComputedTextLength() + 14;
+
+  chip
+    .insert("rect", "text")
+    .attr("class", "threshold-value-chip-background")
+    .attr("x", -width / 2)
+    .attr("y", -8)
+    .attr("width", width)
+    .attr("height", 20)
+    .attr("rx", 6);
+}
+
 export function processClassificationNode(treeData, tooltipBody, tooltipModal, globalX, globalXExtent, globalY, globalYExtent, click, histogramWidth, histogramHeight, rectWidth, rectHeight, colors, d) {
   const {
     layout: {
@@ -200,13 +225,10 @@ export function processClassificationNode(treeData, tooltipBody, tooltipModal, g
       .style("-ms-user-select", "none");
 
     const xDomain = xScale.domain();
-    const xTickValues = [
-      xDomain[0],
-      d.data.threshold,
-      xDomain[1],
-    ];
+    const thresholdValue = Number(d.data.threshold);
+    const xTickValues = [xDomain[0], xDomain[1]];
 
-    d3.select(this)
+    const xAxis = d3.select(this)
       .append("g")
       .attr("class", "xAxis")
       .attr(
@@ -221,7 +243,9 @@ export function processClassificationNode(treeData, tooltipBody, tooltipModal, g
           .tickPadding(8)
           .tickValues(xTickValues)
           .tickFormat(d3.format(",.1f")),
-      )
+      );
+
+    xAxis
       .selectAll(".tick")
       .attr("class", "xAxis-text")
       .style("user-select", "none")
@@ -229,7 +253,6 @@ export function processClassificationNode(treeData, tooltipBody, tooltipModal, g
       .style("-moz-user-select", "none")
       .style("-ms-user-select", "none")
       .style("fill", "black");
-
 
     d3.select(this).selectAll(".domain")
       .style("stroke", "black");
@@ -403,18 +426,23 @@ export function processClassificationNode(treeData, tooltipBody, tooltipModal, g
       .on("mouseleave", mouseleave)
       .on("mousemove", mousemove);
     stLog("debug", "abc")
-    var threshold = parseFloat(d.data.threshold).toFixed(3);
     d3.select(this)
       .append("line")
       .attr("class", "threshold-line")
-      .attr("x1", xScale(threshold))
-      .attr("x2", xScale(threshold))
+      .attr("x1", xScale(thresholdValue))
+      .attr("x2", xScale(thresholdValue))
       .attr("y1", 0)
       .attr("y2", histogramHeight)
       .attr("stroke", "black")
       .attr("transform", `translate(${-histogramWidth / 2},0)`)
       .attr("stroke-width", 2)
       .attr("stroke-dasharray", "5,5");
+
+    appendThresholdValueChip(
+      d3.select(this),
+      histogramTranslateX + xScale(thresholdValue),
+      thresholdValue,
+    );
 
     var mouseovertriangle = function(d) {
 
@@ -981,14 +1009,11 @@ export function processRegressionNode(
       .range([0, scatterplotWidth]);
 
     const xDomain = xScale.domain();
+    const thresholdValue = Number(d.data.threshold);
 
-    const xTickValues = [
-      xDomain[0],
-      d.data.threshold,
-      xDomain[1],
-    ];
+    const xTickValues = [xDomain[0], xDomain[1]];
 
-    d3.select(this)
+    const xAxis = d3.select(this)
       .append("g")
       .attr(
         "transform",
@@ -1001,7 +1026,9 @@ export function processRegressionNode(
           .tickSize(0)
           .tickValues(xTickValues)
           .tickPadding(8),
-      )
+      );
+
+    xAxis
       .selectAll(".tick")
       .attr("class", "xAxis-text")
       .style("user-select", "none")
@@ -1224,12 +1251,11 @@ export function processRegressionNode(
         .style("left", -2000 + "px");
     };
 
-    var threshold = parseFloat(d.data.threshold).toFixed(3);
     d3.select(this)
       .append("line")
       .attr("class", "threshold-line")
-      .attr("x1", xScale(threshold))
-      .attr("x2", xScale(threshold))
+      .attr("x1", xScale(thresholdValue))
+      .attr("x2", xScale(thresholdValue))
       .attr("y1", 0)
       .attr("y2", scatterplotHeight)
       .attr("stroke", "black")
@@ -1242,13 +1268,19 @@ export function processRegressionNode(
       .style("-moz-user-select", "none")
       .style("-ms-user-select", "none");
 
+    appendThresholdValueChip(
+      d3.select(this),
+      histogramTranslateX + xScale(thresholdValue),
+      thresholdValue,
+    );
+
     stLog("debug", average.averageBelowThreshold, "avarage 1:")
     if (!isNaN(average.averageBelowThreshold)) {
       d3.select(this)
         .append("line")
         .attr("class", "average-line")
         .attr("x1", 0)
-        .attr("x2", xScale(threshold))
+        .attr("x2", xScale(thresholdValue))
         .attr("y1", yScale(average.averageBelowThreshold))
         .attr("y2", yScale(average.averageBelowThreshold))
         .attr("stroke", "black")
@@ -1266,7 +1298,7 @@ export function processRegressionNode(
       d3.select(this)
         .append("line")
         .attr("class", "average-line")
-        .attr("x1", xScale(threshold))
+        .attr("x1", xScale(thresholdValue))
         .attr("x2", xScale(xDomain[1]))
         .attr("y1", yScale(average.averageAboveOrEqualThreshold))
         .attr("y2", yScale(average.averageAboveOrEqualThreshold))

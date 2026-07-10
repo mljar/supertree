@@ -313,6 +313,12 @@
   }
 
   // supertree/js/src/node_renderers.js
+  function appendThresholdValueChip(container, x, thresholdValue) {
+    const chip = container.append("g").attr("class", "threshold-value-chip").attr("transform", `translate(${x}, 0)`).attr("pointer-events", "none");
+    const label = chip.append("text").attr("class", "threshold-value-label").attr("x", 0).attr("y", 2).style("text-anchor", "middle").text(d3.format("~g")(thresholdValue));
+    const width = label.node().getComputedTextLength() + 14;
+    chip.insert("rect", "text").attr("class", "threshold-value-chip-background").attr("x", -width / 2).attr("y", -8).attr("width", width).attr("height", 20).attr("rx", 6);
+  }
   function processClassificationNode(treeData, tooltipBody2, tooltipModal2, globalX, globalXExtent, globalY, globalYExtent, click, histogramWidth, histogramHeight, rectWidth, rectHeight, colors, d) {
     const {
       layout: {
@@ -440,17 +446,15 @@
       stLog("debug", this, "This");
       d3.select(this).append("text").attr("class", "st-target").attr("x", 0).attr("y", nodeLabelY).style("text-anchor", "middle").style("font-size", "18px").text(treeData.feature_names[featureIndex]).on("mousemove", mousemoveAllData).on("mouseleave", mouseleaveAllData).style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
       const xDomain = xScale.domain();
-      const xTickValues = [
-        xDomain[0],
-        d.data.threshold,
-        xDomain[1]
-      ];
-      d3.select(this).append("g").attr("class", "xAxis").attr(
+      const thresholdValue = Number(d.data.threshold);
+      const xTickValues = [xDomain[0], xDomain[1]];
+      const xAxis = d3.select(this).append("g").attr("class", "xAxis").attr(
         "transform",
         `translate(${histogramTranslateX}, ${histogramHeight})`
       ).call(
         d3.axisBottom(xScale).tickSize(0).tickPadding(8).tickValues(xTickValues).tickFormat(d3.format(",.1f"))
-      ).selectAll(".tick").attr("class", "xAxis-text").style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none").style("fill", "black");
+      );
+      xAxis.selectAll(".tick").attr("class", "xAxis-text").style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none").style("fill", "black");
       d3.select(this).selectAll(".domain").style("stroke", "black");
       const yScale = d3.scaleLinear().range([histogramHeight, 0]);
       const yAxis = d3.select(this).append("g");
@@ -531,8 +535,12 @@
         (d2) => xScale(d2.data[0].x1) - xScale(d2.data[0].x0)
       ).attr("transform", `translate(${-histogramWidth / 2},0)`).attr("stroke", "black").on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", mousemove);
       stLog("debug", "abc");
-      var threshold = parseFloat(d.data.threshold).toFixed(3);
-      d3.select(this).append("line").attr("class", "threshold-line").attr("x1", xScale(threshold)).attr("x2", xScale(threshold)).attr("y1", 0).attr("y2", histogramHeight).attr("stroke", "black").attr("transform", `translate(${-histogramWidth / 2},0)`).attr("stroke-width", 2).attr("stroke-dasharray", "5,5");
+      d3.select(this).append("line").attr("class", "threshold-line").attr("x1", xScale(thresholdValue)).attr("x2", xScale(thresholdValue)).attr("y1", 0).attr("y2", histogramHeight).attr("stroke", "black").attr("transform", `translate(${-histogramWidth / 2},0)`).attr("stroke-width", 2).attr("stroke-dasharray", "5,5");
+      appendThresholdValueChip(
+        d3.select(this),
+        histogramTranslateX + xScale(thresholdValue),
+        thresholdValue
+      );
       var mouseovertriangle = function(d2) {
         tooltipBody2.style("opacity", 1);
         tooltipModal2.style("opacity", 1);
@@ -730,13 +738,13 @@
       }
     } = createTreeVisualMetrics("regression");
     if (!d.data.is_leaf) {
-      let calculateAverages = function(data, threshold2) {
+      let calculateAverages = function(data, threshold) {
         let sumBelowThreshold = 0;
         let countBelowThreshold = 0;
         let sumAboveOrEqualThreshold = 0;
         let countAboveOrEqualThreshold = 0;
         data.forEach((item) => {
-          if (item[0] < threshold2) {
+          if (item[0] < threshold) {
             sumBelowThreshold += item[1];
             countBelowThreshold++;
           } else {
@@ -828,17 +836,15 @@
       }
       const xScale = d3.scaleLinear().domain(xExtent).nice().range([0, scatterplotWidth]);
       const xDomain = xScale.domain();
-      const xTickValues = [
-        xDomain[0],
-        d.data.threshold,
-        xDomain[1]
-      ];
-      d3.select(this).append("g").attr(
+      const thresholdValue = Number(d.data.threshold);
+      const xTickValues = [xDomain[0], xDomain[1]];
+      const xAxis = d3.select(this).append("g").attr(
         "transform",
         `translate(${histogramTranslateX}, ${scatterplotHeight})`
       ).attr("class", "xAxis").call(
         d3.axisBottom(xScale).tickSize(0).tickValues(xTickValues).tickPadding(8)
-      ).selectAll(".tick").attr("class", "xAxis-text").style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none").style("fill", "black");
+      );
+      xAxis.selectAll(".tick").attr("class", "xAxis-text").style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none").style("fill", "black");
       d3.select(this).selectAll(".domain").style("stroke", "black");
       yExtent = d3.extent(treeData.data_target);
       const yScale = d3.scaleLinear().domain(yExtent).nice().range([scatterplotHeight, 0]);
@@ -915,14 +921,18 @@
         tooltipBody.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
         tooltipModal.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
       };
-      var threshold = parseFloat(d.data.threshold).toFixed(3);
-      d3.select(this).append("line").attr("class", "threshold-line").attr("x1", xScale(threshold)).attr("x2", xScale(threshold)).attr("y1", 0).attr("y2", scatterplotHeight).attr("stroke", "black").attr("transform", `translate(${-scatterplotWidth / 2},0)`).attr("stroke-width", 2).attr("stroke-dasharray", "5,5").style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
+      d3.select(this).append("line").attr("class", "threshold-line").attr("x1", xScale(thresholdValue)).attr("x2", xScale(thresholdValue)).attr("y1", 0).attr("y2", scatterplotHeight).attr("stroke", "black").attr("transform", `translate(${-scatterplotWidth / 2},0)`).attr("stroke-width", 2).attr("stroke-dasharray", "5,5").style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
+      appendThresholdValueChip(
+        d3.select(this),
+        histogramTranslateX + xScale(thresholdValue),
+        thresholdValue
+      );
       stLog("debug", average.averageBelowThreshold, "avarage 1:");
       if (!isNaN(average.averageBelowThreshold)) {
-        d3.select(this).append("line").attr("class", "average-line").attr("x1", 0).attr("x2", xScale(threshold)).attr("y1", yScale(average.averageBelowThreshold)).attr("y2", yScale(average.averageBelowThreshold)).attr("stroke", "black").attr("transform", `translate(${-histogramWidth / 2},0)`).attr("stroke-width", 2).attr("stroke-dasharray", "5,5").style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
+        d3.select(this).append("line").attr("class", "average-line").attr("x1", 0).attr("x2", xScale(thresholdValue)).attr("y1", yScale(average.averageBelowThreshold)).attr("y2", yScale(average.averageBelowThreshold)).attr("stroke", "black").attr("transform", `translate(${-histogramWidth / 2},0)`).attr("stroke-width", 2).attr("stroke-dasharray", "5,5").style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
       }
       if (!isNaN(average.averageAboveOrEqualThreshold)) {
-        d3.select(this).append("line").attr("class", "average-line").attr("x1", xScale(threshold)).attr("x2", xScale(xDomain[1])).attr("y1", yScale(average.averageAboveOrEqualThreshold)).attr("y2", yScale(average.averageAboveOrEqualThreshold)).attr("stroke", "black").attr("transform", `translate(${-histogramWidth / 2},0)`).attr("stroke-width", 2).attr("stroke-dasharray", "5,5");
+        d3.select(this).append("line").attr("class", "average-line").attr("x1", xScale(thresholdValue)).attr("x2", xScale(xDomain[1])).attr("y1", yScale(average.averageAboveOrEqualThreshold)).attr("y2", yScale(average.averageAboveOrEqualThreshold)).attr("stroke", "black").attr("transform", `translate(${-histogramWidth / 2},0)`).attr("stroke-width", 2).attr("stroke-dasharray", "5,5");
       }
       d3.select(this).append("text").attr("class", "st-target").attr("x", 0).attr("y", nodeLabelY).style("text-anchor", "middle").style("font-size", "18px").text(treeData.feature_names[d.data.feature]).style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
       var mouseovertriangle = function(d2) {
