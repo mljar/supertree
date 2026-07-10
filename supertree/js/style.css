@@ -87,7 +87,40 @@
 }
 
 .st-info-div {
-    align-items: center !important;     
+    align-items: center !important;
+    bottom: 10px !important;
+    color: rgba(92, 99, 106, 0.88) !important;
+    display: block !important;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace !important;
+    font-size: 12px !important;
+    left: 14px !important;
+    line-height: 1.4 !important;
+    max-width: calc(100% - 110px) !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+    position: absolute !important;
+    text-align: left !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    z-index: 2 !important;
+}
+
+.st-tree-statistics {
+    letter-spacing: 0.02em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.st-tree-statistics strong {
+    color: rgba(65, 72, 79, 0.95);
+    font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .st-info-div {
+    display: none !important;
+  }
 }
 
 .st-body-toolbar-div {
@@ -160,6 +193,7 @@
   align-items: center !important;
   gap: 6px !important;
   padding: 1px 0 1px 2px !important;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace !important;
 }
 
 .st-depth-label {
@@ -337,6 +371,7 @@
     gap: 0;
     padding: 0;
     margin: 0;
+    position: relative;
     border-radius: 16px;
 }
 

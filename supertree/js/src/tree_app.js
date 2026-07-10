@@ -489,6 +489,48 @@ export function buildTree(
         if (data) {
           const { nodeData, treeData } = data;
 
+          function getTreeStatistics(root) {
+            let nodes = 0;
+            let leaves = 0;
+            let depth = 0;
+
+            function visit(node, currentDepth) {
+              if (!node) {
+                return;
+              }
+
+              nodes++;
+              depth = Math.max(depth, currentDepth);
+              if (node.is_leaf) {
+                leaves++;
+                return;
+              }
+
+              visit(node.left_node, currentDepth + 1);
+              visit(node.right_node, currentDepth + 1);
+            }
+
+            visit(root, 0);
+            return { nodes, leaves, depth };
+          }
+
+          const treeStatistics = getTreeStatistics(nodeData);
+          const treeStatisticsItems = [
+            treeData.model_name,
+            `NODES ${treeStatistics.nodes}`,
+            `LEAVES ${treeStatistics.leaves}`,
+            `DEPTH ${treeStatistics.depth}`,
+            `SAMPLES ${nodeData.samples}`,
+            `FEATURES ${treeData.feature_names.length}`,
+          ];
+          if ((treeData.tree_count || 1) > 1) {
+            treeStatisticsItems.push(`TREE ${treeData.which_tree + 1}/${treeData.tree_count}`);
+          }
+          d3.select(infoSelector)
+            .html(`<div class="st-tree-statistics">${treeStatisticsItems
+              .map((item, index) => index === 0 ? `<strong>${item}</strong>` : item)
+              .join(" · ")}</div>`);
+
           function triggerToolbarTreeNavigation(direction) {
             const navId = treeData.nav_id;
             if (!navId) {

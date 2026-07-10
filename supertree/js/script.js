@@ -4,6 +4,7 @@
   var svgFitVisible = `<svg style="display: inline" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 4h-5v5" /><path d="M4 4l6 6" /><path d="M15 4h5v5" /><path d="M20 4l-6 6" /><path d="M4 15v5h5" /><path d="M4 20l6 -6" /><path d="M20 15v5h-5" /><path d="M20 20l-6 -6" /></svg>`;
   var svgDownload = `<svg style="display: inline"  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg>`;
   var svgSample = `<svg style="display: inline" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" /><path d="M12 7v3" /><path d="M12 14v3" /></svg>`;
+  var svgDecisionValues = `<svg style="display: inline" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-tag"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6.5 7.5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M3 6v5.172a2 2 0 0 0 .586 1.414l7.71 7.71a2.41 2.41 0 0 0 3.408 0l5.592-5.592a2.41 2.41 0 0 0 0-3.408l-7.71-7.71a2 2 0 0 0 -1.414-.586h-5.172a3 3 0 0 0 -3 3"/></svg>`;
 
   // supertree/js/src/layout.js
   function createTreeLayoutHelpers(config) {
@@ -312,7 +313,7 @@
   }
 
   // supertree/js/src/node_renderers.js
-  function processClassificationNode(treeData, tooltipBody, tooltipModal, globalX, globalXExtent, globalY, globalYExtent, click, histogramWidth, histogramHeight, rectWidth, rectHeight, colors, d) {
+  function processClassificationNode(treeData, tooltipBody2, tooltipModal2, globalX, globalXExtent, globalY, globalYExtent, click, histogramWidth, histogramHeight, rectWidth, rectHeight, colors, d) {
     const {
       layout: {
         histogramTranslateX,
@@ -417,14 +418,14 @@
       d3.select(this).append("rect").attr("class", "histogram-background").attr("x", -(histogramWidth / 2) - 25).attr("y", -10).attr("width", rectWidth).attr("height", rectHeight).attr("stroke-width", 1).attr("stroke", "#545454").attr("rx", 10).attr("ry", 10).style("fill", "#ffffff").on("click", click);
       const mousemoveAllData = function(event2, d2) {
         stLog("debug", d2, "mousemoveAllData");
-        tooltipBody.html(
+        tooltipBody2.html(
           `<b>All Data</b>:<br>Class distribution: ${d2.data.class_distribution}
               <br>Impurity: ${d2.data.impurity}
               <br>Samples: ${d2.data.samples}
               <br>Threshold: ${parseFloat(d2.data.threshold).toFixed(3)}
               <br>Treeclass: ${d2.data.treeclass}`
         ).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px").style("opacity", 1);
-        tooltipModal.html(
+        tooltipModal2.html(
           `<b>All Data</b>:<br>Class distribution: ${d2.data.class_distribution}
               <br>Impurity: ${d2.data.impurity}
               <br>Samples: ${d2.data.samples}
@@ -433,8 +434,8 @@
         ).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px").style("opacity", 1);
       };
       const mouseleaveAllData = function(event2, d2) {
-        tooltipBody.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
-        tooltipModal.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
+        tooltipBody2.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
+        tooltipModal2.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
       };
       stLog("debug", this, "This");
       d3.select(this).append("text").attr("class", "st-target").attr("x", 0).attr("y", nodeLabelY).style("text-anchor", "middle").style("font-size", "18px").text(treeData.feature_names[featureIndex]).on("mousemove", mousemoveAllData).on("mouseleave", mouseleaveAllData).style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
@@ -487,20 +488,20 @@
       }
       d3.select(this).selectAll(".domain").style("stroke", "black");
       const mouseover = function(d2) {
-        tooltipModal.style("opacity", 1);
-        tooltipBody.style("opacity", 1);
+        tooltipModal2.style("opacity", 1);
+        tooltipBody2.style("opacity", 1);
         d3.select(this).style("stroke", "#EF4A60");
       };
       const mouseleave = function(d2) {
-        tooltipModal.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
-        tooltipBody.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
+        tooltipModal2.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
+        tooltipBody2.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
         d3.select(this).style("stroke", "black");
       };
       const mousemove = function(event2, d2) {
-        tooltipBody.html(
+        tooltipBody2.html(
           `<b>${treeData.target_names[d2.class]}</b>: ${d2[1] - d2[0]}`
         ).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px");
-        tooltipModal.html(
+        tooltipModal2.html(
           `<b>${treeData.target_names[d2.class]}</b>: ${d2[1] - d2[0]}`
         ).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px");
       };
@@ -533,24 +534,24 @@
       var threshold = parseFloat(d.data.threshold).toFixed(3);
       d3.select(this).append("line").attr("class", "threshold-line").attr("x1", xScale(threshold)).attr("x2", xScale(threshold)).attr("y1", 0).attr("y2", histogramHeight).attr("stroke", "black").attr("transform", `translate(${-histogramWidth / 2},0)`).attr("stroke-width", 2).attr("stroke-dasharray", "5,5");
       var mouseovertriangle = function(d2) {
-        tooltipBody.style("opacity", 1);
-        tooltipModal.style("opacity", 1);
+        tooltipBody2.style("opacity", 1);
+        tooltipModal2.style("opacity", 1);
         d3.select(this).style("fill", "#0099cc").style("stroke", "#0099cc");
       };
       var mouseleavetriangle = function(d2) {
-        tooltipBody.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
-        tooltipModal.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
+        tooltipBody2.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
+        tooltipModal2.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
         d3.select(this).style("fill", "green").style("stroke", "green");
       };
       var mousemovetriangle = function(event2, d2) {
-        tooltipModal.html(
+        tooltipModal2.html(
           treeData.feature_names.map((feature, index) => {
             const sampleValue = treeData.show_sample[index];
             const formattedValue = !isNaN(parseFloat(sampleValue)) ? parseFloat(sampleValue).toFixed(3) : "N/A";
             return `<b>${feature}:</b> ${formattedValue}`;
           }).join(",")
         ).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px");
-        tooltipBody.html(
+        tooltipBody2.html(
           treeData.feature_names.map((feature, index) => {
             const sampleValue = treeData.show_sample[index];
             const formattedValue = !isNaN(parseFloat(sampleValue)) ? parseFloat(sampleValue).toFixed(3) : "N/A";
@@ -570,7 +571,7 @@
       }
     }
   }
-  function processClassificationLeaf(treeData, pieWidth, pieHeight, rectWidth, rectHeight, scatterplotWidth, scatterplotHeight, colors, maxSample, showpath, d32, tooltipBody, tooltipModal, d) {
+  function processClassificationLeaf(treeData, pieWidth, pieHeight, rectWidth, rectHeight, scatterplotWidth, scatterplotHeight, colors, maxSample, showpath, d32, tooltipBody2, tooltipModal2, d) {
     const {
       layout: {
         classificationLeafRectX,
@@ -667,20 +668,20 @@
         })
       );
       const mouseover = function(d2) {
-        tooltipBody.style("opacity", 1);
-        tooltipModal.style("opacity", 1);
+        tooltipBody2.style("opacity", 1);
+        tooltipModal2.style("opacity", 1);
         d32.select(this).style("stroke", "#0099cc");
       };
       const mouseleave = function(d2) {
-        tooltipBody.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
-        tooltipModal.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
+        tooltipBody2.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
+        tooltipModal2.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
         d32.select(this).style("stroke", "#545454");
       };
       const mousemove = function(event2, d2) {
-        tooltipBody.html(
+        tooltipBody2.html(
           `<b>${d2.data.target_name}</b>: ${d2.data.classDistributionValue}`
         ).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px");
-        tooltipModal.html(
+        tooltipModal2.html(
           `<b>${d2.data.target_name}</b>: ${d2.data.classDistributionValue}`
         ).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px");
       };
@@ -720,7 +721,7 @@
       }
     }
   }
-  function processRegressionNode(d, treeData, scatterplotWidth, scatterplotHeight, histogramWidth, histogramHeight, rectWidth, rectHeight, tooltipBody, tooltipModal, colors) {
+  function processRegressionNode(d, treeData, scatterplotWidth, scatterplotHeight, histogramWidth, histogramHeight, rectWidth, rectHeight, colors) {
     const {
       layout: {
         histogramTranslateX,
@@ -883,7 +884,7 @@
       d3.select(this).append("g").selectAll("g").data(combinedData).join("circle").attr("cx", (d2, i) => xScale(combinedData[i][0])).attr("cy", (d2, i) => yScale(combinedData[i][1])).attr("r", 2).attr(
         "transform",
         `translate(${histogramTranslateX}, ${0})`
-      ).style("fill", "#0099cc").style("fill-opacity", 0.5).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", mousemovecircle);
+      ).style("fill", "#0099cc").style("fill-opacity", 0.5);
       const mousemoveavaragebelow = function(event2, d2) {
         tooltipBody.html(`<b>Average:</b> ${parseFloat(average.averageBelowThreshold).toFixed(3)} `).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px");
         tooltipModal.html(`<b>Average:</b> ${parseFloat(average.averageBelowThreshold).toFixed(3)} `).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px");
@@ -918,12 +919,12 @@
       d3.select(this).append("line").attr("class", "threshold-line").attr("x1", xScale(threshold)).attr("x2", xScale(threshold)).attr("y1", 0).attr("y2", scatterplotHeight).attr("stroke", "black").attr("transform", `translate(${-scatterplotWidth / 2},0)`).attr("stroke-width", 2).attr("stroke-dasharray", "5,5").style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
       stLog("debug", average.averageBelowThreshold, "avarage 1:");
       if (!isNaN(average.averageBelowThreshold)) {
-        d3.select(this).append("line").attr("class", "average-line").attr("x1", 0).attr("x2", xScale(threshold)).attr("y1", yScale(average.averageBelowThreshold)).attr("y2", yScale(average.averageBelowThreshold)).attr("stroke", "black").attr("transform", `translate(${-histogramWidth / 2},0)`).attr("stroke-width", 2).attr("stroke-dasharray", "5,5").on("mouseover", mouseoverline).on("mouseleave", mouseleaveline).on("mousemove", mousemoveavaragebelow).style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
+        d3.select(this).append("line").attr("class", "average-line").attr("x1", 0).attr("x2", xScale(threshold)).attr("y1", yScale(average.averageBelowThreshold)).attr("y2", yScale(average.averageBelowThreshold)).attr("stroke", "black").attr("transform", `translate(${-histogramWidth / 2},0)`).attr("stroke-width", 2).attr("stroke-dasharray", "5,5").style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
       }
       if (!isNaN(average.averageAboveOrEqualThreshold)) {
-        d3.select(this).append("line").attr("class", "average-line").attr("x1", xScale(threshold)).attr("x2", xScale(xDomain[1])).attr("y1", yScale(average.averageAboveOrEqualThreshold)).attr("y2", yScale(average.averageAboveOrEqualThreshold)).attr("stroke", "black").attr("transform", `translate(${-histogramWidth / 2},0)`).attr("stroke-width", 2).attr("stroke-dasharray", "5,5").on("mouseover", mouseoverline).on("mouseleave", mouseleaveline).on("mousemove", mousemoveavarageabove);
+        d3.select(this).append("line").attr("class", "average-line").attr("x1", xScale(threshold)).attr("x2", xScale(xDomain[1])).attr("y1", yScale(average.averageAboveOrEqualThreshold)).attr("y2", yScale(average.averageAboveOrEqualThreshold)).attr("stroke", "black").attr("transform", `translate(${-histogramWidth / 2},0)`).attr("stroke-width", 2).attr("stroke-dasharray", "5,5");
       }
-      d3.select(this).append("text").attr("class", "st-target").attr("x", 0).attr("y", nodeLabelY).style("text-anchor", "middle").style("font-size", "18px").text(treeData.feature_names[d.data.feature]).on("mousemove", mousemoveAllData).on("mouseleave", mouseleaveAllData).style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
+      d3.select(this).append("text").attr("class", "st-target").attr("x", 0).attr("y", nodeLabelY).style("text-anchor", "middle").style("font-size", "18px").text(treeData.feature_names[d.data.feature]).style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
       var mouseovertriangle = function(d2) {
         tooltipBody.style("opacity", 1);
         tooltipModal.style("opacity", 1);
@@ -958,11 +959,11 @@
         stLog("debug", d, "Exist");
         d3.select(this).append("path").attr("d", triangle).attr("class", "st-triangle").style("stroke-width", 1).style("stroke-opacity", 1).style("fill", color).attr("transform", function(d2) {
           return "translate(" + (-histogramWidth / 2 + xScale(treeData.show_sample[featureIndex])) + "," + verticalTransform + ")";
-        }).on("mouseover", mouseovertriangle).on("mouseleave", mouseleavetriangle).on("mousemove", mousemovetriangle);
+        });
       }
     }
   }
-  function processRegressionLeaf(d, treeData, scatterplotLeafWidth, scatterplotLeafHeight, rectHeight, tooltipBody, tooltipModal, click, showpath) {
+  function processRegressionLeaf(d, treeData, scatterplotLeafWidth, scatterplotLeafHeight, rectHeight, click, showpath) {
     const {
       layout: {
         regressionLeafRectX,
@@ -1110,21 +1111,21 @@
       d3.select(this).append("g").selectAll("g").data(combinedData).join("circle").attr("cx", (d2, i) => xScale(combinedData[i][0])).attr("cy", (d2, i) => yScale(combinedData[i][1])).attr("r", 2).attr(
         "transform",
         `translate(${regressionLeafPlotTranslateX}, ${0})`
-      ).style("fill", "#0099cc").style("fill-opacity", 0.5).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", mousemovecircle);
+      ).style("fill", "#0099cc").style("fill-opacity", 0.5);
       if (!isNaN(average)) {
         d3.select(this).append("line").attr("class", "average-line").attr("x1", 0).attr("x2", scatterplotLeafWidth).attr("y1", yScale(average)).attr("y2", yScale(average)).attr("stroke", "black").attr(
           "transform",
           `translate(${regressionLeafPlotTranslateX},0)`
-        ).attr("stroke-width", 2).attr("stroke-dasharray", "5,5").on("mouseover", mouseoverline).on("mouseleave", mouseleaveline).on("mousemove", mousemoveavarage);
+        ).attr("stroke-width", 2).attr("stroke-dasharray", "5,5");
       }
-      var maxWidth = 100;
+      var maxWidth = 220;
       var textElement = d3.select(this).append("text").attr("class", "st-target").attr("x", leafLabelX).attr("y", regressionLeafLabelY).style("text-anchor", "middle").style("font-size", "18px").text(`${d.data.treeclass} = ${parseFloat(d.data.class_distribution[0][0].toFixed(3))}`).style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none").call(wrapText, maxWidth);
       var lineCount = textElement.selectAll("tspan").size();
       var lineHeightEm = 1.1;
       var fontSizePx = 18;
       var textSpacing = 5;
       var nTextY = rectHeight + lineCount * lineHeightEm * fontSizePx + textSpacing;
-      d3.select(this).append("text").attr("class", "st-target").attr("x", leafLabelX).attr("y", nTextY).style("text-anchor", "middle").style("font-size", "18px").text(`n = ${d.data.samples}`).style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
+      d3.select(this).append("text").attr("class", "st-target").attr("x", leafLabelX).attr("y", nTextY).style("text-anchor", "middle").style("font-size", "18px").text(`# samples = ${d.data.samples}`).style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
       var mouseovertriangle = function(d2) {
         tooltipBody.style("opacity", 1);
         tooltipModal.style("opacity", 1);
@@ -1159,7 +1160,7 @@
         stLog("debug", d, "Existtt");
         d3.select(this).append("path").attr("d", triangle).attr("class", "st-triangle").style("stroke", color).style("stroke-width", 1).style("stroke-opacity", 1).style("fill", color).attr("transform", function(d2) {
           return "translate(" + (regressionLeafPlotTranslateX + xScale(treeData.show_sample[d2.parent.data.feature])) + "," + scatterplotLeafHeight + ")";
-        }).on("mouseover", mouseovertriangle).on("mouseleave", mouseleavetriangle).on("mousemove", mousemovetriangle);
+        });
       }
     }
   }
@@ -1648,6 +1649,8 @@
       const classification = "classification";
       const nodata = "nodata";
       let boldLinks = true;
+      let showDecisionChips = true;
+      let decisionChipButton = null;
       let globalX = true;
       let globalY = true;
       const yMultiplayer = 1;
@@ -1846,8 +1849,8 @@
         "#227944"
       ];
       const colorSize = 20;
-      var tooltipModal = d3.select(modalSelector).append("div").attr("id", `st-tooltip-modal-${instanceKey}`).attr("class", "st-tooltip").style("position", "absolute").style("opacity", 0).style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none").style("font-size", "18px").style("background-color", "rgba(0, 0, 0, 0.7)").style("color", "white").style("padding", "8px").style("border-radius", "4px").style("box-shadow", "0px 4px 8px rgba(0, 0, 0, 0.3)").style("max-width", "200px").style("text-align", "center").style("z-index", "1000").style("transition", "opacity 0.3s ease");
-      var tooltipBody = d3.select("body").append("div").attr("id", `st-tooltip-body-${instanceKey}`).attr("class", "st-tooltip").style("position", "absolute").style("opacity", 0).style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none").style("font-size", "18px").style("background-color", "rgba(0, 0, 0, 0.7)").style("color", "white").style("padding", "8px").style("border-radius", "4px").style("box-shadow", "0px 4px 8px rgba(0, 0, 0, 0.3)").style("max-width", "200px").style("text-align", "center").style("z-index", "1000").style("transition", "opacity 0.3s ease");
+      var tooltipModal2 = d3.select(modalSelector).append("div").attr("id", `st-tooltip-modal-${instanceKey}`).attr("class", "st-tooltip").style("position", "absolute").style("opacity", 0).style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none").style("font-size", "18px").style("background-color", "rgba(0, 0, 0, 0.7)").style("color", "white").style("padding", "8px").style("border-radius", "4px").style("box-shadow", "0px 4px 8px rgba(0, 0, 0, 0.3)").style("max-width", "200px").style("text-align", "center").style("z-index", "1000").style("transition", "opacity 0.3s ease");
+      var tooltipBody2 = d3.select("body").append("div").attr("id", `st-tooltip-body-${instanceKey}`).attr("class", "st-tooltip").style("position", "absolute").style("opacity", 0).style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none").style("font-size", "18px").style("background-color", "rgba(0, 0, 0, 0.7)").style("color", "white").style("padding", "8px").style("border-radius", "4px").style("box-shadow", "0px 4px 8px rgba(0, 0, 0, 0.3)").style("max-width", "200px").style("text-align", "center").style("z-index", "1000").style("transition", "opacity 0.3s ease");
       function startWatcher() {
         const treeID = "st-body-tree-div-treeID";
         const modalID = "myModal-treeID";
@@ -1900,7 +1903,26 @@
       }
       loadJSONFiles().then((data) => {
         if (data) {
-          let triggerToolbarTreeNavigation = function(direction) {
+          let getTreeStatistics = function(root) {
+            let nodes = 0;
+            let leaves = 0;
+            let depth = 0;
+            function visit(node, currentDepth) {
+              if (!node) {
+                return;
+              }
+              nodes++;
+              depth = Math.max(depth, currentDepth);
+              if (node.is_leaf) {
+                leaves++;
+                return;
+              }
+              visit(node.left_node, currentDepth + 1);
+              visit(node.right_node, currentDepth + 1);
+            }
+            visit(root, 0);
+            return { nodes, leaves, depth };
+          }, triggerToolbarTreeNavigation = function(direction) {
             const navId = treeData.nav_id;
             if (!navId) {
               return;
@@ -1990,6 +2012,19 @@
             return treeSVG.selectAll(".treeNode").filter((node) => ids.has(node.id));
           }, selectTreeLinksByIds = function(ids) {
             return treeSVG.selectAll("#st-link-treeID").filter((node) => ids.has(node.id));
+          }, selectTreeLabelsByIds = function(ids) {
+            return treeSVG.selectAll(".st-link-label").filter((node) => ids.has(node.id));
+          }, applyDecisionChipVisibility = function(transitionDuration = 180) {
+            const labels = treeSVG.selectAll(".st-link-label");
+            const target = transitionDuration > 0 ? labels.transition().duration(transitionDuration).ease(d3.easeCubicInOut) : labels;
+            target.style("opacity", (d) => {
+              var _a, _b;
+              const edgeIsVisible = (_b = (_a = d.parent) == null ? void 0 : _a.children) == null ? void 0 : _b.some((child) => child.id === d.id);
+              return showDecisionChips && edgeIsVisible ? 1 : 0;
+            }).attr("aria-hidden", showDecisionChips ? null : "true");
+            if (decisionChipButton) {
+              decisionChipButton.attr("aria-pressed", showDecisionChips ? "true" : "false");
+            }
           }, getNodeTransform = function(node, scale = 1) {
             return "translate(" + node.x * xMultiplayer + "," + node.y * yMultiplayer + ") scale(" + scale + ")";
           }, applyVisibleLinkWidths = function(linkSelection = treeSVG.selectAll("#st-link-treeID")) {
@@ -2143,8 +2178,6 @@
                   histogramHeight,
                   rectWidth,
                   rectHeight,
-                  tooltipBody,
-                  tooltipModal,
                   colors
                 );
               });
@@ -2156,8 +2189,6 @@
                   scatterplotLeafWidth,
                   scatterplotLeafHeight,
                   rectHeight,
-                  tooltipBody,
-                  tooltipModal,
                   click,
                   showpath
                 );
@@ -2168,8 +2199,8 @@
                 processClassificationNode.call(
                   this,
                   treeData,
-                  tooltipBody,
-                  tooltipModal,
+                  tooltipBody2,
+                  tooltipModal2,
                   globalX,
                   globalXExtent,
                   globalY,
@@ -2210,8 +2241,8 @@
                   maxSample,
                   showpath,
                   d3,
-                  tooltipBody,
-                  tooltipModal,
+                  tooltipBody2,
+                  tooltipModal2,
                   d
                 );
               });
@@ -2328,14 +2359,14 @@
             const mouseover2 = function(d) {
               const currentStroke = d3.select(this).style("stroke");
               this.dataset.previousStroke = currentStroke;
-              tooltipBody.style("opacity", 1);
-              tooltipModal.style("opacity", 1);
+              tooltipBody2.style("opacity", 1);
+              tooltipModal2.style("opacity", 1);
               d3.select(this).style("stroke", "#0099cc");
             };
             const mouseleave2 = function(d) {
               const previousStroke = this.dataset.previousStroke || defaultLinkStroke;
-              tooltipBody.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
-              tooltipModal.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
+              tooltipBody2.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
+              tooltipModal2.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
               d3.select(this).style("stroke", previousStroke);
               delete this.dataset.previousStroke;
             };
@@ -2345,17 +2376,17 @@
                 for (let i = 0; i < d.data.class_distribution[0].length; i++) {
                   currentDistribution = currentDistribution + parseInt(d.data.class_distribution[0][i]);
                 }
-                tooltipModal.html(
+                tooltipModal2.html(
                   `<b>Samples in link:</b> ${currentDistribution}`
                 ).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px");
-                tooltipBody.html(
+                tooltipBody2.html(
                   `<b>Samples in link:</b> ${currentDistribution}`
                 ).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px");
               }
               if (treeData.tree_type == regr) {
                 var currentDistribution = d.data.samples;
-                tooltipModal.html(`<b>Samples in link:</b> ${currentDistribution}`).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px");
-                tooltipBody.html(`<b>Samples in link:</b> ${currentDistribution}`).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px");
+                tooltipModal2.html(`<b>Samples in link:</b> ${currentDistribution}`).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px");
+                tooltipBody2.html(`<b>Samples in link:</b> ${currentDistribution}`).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px");
               }
             };
             var linkEnter = link.enter().insert("path", "g").attr("class", "st-link").attr("id", "st-link-treeID").attr("d", function(d) {
@@ -2417,6 +2448,53 @@
               var o = getSourceAnchor(source2, d, { useExitPosition: true });
               return diagonal(o, o);
             }).remove();
+            function getLinkDecisionText(linkNode) {
+              var _a, _b, _c, _d, _e;
+              const parent = linkNode.parent;
+              const feature = (_c = (_b = treeData.feature_names) == null ? void 0 : _b[(_a = parent == null ? void 0 : parent.data) == null ? void 0 : _a.feature]) != null ? _c : "feature";
+              const threshold = Number((_d = parent == null ? void 0 : parent.data) == null ? void 0 : _d.threshold);
+              if (!parent || parent.data.is_leaf || !Number.isFinite(threshold)) {
+                return "";
+              }
+              const formattedThreshold = d3.format("~g")(threshold);
+              const isLeft = ((_e = parent.data.left_node) == null ? void 0 : _e.id) === linkNode.data.id;
+              const isLteRule = treeData.split_rule === "lte_gt";
+              const operator = isLeft ? isLteRule ? "<=" : "<" : isLteRule ? ">" : ">=";
+              return `${feature} ${operator} ${formattedThreshold}`;
+            }
+            function getLinkDecisionPosition(linkNode) {
+              var _a;
+              const sourceAnchor = getSourceAnchor(linkNode.parent, linkNode);
+              const targetAnchor = getTargetAnchor(linkNode);
+              const midpoint = {
+                x: (sourceAnchor.x + targetAnchor.x) / 2,
+                y: (sourceAnchor.y + targetAnchor.y) / 2
+              };
+              const goesLeft = ((_a = linkNode.data.left_node) == null ? void 0 : _a.id) === linkNode.data.id;
+              const horizontalOffset = goesLeft ? -18 : 18;
+              return {
+                x: midpoint.x + horizontalOffset,
+                y: midpoint.y
+              };
+            }
+            const decisionLabels = treeSVG.selectAll(".st-link-label").data(links, (d) => d.id);
+            const decisionLabelEnter = decisionLabels.enter().insert("g", ".treeNode").attr("class", "st-link-label").style("opacity", 0).attr("transform", (d) => {
+              const position = getLinkDecisionPosition(d);
+              return `translate(${position.x},${position.y})`;
+            });
+            decisionLabelEnter.append("rect").attr("class", "st-link-label-background").attr("rx", 7).attr("ry", 7);
+            decisionLabelEnter.append("text").attr("class", "st-link-label-text");
+            const decisionLabelUpdate = decisionLabelEnter.merge(decisionLabels);
+            decisionLabelUpdate.select("text").text(getLinkDecisionText).each(function(d) {
+              const text = d3.select(this).text();
+              const width = Math.max(44, text.length * 7.1 + 18);
+              d3.select(this.parentNode).select("rect").attr("x", -width / 2).attr("y", -11).attr("width", width).attr("height", 22);
+            });
+            decisionLabelUpdate.transition().duration((d) => hiddenLinkIds.has(d.id) ? 0 : transitionDuration).ease(d3.easeCubicInOut).style("opacity", (d) => hiddenLinkIds.has(d.id) || !showDecisionChips ? 0 : 1).attr("transform", (d) => {
+              const position = getLinkDecisionPosition(d);
+              return `translate(${position.x},${position.y})`;
+            });
+            decisionLabels.exit().filter((d) => descendantIds.has(d.id)).transition().duration(transitionDuration).style("opacity", 0).remove();
             function getNodeBasePosition(node, options2 = {}) {
               if (options2.useCurrentPosition) {
                 return {
@@ -2580,8 +2658,8 @@
                     processClassificationNode.call(
                       this,
                       treeData,
-                      tooltipBody,
-                      tooltipModal,
+                      tooltipBody2,
+                      tooltipModal2,
                       globalX,
                       globalXExtent,
                       globalY,
@@ -2609,8 +2687,8 @@
                       globalMaxSample,
                       showpath,
                       d3,
-                      tooltipBody,
-                      tooltipModal,
+                      tooltipBody2,
+                      tooltipModal2,
                       d
                     );
                   }
@@ -2627,8 +2705,6 @@
                       histogramHeight,
                       rectWidth,
                       rectHeight,
-                      tooltipBody,
-                      tooltipModal,
                       colors
                     );
                   }
@@ -2640,8 +2716,6 @@
                       scatterplotLeafWidth,
                       scatterplotLeafHeight,
                       rectHeight,
-                      tooltipBody,
-                      tooltipModal,
                       click,
                       showpath
                     );
@@ -2675,6 +2749,9 @@
           }, boldClick = function() {
             boldLinks = !boldLinks;
             applyVisibleLinkWidths();
+          }, toggleDecisionChips = function() {
+            showDecisionChips = !showDecisionChips;
+            applyDecisionChipVisibility();
           }, saveSvg = function() {
             var svgElement = document.getElementById("mySVG-treeID");
             var serializer = new XMLSerializer();
@@ -2715,6 +2792,19 @@
             return null;
           };
           const { nodeData, treeData } = data;
+          const treeStatistics = getTreeStatistics(nodeData);
+          const treeStatisticsItems = [
+            treeData.model_name,
+            `NODES ${treeStatistics.nodes}`,
+            `LEAVES ${treeStatistics.leaves}`,
+            `DEPTH ${treeStatistics.depth}`,
+            `SAMPLES ${nodeData.samples}`,
+            `FEATURES ${treeData.feature_names.length}`
+          ];
+          if ((treeData.tree_count || 1) > 1) {
+            treeStatisticsItems.push(`TREE ${treeData.which_tree + 1}/${treeData.tree_count}`);
+          }
+          d3.select(infoSelector).html(`<div class="st-tree-statistics">${treeStatisticsItems.map((item, index) => index === 0 ? `<strong>${item}</strong>` : item).join(" \xB7 ")}</div>`);
           if ((treeData.tree_count || 1) > 1) {
             if (treeData.nav_id) {
               tertiaryToolbarGroup.append("button").attr("class", "st-option-button").on("click", () => triggerToolbarTreeNavigation("prev")).text("Prev");
@@ -2912,15 +3002,21 @@
             layers.forEach((layer) => {
               const layerIds = new Set(layer.map((node) => node.id));
               selectTreeLinksByIds(layerIds).style("stroke-opacity", 0).style("pointer-events", "none");
+              selectTreeLabelsByIds(layerIds).style("opacity", 0).style("pointer-events", "none");
               selectTreeNodesByIds(layerIds).style("opacity", 0).style("pointer-events", "none").attr("transform", (node) => getNodeTransform(node, 0.96));
             });
             for (const layer of layers) {
               const layerIds = new Set(layer.map((node) => node.id));
               const layerLinks = selectTreeLinksByIds(layerIds);
+              const layerLabels = selectTreeLabelsByIds(layerIds);
               const layerNodes = selectTreeNodesByIds(layerIds);
               await runTransition(
                 layerLinks,
                 (transition) => transition.duration(stagedToggleDurations.expandLink).ease(d3.easeCubicOut).style("stroke-opacity", 1)
+              );
+              await runTransition(
+                layerLabels,
+                (transition) => transition.duration(stagedToggleDurations.expandLink).ease(d3.easeCubicOut).style("opacity", showDecisionChips ? 1 : 0)
               );
               await runTransition(
                 layerNodes,
@@ -2961,8 +3057,10 @@
               const layerIds = new Set(layer.map((node) => node.id));
               const layerNodes = selectTreeNodesByIds(layerIds);
               const layerLinks = selectTreeLinksByIds(layerIds);
+              const layerLabels = selectTreeLabelsByIds(layerIds);
               layerNodes.style("pointer-events", "none");
               layerLinks.style("pointer-events", "none");
+              layerLabels.style("pointer-events", "none");
               await runTransition(
                 layerNodes,
                 (transition) => transition.duration(stagedToggleDurations.collapseNode).ease(d3.easeCubicIn).style("opacity", 0).attr("transform", (node) => getNodeTransform(node, 0.96))
@@ -2970,6 +3068,10 @@
               await runTransition(
                 layerLinks,
                 (transition) => transition.duration(stagedToggleDurations.collapseLink).ease(d3.easeCubicIn).style("stroke-opacity", 0)
+              );
+              await runTransition(
+                layerLabels,
+                (transition) => transition.duration(stagedToggleDurations.collapseLink).ease(d3.easeCubicIn).style("opacity", 0)
               );
               if (stagedToggleDurations.gap > 0) {
                 await wait(stagedToggleDurations.gap);
@@ -3015,15 +3117,21 @@
             layers.forEach((layer) => {
               const layerIds = new Set(layer.map((node) => node.id));
               selectTreeLinksByIds(layerIds).style("stroke-opacity", 0).style("pointer-events", "none");
+              selectTreeLabelsByIds(layerIds).style("opacity", 0).style("pointer-events", "none");
               selectTreeNodesByIds(layerIds).style("opacity", 0).style("pointer-events", "none").attr("transform", (node) => getNodeTransform(node, 0.96));
             });
             for (const layer of layers) {
               const layerIds = new Set(layer.map((node) => node.id));
               const layerLinks = selectTreeLinksByIds(layerIds);
+              const layerLabels = selectTreeLabelsByIds(layerIds);
               const layerNodes = selectTreeNodesByIds(layerIds);
               await runTransition(
                 layerLinks,
                 (transition) => transition.duration(stagedToggleDurations.expandLink).ease(d3.easeCubicOut).style("stroke-opacity", 1)
+              );
+              await runTransition(
+                layerLabels,
+                (transition) => transition.duration(stagedToggleDurations.expandLink).ease(d3.easeCubicOut).style("opacity", showDecisionChips ? 1 : 0)
               );
               await runTransition(
                 layerNodes,
@@ -3057,8 +3165,10 @@
               const layerIds = new Set(layer.map((node) => node.id));
               const layerNodes = selectTreeNodesByIds(layerIds);
               const layerLinks = selectTreeLinksByIds(layerIds);
+              const layerLabels = selectTreeLabelsByIds(layerIds);
               layerNodes.style("pointer-events", "none");
               layerLinks.style("pointer-events", "none");
+              layerLabels.style("pointer-events", "none");
               await runTransition(
                 layerNodes,
                 (transition) => transition.duration(stagedToggleDurations.collapseNode).ease(d3.easeCubicIn).style("opacity", 0).attr("transform", (node) => getNodeTransform(node, 0.96))
@@ -3066,6 +3176,10 @@
               await runTransition(
                 layerLinks,
                 (transition) => transition.duration(stagedToggleDurations.collapseLink).ease(d3.easeCubicIn).style("stroke-opacity", 0)
+              );
+              await runTransition(
+                layerLabels,
+                (transition) => transition.duration(stagedToggleDurations.collapseLink).ease(d3.easeCubicIn).style("opacity", 0)
               );
               if (stagedToggleDurations.gap > 0) {
                 await wait(stagedToggleDurations.gap);
@@ -3087,16 +3201,16 @@
           collapse(treeRoot, 0, startDepth);
           update(treeRoot, false, 0);
           const mouseover = function(d) {
-            tooltipBody.style("opacity", 1);
-            tooltipModal.style("opacity", 1);
+            tooltipBody2.style("opacity", 1);
+            tooltipModal2.style("opacity", 1);
           };
           const mouseleave = function(d) {
-            tooltipBody.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
-            tooltipModal.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
+            tooltipBody2.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
+            tooltipModal2.style("opacity", 0).style("top", "-2000px").style("left", "-2000px");
           };
           const mousemoveButton = function(event2, d) {
-            tooltipBody.html(`<b>${d}</b>`).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px");
-            tooltipModal.html(`<b>${d}</b>`).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px");
+            tooltipBody2.html(`<b>${d}</b>`).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px");
+            tooltipModal2.html(`<b>${d}</b>`).style("top", event2.pageY - 10 + "px").style("left", event2.pageX + 10 + "px");
           };
           var toolbar = primaryToolbarGroup;
           const hasShowSample = hasShowSampleData;
@@ -3116,6 +3230,10 @@
           if (boldLinkButton) {
             boldLinkButton.append("span").attr("class", "st-button-label").text("Line Width");
           }
+          decisionChipButton = primaryToolbarGroup.append("button").html(svgDecisionValues).attr("id", "decisionValues-treeID").attr("class", "st-option-button").attr("type", "button").attr("aria-pressed", "true").on("click", toggleDecisionChips).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function() {
+            mousemoveButton(event, "Show or hide decision values on edges");
+          });
+          decisionChipButton.append("span").attr("class", "st-button-label").text("Decisions");
           if (hasShowSample) {
             const sampleButton = primaryToolbarGroup.append("button").html(svgSample).attr("id", "showSample-treeID").attr("class", "st-option-button").on("click", showSample).on("mouseover", mouseover).on("mouseleave", mouseleave).on("mousemove", function(d) {
               mousemoveButton(event, "Show sample path");
