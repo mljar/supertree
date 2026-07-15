@@ -1,6 +1,11 @@
 import { createTreeVisualMetrics } from "./geometry.js";
 import { stLog, yAxisMargin } from "./shared.js";
 
+function getTextWidth(text, fontSize) {
+  const measuredWidth = text.node().getComputedTextLength();
+  return measuredWidth > 0 ? measuredWidth : text.text().length * fontSize * 0.6;
+}
+
 function appendThresholdValueChip(container, x, thresholdValue) {
   const chip = container
     .append("g")
@@ -14,7 +19,7 @@ function appendThresholdValueChip(container, x, thresholdValue) {
     .attr("y", 2)
     .style("text-anchor", "middle")
     .text(d3.format("~g")(thresholdValue));
-  const width = label.node().getComputedTextLength() + 14;
+  const width = getTextWidth(label, 11) + 14;
 
   chip
     .insert("rect", "text")
@@ -776,7 +781,7 @@ export function processClassificationLeaf(
             .style("-moz-user-select", "none")
             .style("-ms-user-select", "none");
 
-          const badgeWidth = text.node().getComputedTextLength() + 20;
+          const badgeWidth = getTextWidth(text, 13) + 20;
           const badgeHeight = 24;
 
           group

@@ -313,10 +313,14 @@
   }
 
   // supertree/js/src/node_renderers.js
+  function getTextWidth(text, fontSize) {
+    const measuredWidth = text.node().getComputedTextLength();
+    return measuredWidth > 0 ? measuredWidth : text.text().length * fontSize * 0.6;
+  }
   function appendThresholdValueChip(container, x, thresholdValue) {
     const chip = container.append("g").attr("class", "threshold-value-chip").attr("transform", `translate(${x}, 0)`).attr("pointer-events", "none");
     const label = chip.append("text").attr("class", "threshold-value-label").attr("x", 0).attr("y", 2).style("text-anchor", "middle").text(d3.format("~g")(thresholdValue));
-    const width = label.node().getComputedTextLength() + 14;
+    const width = getTextWidth(label, 11) + 14;
     chip.insert("rect", "text").attr("class", "threshold-value-chip-background").attr("x", -width / 2).attr("y", -8).attr("width", width).attr("height", 20).attr("rx", 6);
   }
   function processClassificationNode(treeData, tooltipBody2, tooltipModal2, globalX, globalXExtent, globalY, globalYExtent, click, histogramWidth, histogramHeight, rectWidth, rectHeight, colors, d) {
@@ -717,7 +721,7 @@
           const badgeFill = colors[indicesArray[i]];
           const badgeText = `${d2.data.target_name}: ${formatNumber(d2.data.classDistributionValue)}`;
           const text = group.append("text").attr("class", "st-pie-target").attr("x", 0).attr("y", 5).attr("fill", getBadgeTextColor(badgeFill)).style("text-anchor", "middle").style("font-size", "13px").style("font-weight", "600").text(badgeText).style("user-select", "none").style("-webkit-user-select", "none").style("-moz-user-select", "none").style("-ms-user-select", "none");
-          const badgeWidth = text.node().getComputedTextLength() + 20;
+          const badgeWidth = getTextWidth(text, 13) + 20;
           const badgeHeight = 24;
           group.insert("rect", "text").attr("x", -badgeWidth / 2).attr("y", -badgeHeight / 2).attr("width", badgeWidth).attr("height", badgeHeight).attr("rx", 12).attr("ry", 12).attr("fill", badgeFill).attr("stroke", badgeFill).attr("stroke-width", 1);
         });
