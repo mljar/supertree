@@ -2624,8 +2624,51 @@ export function buildTree(
           function saveSvg() {
             var svgElement = document.getElementById("mySVG-treeID");
 
+            const svgExportStyles = `
+              .st-target,
+              .st-pie-target,
+              .st-pie-target2,
+              .threshold-value-label {
+                fill: #333333;
+              }
+
+              .threshold-value-chip-background {
+                fill: #ffffff;
+                fill-opacity: 0.82;
+                stroke: #c8cdd2;
+                stroke-width: 1;
+              }
+
+              .st-link-label-background {
+                fill: #eef0f2;
+                stroke: #c8cdd2;
+                stroke-width: 1;
+              }
+
+              .st-link-label-text {
+                fill: #3f464d;
+                font-size: 12px;
+                font-weight: 600;
+                text-anchor: middle;
+                dominant-baseline: central;
+              }
+
+              .xAxis-text,
+              .yAxis-text {
+                fill: #000000;
+              }
+            `;
+
+            var svgClone = svgElement.cloneNode(true);
+            var defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+            var style = document.createElementNS("http://www.w3.org/2000/svg", "style");
+            style.setAttribute("type", "text/css");
+            style.textContent = svgExportStyles;
+            defs.appendChild(style);
+            svgClone.insertBefore(defs, svgClone.firstChild);
+
             var serializer = new XMLSerializer();
-            var svgString = serializer.serializeToString(svgElement);
+            var svgString = serializer.serializeToString(svgClone);
 
             var blob = new Blob([svgString], {
               type: "image/svg+xml;charset=utf-8",
