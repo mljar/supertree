@@ -100,7 +100,7 @@
         node.id = node.data.id;
         const stablePosition = stableLayout.stableNodePositions.get(node.data.id);
         const visibleX = visibleNodePositions.get(node.data.id);
-        node.x = visibleX !== void 0 ? visibleX : stablePosition.x;
+        node.x = stablePosition.x;
         node.y = stablePosition.y;
         if (!node.hasOwnProperty("cx")) {
           node.cx = node.x * xMultiplayer;

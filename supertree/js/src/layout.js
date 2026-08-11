@@ -112,7 +112,7 @@ export function createTreeLayoutHelpers(config) {
       const stablePosition = stableLayout.stableNodePositions.get(node.data.id);
       const visibleX = visibleNodePositions.get(node.data.id);
 
-      node.x = visibleX !== undefined ? visibleX : stablePosition.x;
+      node.x = stablePosition.x;
       node.y = stablePosition.y;
 
       if (!node.hasOwnProperty("cx")) {
